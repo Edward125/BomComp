@@ -9104,6 +9104,54 @@ Dim strBom1 As String
 Dim strBom2 As String
 Dim strTmp As String
 Dim strOutputStr As String
+
+'==============================================excel
+Dim ExcelID As Excel.Application
+Set ExcelID = New Excel.Application
+Dim intExcelCells_1 As Integer
+Dim intExcelCells_2 As Integer
+
+Dim By1() As Byte
+Dim i As Long
+On Error Resume Next
+
+By1 = LoadResData(101, "CUSTOM")
+
+If Dir(PrmPath & "BomCompare\tmp.xls") <> "" Then
+    Kill PrmPath & "BomCompare\tmp.xls"
+End If
+
+    Open PrmPath & "BomCompare\tmp.xls" For Binary As #45
+    For i = 0 To UBound(By1)   '这里的198144是被嵌套的Exe文件准确字节数（大小）
+        Put #45, , By1(i)
+    Next
+
+    Close #45
+
+
+intExcelCells_1 = 2
+intExcelCells_2 = 1
+ ExcelID.Visible = True
+ExcelID.Workbooks.Open (PrmPath & "BomCompare\tmp.xls")
+ 
+ExcelID.Worksheets("Bom1_and_Bom2_Compare").Activate
+ExcelID.DisplayAlerts = False
+
+
+'ExcelID.Cells(1, 2).Value = "材︽材"
+'ExcelID.Workbooks.Close
+
+'ExcelID.Quit
+'Set ExcelID = Nothing
+'========================================================
+
+
+
+
+
+
+
+
 strFileName_1 = l1.Caption
 strFileName_2 = l2.Caption
 If strFileName_1 = "" Then strFileName_1 = "Bom1"
@@ -9172,6 +9220,10 @@ MkDir PrmPath & "BomCompare\CvsBom1"
   Close #3
   Open PrmPath & "BomCompare\Bom1_and_Bom2_Compare.csv" For Output As #3
     Print #3, "DeviceName," & strFileName_2 & "__PartNumber," & strFileName_1 & "__PartNumber"
+   '=============================================================
+    ExcelID.Cells(1, 2).Value = strFileName_2 & "__PartNumber"
+    ExcelID.Cells(1, 3).Value = strFileName_1 & "__PartNumber"
+   '=============================================================
   Open PrmPath & "BomCompare\CvsBom1\tmpReadAll.dll" For Input As #2
     Do Until EOF(2)
        Line Input #2, strMy
@@ -9191,6 +9243,12 @@ MkDir PrmPath & "BomCompare\CvsBom1"
              Close #4
             If Trim(strBom1) = "" Then strBom1 = "N/A"
             If Trim(strBom2) = "" Then strBom2 = "N/A"
+           '======================================================
+               ExcelID.Cells(intExcelCells_1, 1).Value = strMy
+               ExcelID.Cells(intExcelCells_1, 2).Value = strBom1
+               ExcelID.Cells(intExcelCells_1, 3).Value = strBom2
+               intExcelCells_1 = intExcelCells_1 + 1
+           '======================================================
             Print #3, strMy & "," & strBom1 & "," & strBom2
             strBom1 = ""
             strBom2 = ""
@@ -9199,6 +9257,13 @@ MkDir PrmPath & "BomCompare\CvsBom1"
     Loop
   Close #2
   Close #3
+ '======================================
+   ExcelID.ActiveSheet.SaveAs (PrmPath & "BomCompare\Bom1_and_Bom2_Compare.xls")
+   ExcelID.Workbooks.Close
+   ExcelID.Quit
+   Set ExcelID = Nothing
+   
+  '=======================================
   Kill PrmPath & "BomCompare\CvsBom1\*.*"
   RmDir PrmPath & "BomCompare\CvsBom1"
 End Sub
