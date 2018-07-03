@@ -7,6 +7,7 @@ Begin VB.Form frmMain
    ClientTop       =   165
    ClientWidth     =   10275
    Icon            =   "frmMain.frx":0000
+   LockControls    =   -1  'True
    MaxButton       =   0   'False
    ScaleHeight     =   5760
    ScaleWidth      =   10275
@@ -79,22 +80,56 @@ Begin VB.Form frmMain
       TabIndex        =   24
       Top             =   0
       Width           =   2535
+      Begin VB.CommandButton Command1 
+         Caption         =   "Tool"
+         Height          =   375
+         Left            =   120
+         TabIndex        =   39
+         Top             =   4680
+         Width           =   2295
+      End
+      Begin VB.CommandButton cmdToVerBoard 
+         Caption         =   "Output BoardVer Format File"
+         Height          =   375
+         Left            =   120
+         TabIndex        =   38
+         Top             =   4200
+         Width           =   2295
+      End
+      Begin VB.OptionButton Option4 
+         Caption         =   "Output 3070 board version format (1-8 bom file)"
+         ForeColor       =   &H00C00000&
+         Height          =   615
+         Left            =   120
+         TabIndex        =   37
+         Top             =   1800
+         Value           =   -1  'True
+         Width           =   2295
+      End
+      Begin VB.CommandButton cmdBom8GeVer 
+         Caption         =   "8 Ge Bom add output Basic Bom ,Only one Device"
+         Height          =   735
+         Left            =   120
+         TabIndex        =   36
+         Top             =   3360
+         Width           =   2295
+      End
       Begin VB.OptionButton Option3 
          Caption         =   "Bom and bom compare   (1-8 bom file)"
          ForeColor       =   &H00C00000&
          Height          =   495
          Left            =   120
          TabIndex        =   35
-         Top             =   1920
-         Value           =   -1  'True
+         Top             =   1320
          Width           =   2295
       End
       Begin VB.CommandButton cmdBom8Ge 
          Caption         =   "Bom 1------8 Comp  &GO>>>"
+         Enabled         =   0   'False
          Height          =   375
          Left            =   120
          TabIndex        =   34
-         Top             =   2640
+         Top             =   2880
          Width           =   2295
       End
       Begin VB.CommandButton cmdBomAndBom 
@@ -103,7 +138,7 @@ Begin VB.Form frmMain
          Height          =   375
          Left            =   120
          TabIndex        =   33
-         Top             =   1320
+         Top             =   2400
          Width           =   2295
       End
       Begin VB.OptionButton Option2 
@@ -605,10 +640,28 @@ If strMsg = vbYes Then
    ElseIf strMsg = vbNo Then
     Exit Sub
 End If
+
+           Option1.Enabled = False
+     Option2.Enabled = False
+     Option3.Enabled = False
+     txtBom1.Enabled = False
+     txtBom2.Enabled = False
+     txtBom3.Enabled = False
+     txtBom4.Enabled = False
+     txtBom5.Enabled = False
+     txtBom6.Enabled = False
+     txtBom7.Enabled = False
+     txtBom8.Enabled = False
+     txtTestplan.Enabled = False
+    cmdToVerBoard.Enabled = False
+cmdBom8GeVer.Enabled = False
+
+cmdToVerBoard.Enabled = False
+
 Start:
-
+'Open PrmPath & "BomCompare\8_Bom_basic_device.dll" For Output As #99
  
-
+'frmBomVerOption.Show
   cmdBom8Ge.Enabled = False
   Frame4.Enabled = False
   cmdBomAndBom.Enabled = False
@@ -693,10 +746,230 @@ Msg4.Caption = "Please wait..."
  
 Msg4.Caption = "Compare file end!"
        cmdBom8Ge.Enabled = True
+       cmdToVerBoard.Enabled = True
       Option1.Enabled = True
      Option2.Enabled = True
      Option3.Enabled = True
+cmdBom8GeVer.Enabled = True
+     txtBom1.Enabled = True
+     txtBom2.Enabled = True
+     txtBom3.Enabled = True
+     txtBom4.Enabled = True
+     txtBom5.Enabled = True
+     txtBom6.Enabled = True
+     txtBom7.Enabled = True
+     txtBom8.Enabled = True
+ cmdToVerBoard.Enabled = True
+ Option1.Enabled = True
+ Option2.Enabled = True
+ 'Close #99
+ MsgBox "ok"
+End Sub
 
+Private Sub cmdBom8GeVer_Click()
+Dim bAllVer As Boolean
+Dim a
+ On Error Resume Next
+'MkDir PrmPath & "BomCompare\Testplan_Tmp_Analog"
+'MkDir PrmPath & "BomCompare\Bom_1"
+'MkDir PrmPath & "BomCompare\Bom_2"
+'MkDir PrmPath & "BomCompare\Bom_3"
+'MkDir PrmPath & "BomCompare\Bom_4"
+'MkDir PrmPath & "BomCompare\Bom_5"
+'MkDir PrmPath & "BomCompare\Bom_6"
+'MkDir PrmPath & "BomCompare\Bom_7"
+'MkDir PrmPath & "BomCompare\Bom_8"
+    strMsg = MsgBox("Do you want to continue ?", 52, "Warning!")
+If strMsg = vbYes Then
+      GoTo Start
+   ElseIf strMsg = vbNo Then
+   
+   ' GoTo GOend
+   
+    Exit Sub
+End If
+
+
+
+Start:
+
+   bAllVer = bRunBom1 Or bRunBom2 Or bRunBom3 Or bRunBom4 Or bRunBom5 Or bRunBom6 Or bRunBom7 Or bRunBom8
+
+
+
+
+
+
+
+ If bAllVer = True Then
+           Option1.Enabled = False
+     Option2.Enabled = False
+     Option3.Enabled = False
+     Option4.Enabled = False
+     txtBom1.Enabled = False
+     txtBom2.Enabled = False
+     txtBom3.Enabled = False
+     txtBom4.Enabled = False
+     txtBom5.Enabled = False
+     txtBom6.Enabled = False
+     txtBom7.Enabled = False
+     txtBom8.Enabled = False
+     txtTestplan.Enabled = False
+    
+   
+   
+   
+ '  Call Open_Testplan_Read
+   
+   
+   
+   Else
+     If bAllVer = False Then
+       MsgBox "Please check bom file!", vbCritical
+         txtBom1.SetFocus
+         Exit Sub
+     End If
+     
+     
+ End If
+ 
+
+ 
+ 
+' If bRunTestplan = False Then
+'     Call Kill_File
+'     Call Kill_Device
+'     comOK.Enabled = True
+'     txtBom1.Enabled = True
+'     txtBom2.Enabled = True
+'     txtBom3.Enabled = True
+'     txtBom4.Enabled = True
+'     txtBom5.Enabled = True
+'     txtBom6.Enabled = True
+'     txtBom7.Enabled = True
+'     txtBom8.Enabled = True
+'     cmdBoards.Enabled = True
+'     Check1.Enabled = True
+'     txtTestplan.Enabled = True
+'
+' End If
+
+
+
+Kill PrmPath & "BomCompare\Bom_1\*.*"
+Open PrmPath & "BomCompare\Bom8GeVer_Comp.txt" For Output As #58
+Close #58
+
+  cmdBom8GeVer.Enabled = False
+  Frame4.Enabled = False
+  cmdBomAndBom.Enabled = False
+ Option1.Enabled = False
+ Option2.Enabled = False
+ Option3.Enabled = False
+ ' MkDir PrmPath & "BomCompare\BomAndBom_Comp"
+ intBomGeShu = 0
+ 
+If bRunBom1 = True Then
+  MkDir PrmPath & "BomCompare\Bom_1"
+  'MkDir PrmPath & "BomCompare\Bom_2"
+  intBomGeShu = intBomGeShu + 1
+  
+  Call ReadBom1_Ver_Out_Dir 'Bom8Comp_Bom1
+End If
+
+If bRunBom2 = True Then
+  MkDir PrmPath & "BomCompare\Bom_1"
+  intBomGeShu = intBomGeShu + 1
+   Call ReadBom2_Ver_Out_Dir 'Bom8Comp_Bom1
+End If
+If bRunBom3 = True Then
+  MkDir PrmPath & "BomCompare\Bom_1"
+   intBomGeShu = intBomGeShu + 1
+  Call ReadBom3_Ver_Out_Dir 'Bom8Comp_Bom1
+ 
+End If
+If bRunBom4 = True Then
+ MkDir PrmPath & "BomCompare\Bom_1"
+ intBomGeShu = intBomGeShu + 1
+ Call ReadBom4_Ver_Out_Dir
+End If
+If bRunBom5 = True Then
+intBomGeShu = intBomGeShu + 1
+  MkDir PrmPath & "BomCompare\Bom_1"
+    Call ReadBom5_Ver_Out_Dir
+End If
+If bRunBom6 = True Then
+intBomGeShu = intBomGeShu + 1
+  MkDir PrmPath & "BomCompare\Bom_1"
+   Call ReadBom6_Ver_Out_Dir
+End If
+
+If bRunBom7 = True Then
+intBomGeShu = intBomGeShu + 1
+  MkDir PrmPath & "BomCompare\Bom_1"
+    Call ReadBom7_Ver_Out_Dir
+End If
+ 
+If bRunBom8 = True Then
+intBomGeShu = intBomGeShu + 1
+   MkDir PrmPath & "BomCompare\Bom_1"
+  Call ReadBom8_Ver_Out_Dir
+End If
+'If bRunBom8 = True Then
+'   MkDir PrmPath & "BomCompare\Bom_8"
+'  Call Bom8Comp_Bom8
+'End If
+Msg1.Caption = "Start compare..."
+Msg2.Caption = "Please wait..."
+'Call Start_8Ge_Ver_Bom_Comp
+
+Msg3.Caption = ""
+Msg4.Caption = ""
+'Call FileCompStart_8_NoTestplan
+
+
+
+'¡I¡I¡I¡I¡I¡I¡I¡I¡I¡I¡I¡I¡I¡I¡I¡I¡I¡I
+Kill PrmPath & "BomCompare\Bom8GeVer_Comp.txt"
+ '¡I¡I¡I¡I¡I¡I¡I¡I¡I¡I¡I¡I¡I¡I¡I¡I¡I¡I
+ 
+Kill PrmPath & "BomCompare\BomAndBom_Comp\*.*"
+Kill PrmPath & "BomCompare\Bom_1\*.*"
+Kill PrmPath & "BomCompare\Bom_2\*.*"
+Kill PrmPath & "BomCompare\Bom_3\*.*"
+Kill PrmPath & "BomCompare\Bom_4\*.*"
+Kill PrmPath & "BomCompare\Bom_5\*.*"
+Kill PrmPath & "BomCompare\Bom_6\*.*"
+Kill PrmPath & "BomCompare\Bom_7\*.*"
+Kill PrmPath & "BomCompare\Bom_8\*.*"
+RmDir PrmPath & "BomCompare\Bom_1\"
+RmDir PrmPath & "BomCompare\Bom_2\"
+RmDir PrmPath & "BomCompare\Bom_3\"
+RmDir PrmPath & "BomCompare\Bom_4\"
+RmDir PrmPath & "BomCompare\Bom_5\"
+RmDir PrmPath & "BomCompare\Bom_6\"
+RmDir PrmPath & "BomCompare\Bom_7\"
+RmDir PrmPath & "BomCompare\Bom_8\"
+RmDir PrmPath & "BomCompare\BomAndBom_Comp"
+
+
+
+ 
+
+
+Msg3.Caption = "Runing create BomDiff.txt file..."
+Msg4.Caption = "Please wait..."
+
+' Call FileHeBin
+ 
+Msg4.Caption = "Compare file end!"
+
+GOend:
+       cmdBom8GeVer.Enabled = True
+      Option1.Enabled = True
+     Option2.Enabled = True
+     Option3.Enabled = True
+     Option4.Enabled = True
      txtBom1.Enabled = True
      txtBom2.Enabled = True
      txtBom3.Enabled = True
@@ -710,6 +983,7 @@ Msg4.Caption = "Compare file end!"
  Option2.Enabled = True
  
  MsgBox "ok"
+
 End Sub
 
 Private Sub cmdBomAndBom_Click()
@@ -733,6 +1007,7 @@ If strMsg = vbYes Then
 End If
 
 Start:
+cmdToVerBoard.Enabled = -False
 Frame3.Enabled = False
      Option1.Enabled = False
      Option2.Enabled = False
@@ -754,6 +1029,7 @@ If bTwoBom = True Then
     MsgBox l1.Caption & " and " & l2.Caption & " compare ok!", vbInformation
      Option1.Enabled = True
      Option2.Enabled = True
+     cmdToVerBoard.Enabled = True
      Option3.Enabled = True
 End If
 
@@ -764,7 +1040,7 @@ Private Sub BomAndBomComp_Bom2()
  Dim strDevice_LiaoHao As String
  Dim strDevice_Text As String
  Dim intFile_Line As Integer
- Dim Mystr As String
+ Dim MyStr As String
  Dim strTmp() As String
  On Error Resume Next
  MkDir PrmPath & "BomCompare\Bom_2"
@@ -788,25 +1064,28 @@ End If
            Do Until EOF(52)
              Line Input #52, strBom2_DeviceName
                Msg1.Caption = "Reading bom2 file..."
-               Mystr = LCase(Trim(strBom2_DeviceName))
-               If Mystr <> "" Then
-                  If Left(Mystr, 1) <> "-" Then
+               MyStr = LCase(Trim(strBom2_DeviceName))
+               If MyStr <> "" Then
+                  If Left(MyStr, 1) <> "-" Then
                  '   strTmp = Split(Mystr, " ")
                     
                     
  '!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    strTmp = Split(Replace(Mystr, Chr(9), ""), " ")
+                     
+                               MyStr1 = Replace(MyStr, " ", ",")
+                    strTmp = Split(Replace(MyStr1, Chr(9), ""), ",")
   '!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     
                     
                     
                       If Trim(strTmp(UBound(strTmp))) <> "" Then
                              'create bom1 analog file
-                             If Dir(PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) & ".sh") = "" Then
+                              strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), ";", "")
+                             If Dir(PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0)) = "" Then
                                 Print #54, strBom2_DeviceName
                              End If
                              
-                              Open PrmPath & "BomCompare\Bom_2\" & strTmp(UBound(strTmp)) & "." & strTmp(0) & ".sh" For Output As #22
+                              Open PrmPath & "BomCompare\Bom_2\" & strTmp(UBound(strTmp)) & "." & strTmp(0) For Output As #22
                                    Print #22, strBom2_DeviceName
                               Close #22
                              intDevice_Ge = intDevice_Ge + 1
@@ -845,7 +1124,7 @@ Private Sub BomAndBomComp_Bom1()
  Dim strDevice_LiaoHao As String
  Dim strDevice_Text As String
  Dim intFile_Line As Integer
- Dim Mystr As String
+ Dim MyStr As String
  Dim strTmp() As String
  On Error Resume Next
  MkDir PrmPath & "BomCompare\Bom_1"
@@ -869,21 +1148,26 @@ End If
            Do Until EOF(50)
              Line Input #50, strBom1_DeviceName
                Msg1.Caption = "Reading bom1 file..."
-               Mystr = LCase(Trim(strBom1_DeviceName))
-               If Mystr <> "" Then
-                  If Left(Mystr, 1) <> "-" Then
+               MyStr = LCase(Trim(strBom1_DeviceName))
+               If MyStr <> "" Then
+                  If Left(MyStr, 1) <> "-" Then
                   
  '!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    strTmp = Split(Replace(Mystr, Chr(9), ""), " ")
+                     
+                               MyStr1 = Replace(MyStr, " ", ",")
+                    strTmp = Split(Replace(MyStr1, Chr(9), ""), ",")
   '!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     
                     
                       If Trim(strTmp(UBound(strTmp))) <> "" Then
                              'create bom1 analog file
-                              Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) & ".sh" For Output As #22
+                              strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), ";", "")
+                              Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) For Output As #22
                                    Print #22, strBom1_DeviceName
                               Close #22
-                                   Print #58, strTmp(UBound(strTmp)) & "." & strTmp(0) & ".sh"
+                                   'Print #58, strTmp(UBound(strTmp)) & "." & strTmp(0)   & ".sh"
+                                   
+                                   Print #58, strTmp(UBound(strTmp)) & "." & strTmp(0)
                              intDevice_Ge = intDevice_Ge + 1
                              Msg3.Caption = Trim(strTmp(UBound(strTmp)))
                              Msg4.Caption = "AnalogDevice:" & intDevice_Ge
@@ -1016,6 +1300,7 @@ Start:
      txtBom6.Enabled = False
      txtBom7.Enabled = False
      txtBom8.Enabled = False
+     cmdToVerBoard.Enabled = False
      txtTestplan.Enabled = False
      MkDir PrmPath & "BomCompare\Testplan_Tmp_Analog"
    Call Open_Testplan_Read
@@ -1052,6 +1337,7 @@ Start:
     Option1.Enabled = True
      Option2.Enabled = True
      Option3.Enabled = True
+     
  End If
  
 If bRunBom1 = True And bRunTestplan = True Then
@@ -1133,7 +1419,7 @@ Call Kill_File
 ' Kill PrmPath & "BomCompare\NotTest_in_Curr_Ver.txt"
  
 Msg4.Caption = "Compare analog file end!"
-
+cmdToVerBoard.Enabled = True
      cmdOk.Enabled = True
      Check3.Enabled = True
      cmdBoards.Enabled = True
@@ -1155,7 +1441,7 @@ Msg4.Caption = "Compare analog file end!"
 End Sub
 Private Sub File_Compare()
 Dim MyName
-Dim Mystr As String
+Dim MyStr As String
 Dim bBom1OK As Boolean
 Dim bBom2OK As Boolean
 Dim bBom3OK As Boolean
@@ -1222,7 +1508,7 @@ Open PrmPath & "BomCompare\Testplan_Analog.txt" For Output As #7
   Do While MyName <> ""   ' ¿ªÊ¼Ñ­»·
      tmpfile = Trim(Replace(MyName, ".sh", ""))
         If Not_initializel_testplan = False Then
-           If InStr(LCase(Mystr), ".unknownstring") <> 0 Then
+           If InStr(LCase(MyStr), ".unknownstring") <> 0 Then
                tmpfile = ""
            End If
         End If
@@ -1247,44 +1533,44 @@ Close #7
  Kill PrmPath & "BomCompare\Testplan_Tmp_Analog\*.UnknownString"
   Open PrmPath & "BomCompare\Testplan_Analog.txt" For Input As #7
     Do Until EOF(7)
-      Line Input #7, Mystr
-      Mystr = Trim(LCase(Mystr))
-        If Mystr <> "" Then
-           tmpFile2 = Mystr
-            If InStr(Mystr, ".%") <> 0 Then
-               tmpFile2 = Trim(Replace(Mystr, ".%", ""))
-                Mystr = Trim(Replace(Mystr, ".%", ""))
-               tmpFile2 = Left(Mystr, Len(Mystr) - (Len(Mystr) - InStr(Mystr, "%")))
+      Line Input #7, MyStr
+      MyStr = Trim(LCase(MyStr))
+        If MyStr <> "" Then
+           tmpFile2 = MyStr
+            If InStr(MyStr, ".%") <> 0 Then
+               tmpFile2 = Trim(Replace(MyStr, ".%", ""))
+                MyStr = Trim(Replace(MyStr, ".%", ""))
+               tmpFile2 = Left(MyStr, Len(MyStr) - (Len(MyStr) - InStr(MyStr, "%")))
                 tmpFile2 = Trim(Replace(tmpFile2, "%", ""))
               'baobei 2
                tmpFile2 = Trim(tmpFile2)
                Else
-                If InStr(Mystr, "._") <> 0 Then
-                     Mystr = Trim(Replace(Mystr, "._", ""))
-                    tmpFile2 = Trim(Replace(Mystr, "._", ""))
-                    tmpFile2 = Left(Mystr, Len(Mystr) - (Len(Mystr) - InStr(Mystr, "_")))
+                If InStr(MyStr, "._") <> 0 Then
+                     MyStr = Trim(Replace(MyStr, "._", ""))
+                    tmpFile2 = Trim(Replace(MyStr, "._", ""))
+                    tmpFile2 = Left(MyStr, Len(MyStr) - (Len(MyStr) - InStr(MyStr, "_")))
                     tmpFile2 = Trim(Replace(tmpFile2, "_", ""))
                     'baobei
                     tmpFile2 = Trim(tmpFile2)
                 End If
-                If InStr(Mystr, ".testcommentedintestorder") <> 0 Then
-                   Mystr = Trim(Replace(Mystr, ".testcommentedintestorder", ""))
-                    tmpFile2 = Mystr
+                If InStr(MyStr, ".testcommentedintestorder") <> 0 Then
+                   MyStr = Trim(Replace(MyStr, ".testcommentedintestorder", ""))
+                    tmpFile2 = MyStr
                     tmpFile2 = Trim(tmpFile2)
                     bTestorder = True
                 End If
                 If Not_initializel_testplan = True Then
                   
-                    If InStr(Mystr, ".unknownstring") <> 0 Then
+                    If InStr(MyStr, ".unknownstring") <> 0 Then
                          tmpFile2 = ""
-                       Mystr = Trim(Replace(Mystr, ".unknownstring", ""))
+                       MyStr = Trim(Replace(MyStr, ".unknownstring", ""))
                           Open PrmPath & "BomCompare\WaitDevice.txt" For Input As #25
                              Do Until EOF(25)
                                 Line Input #25, MyWaitStr
                                   MyWaitStr = Trim(LCase(MyWaitStr))
                                     If MyWaitStr <> "" Then
                                        strTmpWait = Split(MyWaitStr, ",")
-                                         If strTmpWait(0) = Mystr Then
+                                         If strTmpWait(0) = MyStr Then
                                             tmpFile2 = strTmpWait(0)
                                             tmpFile2 = Trim(tmpFile2)
 
@@ -1379,12 +1665,12 @@ Close #7
                               Else
                            
                                 Open PrmPath & "BomCompare\Bom_1_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & MyStr & """"
                                 Close #5
                             End If
                           Else
                                 Open PrmPath & "BomCompare\Bom_1_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & MyStr & """"
                                 Close #5
                             
                         End If
@@ -1394,9 +1680,9 @@ Close #7
                                 Open PrmPath & "BomCompare\Bom_1_Exist.txt" For Append As #5
                                   If Boards = True Then
                                    'strBoardsNumber
-                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & MyStr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
                                     Else
-                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & MyStr & """" & "  ! test commented in testorder"
                                   End If
                                 Close #5
                  End If
@@ -1419,13 +1705,13 @@ Close #7
                               Else
                            
                                 Open PrmPath & "BomCompare\Bom_2_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & MyStr & """"
                                 Close #5
                             End If
                             
                           Else
                                 Open PrmPath & "BomCompare\Bom_2_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & MyStr & """"
                                 Close #5
                         End If
         
@@ -1434,9 +1720,9 @@ Close #7
                                 Open PrmPath & "BomCompare\Bom_2_Exist.txt" For Append As #5
                                   If Boards = True Then
                                    'strBoardsNumber
-                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & MyStr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
                                     Else
-                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & MyStr & """" & "  ! test commented in testorder"
                                   End If
                                 Close #5
                  End If
@@ -1459,12 +1745,12 @@ Close #7
                               Else
                            
                                 Open PrmPath & "BomCompare\Bom_3_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & MyStr & """"
                                 Close #5
                             End If
                           Else
                                 Open PrmPath & "BomCompare\Bom_3_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & MyStr & """"
                                 Close #5
                           
                         End If
@@ -1474,9 +1760,9 @@ Close #7
                                 Open PrmPath & "BomCompare\Bom_3_Exist.txt" For Append As #5
                                   If Boards = True Then
                                    'strBoardsNumber
-                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & MyStr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
                                     Else
-                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & MyStr & """" & "  ! test commented in testorder"
                                   End If
                                 Close #5
 
@@ -1500,12 +1786,12 @@ Close #7
                               Else
                            
                                 Open PrmPath & "BomCompare\Bom_4_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & MyStr & """"
                                 Close #5
                             End If
                          Else
                                 Open PrmPath & "BomCompare\Bom_4_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & MyStr & """"
                                 Close #5
                             
                             
@@ -1517,9 +1803,9 @@ Close #7
                                 Open PrmPath & "BomCompare\Bom_4_Exist.txt" For Append As #5
                                   If Boards = True Then
                                    'strBoardsNumber
-                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & MyStr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
                                     Else
-                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & MyStr & """" & "  ! test commented in testorder"
                                   End If
                                 Close #5
 
@@ -1542,12 +1828,12 @@ Close #7
                               Else
                            
                                 Open PrmPath & "BomCompare\Bom_5_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & MyStr & """"
                                 Close #5
                             End If
                            Else
                                 Open PrmPath & "BomCompare\Bom_5_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & MyStr & """"
                                 Close #5
                             
                         End If
@@ -1557,9 +1843,9 @@ Close #7
                                 Open PrmPath & "BomCompare\Bom_5_Exist.txt" For Append As #5
                                   If Boards = True Then
                                    'strBoardsNumber
-                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & MyStr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
                                     Else
-                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & MyStr & """" & "  ! test commented in testorder"
                                   End If
                                 Close #5
 
@@ -1585,14 +1871,14 @@ Close #7
                               Else
                            
                                 Open PrmPath & "BomCompare\Bom_6_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & MyStr & """"
                                 Close #5
                                 
                                 
                             End If
                           Else
                                 Open PrmPath & "BomCompare\Bom_6_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & MyStr & """"
                                 Close #5
                             
                         End If
@@ -1602,9 +1888,9 @@ Close #7
                                 Open PrmPath & "BomCompare\Bom_6_Exist.txt" For Append As #5
                                   If Boards = True Then
                                    'strBoardsNumber
-                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & MyStr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
                                     Else
-                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & MyStr & """" & "  ! test commented in testorder"
                                   End If
                                 Close #5
 
@@ -1627,13 +1913,13 @@ Close #7
                               Else
                            
                                 Open PrmPath & "BomCompare\Bom_7_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & MyStr & """"
                                 Close #5
                             End If
                             
                            Else
                                 Open PrmPath & "BomCompare\Bom_7_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & MyStr & """"
                                 Close #5
                             
                         End If
@@ -1643,9 +1929,9 @@ Close #7
                                 Open PrmPath & "BomCompare\Bom_7_Exist.txt" For Append As #5
                                   If Boards = True Then
                                    'strBoardsNumber
-                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & MyStr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
                                     Else
-                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & MyStr & """" & "  ! test commented in testorder"
                                   End If
                                 Close #5
 
@@ -1668,12 +1954,12 @@ Close #7
                               Else
                            
                                 Open PrmPath & "BomCompare\Bom_8_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & MyStr & """"
                                 Close #5
                             End If
                           Else
                                 Open PrmPath & "BomCompare\Bom_8_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & MyStr & """"
                                 Close #5
                         End If
         
@@ -1682,9 +1968,9 @@ Close #7
                                 Open PrmPath & "BomCompare\Bom_8_Exist.txt" For Append As #5
                                   If Boards = True Then
                                    'strBoardsNumber
-                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & MyStr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
                                     Else
-                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & MyStr & """" & "  ! test commented in testorder"
                                   End If
                                 Close #5
                  End If
@@ -1711,12 +1997,12 @@ Close #7
                                Else
                             
                                  Open PrmPath & "BomCompare\Comm_Device_Exist.txt" For Append As #5
-                                   Print #5, "    test " & """" & strAnalog_ & Mystr & """"
+                                   Print #5, "    test " & """" & strAnalog_ & MyStr & """"
                                  Close #5
                              End If
                            Else
                                  Open PrmPath & "BomCompare\Comm_Device_Exist.txt" For Append As #5
-                                   Print #5, "    test " & """" & strAnalog_ & Mystr & """"
+                                   Print #5, "    test " & """" & strAnalog_ & MyStr & """"
                                  Close #5
                             
                             
@@ -1754,12 +2040,12 @@ Close #7
                               Else
                            
                                 Open PrmPath & "BomCompare\NotTest_in_Curr_Ver.txt" For Append As #5
-                                 Print #5, "    !N test " & """" & strAnalog_ & Mystr & """"
+                                 Print #5, "    !N test " & """" & strAnalog_ & MyStr & """"
                                 Close #5
                             End If
                            Else
                                 Open PrmPath & "BomCompare\NotTest_in_Curr_Ver.txt" For Append As #5
-                                 Print #5, "    !N test " & """" & strAnalog_ & Mystr & """"
+                                 Print #5, "    !N test " & """" & strAnalog_ & MyStr & """"
                                 Close #5
                             
                         End If
@@ -1769,16 +2055,16 @@ Close #7
                                 Open PrmPath & "BomCompare\NotTest_in_Curr_Ver.txt" For Append As #5
                                   If Boards = True Then
                                    'strBoardsNumber
-                                     Print #5, "   !N test " & """" & strAnalog_ & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
+                                     Print #5, "   !N test " & """" & strAnalog_ & MyStr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
                                     Else
-                                     Print #5, "   !N test " & """" & strAnalog_ & Mystr & """" & "  ! test commented in testorder"
+                                     Print #5, "   !N test " & """" & strAnalog_ & MyStr & """" & "  ! test commented in testorder"
                                   End If
                                 Close #5
                   End If 'testorder
              End If
              
              
-            Msg2.Caption = "Current device:" & Mystr
+            Msg2.Caption = "Current device:" & MyStr
          End If
              bTestorder = False
              strTmpWait(1) = ""
@@ -1796,10 +2082,10 @@ Close #7
 End Sub
 
 Private Sub Open_Testplan_Read()
-Dim Mystr As String
+Dim MyStr As String
 Dim strAnalogName As String
 Dim bSubAnalog As Boolean
-Dim i 'As Integer
+Dim I 'As Integer
 Dim t 'As Integer
 Dim BoardSetNomber() As String
  On Error Resume Next
@@ -1814,7 +2100,7 @@ If Dir(strTestplanPath) = "" Then
    MsgBox "Testplan not find!,please check path!", vbCritical
    Exit Sub
 End If
-i = 0
+I = 0
 t = 0
 'Open PrmPath & "BomCompare\EspeciallyDevice.txt" For Output As #2
 'Close #2
@@ -1837,10 +2123,10 @@ Msg1.Caption = "Reading testplan file..."
 strBoardsNumber = ""
   Open strTestplanPath For Input As #1
    Do Until EOF(1)
-       Line Input #1, Mystr
-         Mystr = Trim(Mystr)
-       If Mystr <> "" Then
-              If bSubAnalog = True And Trim(LCase(Mystr)) = "subend" Then
+       Line Input #1, MyStr
+         MyStr = Trim(MyStr)
+       If MyStr <> "" Then
+              If bSubAnalog = True And Trim(LCase(MyStr)) = "subend" Then
                                       Msg1.Caption = "Testplan file read ok!"
                                       Msg2.Caption = "Find subend ok"
                                       Msg3.Caption = "Device(+  % rX , % crX)  :" & t
@@ -1850,7 +2136,7 @@ strBoardsNumber = ""
                                     Exit Do
               End If
                      
-              If bSubAnalog = True And Left(Trim(LCase(Mystr)), 6) = "subend" Then
+              If bSubAnalog = True And Left(Trim(LCase(MyStr)), 6) = "subend" Then
                                       Msg1.Caption = "Testplan file read ok!"
                                       Msg2.Caption = "Find subend ok"
                                       Msg3.Caption = "Device(+  % rX , % crX)  :" & t
@@ -1863,10 +2149,10 @@ strBoardsNumber = ""
                      
              
                 If Boards = True Then
-                   If InStr(Replace(LCase(Mystr), " ", ""), "subanalog_tests") <> 0 Then
+                   If InStr(Replace(LCase(MyStr), " ", ""), "subanalog_tests") <> 0 Then
                        'Mystr = Replace(Mystr, " ", "")
                        'Mystr = Replace(LCase(Mystr), "*", "$")
-                        BoardSetNomber = Split(Mystr, ",")
+                        BoardSetNomber = Split(MyStr, ",")
                            If BoardSetNomber(0) <> "" Then
                                 bSubAnalog = True
                            End If
@@ -1886,12 +2172,12 @@ strBoardsNumber = ""
                            End If 'strBoardsNumber = ""
                      End If 'InStr(Replace(LCase(Mystr), " ", ""), "subanalog_tests") <> 0
                  End If 'Boards = True
-                 If Left(Mystr, 1) = "!" And InStr(Mystr, "test ") <> 0 And bSubAnalog = True And InStr(Mystr, strAnalog_) <> 0 And InStr(Replace(Mystr, " ", ""), "testcommentedintestorder") <> 0 Then
+                 If Left(MyStr, 1) = "!" And InStr(MyStr, "test ") <> 0 And bSubAnalog = True And InStr(MyStr, strAnalog_) <> 0 And InStr(Replace(MyStr, " ", ""), "testcommentedintestorder") <> 0 Then
             '                    Open PrmPath & "BomCompare\TestorderClose.txt" For Append As #23
             '                       Print #23, Mystr
             '                    Close #23
                             strAnalogName = ""
-                            strAnalogName = Replace(Mystr, " ", "")
+                            strAnalogName = Replace(MyStr, " ", "")
                             strAnalogName = Replace(strAnalogName, "testcommentedintestorder", "")
                             strAnalogName = Replace(strAnalogName, Left(strAnalogName, (InStr(strAnalogName, "test") - 1)), "")
                             strAnalogName = Trim(Replace(strAnalogName, "test", ""))
@@ -1910,7 +2196,7 @@ strBoardsNumber = ""
                              
                          If strAnalogName = "" Then
                               Open PrmPath & "BomCompare\UnsettledDevice.txt" For Append As #23
-                                    Print #23, Mystr
+                                    Print #23, MyStr
                               Close #23
                             Else
                              Open PrmPath & "BomCompare\Testplan_Tmp_Analog\" & strAnalogName & ".testcommentedintestorder" For Output As #2
@@ -1925,18 +2211,18 @@ strBoardsNumber = ""
                          strAnalogName = ""
                          
                        Else
-                          If Not_initializel_testplan = False And Left(Mystr, 1) = "!" And bSubAnalog = True And InStr(Mystr, strAnalog_) <> 0 Then
+                          If Not_initializel_testplan = False And Left(MyStr, 1) = "!" And bSubAnalog = True And InStr(MyStr, strAnalog_) <> 0 Then
              
                                     Open PrmPath & "BomCompare\UnsettledDevice.txt" For Append As #23
-                                              Print #23, Mystr
+                                              Print #23, MyStr
                                      Close #23
                        
                           End If
-                         If Left(Mystr, 1) = "!" And bSubAnalog = True And InStr(Mystr, strAnalog_) <> 0 Then
+                         If Left(MyStr, 1) = "!" And bSubAnalog = True And InStr(MyStr, strAnalog_) <> 0 Then
                                  
                                  
                             If Not_initializel_testplan = True Then
-                                 strAnalogName = Replace(Mystr, " ", "")
+                                 strAnalogName = Replace(MyStr, " ", "")
                                  strAnalogName = Replace(strAnalogName, Left(strAnalogName, (InStr(strAnalogName, "test") - 1)), "")
                                  strAnalogName = Trim(Replace(strAnalogName, "test", ""))
                                  strAnalogName = Right(strAnalogName, Len(strAnalogName) - 1)
@@ -1952,13 +2238,13 @@ strBoardsNumber = ""
                                              Msg4.Caption = strAnalogName
                                             
                                              Open PrmPath & "BomCompare\WaitDevice.txt" For Append As #23
-                                                Print #23, strAnalogName & "," & Mystr
+                                                Print #23, strAnalogName & "," & MyStr
                                              Close #23
                                              
                                              strAnalogName = ""
                                         Else
                                               Open PrmPath & "BomCompare\UnsettledDevice.txt" For Append As #23
-                                                    Print #23, Mystr
+                                                    Print #23, MyStr
                                              Close #23
                                              
                                          
@@ -1966,20 +2252,20 @@ strBoardsNumber = ""
 
                            End If 'Not_initializel_testplan = True
                         Else
-                          If Left(Mystr, 1) = "!" And Not_initializel_testplan = True And bSubAnalog = True And InStr(Mystr, strAnalog_) <> 0 Then
+                          If Left(MyStr, 1) = "!" And Not_initializel_testplan = True And bSubAnalog = True And InStr(MyStr, strAnalog_) <> 0 Then
                             Open PrmPath & "BomCompare\UnsettledDevice.txt" For Append As #23
-                                      Print #23, Mystr
+                                      Print #23, MyStr
                              Close #23
                           End If
                            
                      End If 'Left(Mystr, 1) = "!" And bSubAnalog = True And InStr(Mystr, strAnalog_) <> 0
                   End If
-                  If Left(Mystr, 1) <> "!" Then
-                        If InStr(Replace(LCase(Mystr), " ", ""), "subanalog_tests") <> 0 Then
+                  If Left(MyStr, 1) <> "!" Then
+                        If InStr(Replace(LCase(MyStr), " ", ""), "subanalog_tests") <> 0 Then
                            bSubAnalog = True
                         End If
                         If bSubAnalog = True Then
-                                 If Trim(LCase(Mystr)) = "subend" Then
+                                 If Trim(LCase(MyStr)) = "subend" Then
                                       Msg1.Caption = "Testplan file read ok!"
                                       Msg2.Caption = "Find subend ok"
                                       Msg3.Caption = "Device(+  % rX , % crX)  :" & t
@@ -1989,10 +2275,10 @@ strBoardsNumber = ""
                                     Exit Do
                                  End If
                                 Msg3.Caption = "sub Analog_Tests find ok!"
-                               If Left(LCase(Mystr), 5) = "test " And InStr(LCase(Mystr), strAnalog_) <> 0 Then
+                               If Left(LCase(MyStr), 5) = "test " And InStr(LCase(MyStr), strAnalog_) <> 0 Then
                                     ' strAnalogName = Replace(MyStr, " ", "")
                                         strAnalogName = ""
-                                        strAnalogName = Replace(Mystr, " ", "")
+                                        strAnalogName = Replace(MyStr, " ", "")
                                         strAnalogName = Trim(Replace(strAnalogName, "test", ""))
                                         strAnalogName = Right(strAnalogName, Len(strAnalogName) - 1)
                                         strAnalogName = Trim(Replace(strAnalogName, strAnalog_, ""))
@@ -2049,9 +2335,9 @@ strBoardsNumber = ""
                       strAnalogName = ""
             End If '<> !
    End If '<>""
-      i = i + 1
+      I = I + 1
       strAnalogName = ""
-      Msg2.Caption = "Read file line:" & i
+      Msg2.Caption = "Read file line:" & I
     DoEvents
 Loop
   Close #1
@@ -2069,9 +2355,9 @@ End Sub
 
 
 Private Sub Open_Bom1_Read()
-Dim Mystr As String
+Dim MyStr As String
 Dim strTmp() As String
-Dim i
+Dim I
 Dim t
 On Error Resume Next
 strBom1Path = Trim(txtBom1.Text)
@@ -2089,12 +2375,12 @@ End If
    Kill PrmPath & "BomCompare\Bom_1\*.*"
 Open strBom1Path For Input As #1
    Do Until EOF(1)
-     Line Input #1, Mystr
+     Line Input #1, MyStr
        Msg1.Caption = "Reading bom1 file..."
-       Mystr = LCase(Trim(Mystr))
-       If Mystr <> "" Then
-          If Left(Mystr, 1) <> "-" Then
-            strTmp = Split(Mystr, " ")
+       MyStr = LCase(Trim(MyStr))
+       If MyStr <> "" Then
+          If Left(MyStr, 1) <> "-" Then
+            strTmp = Split(MyStr, " ")
               If Trim(strTmp(UBound(strTmp))) <> "" Then
                  If Dir(PrmPath & "BomCompare\Testplan_Tmp_Analog\" & strTmp(UBound(strTmp))) & ".*" <> "" Then
                      'create bom1 analog file
@@ -2113,13 +2399,13 @@ Open strBom1Path For Input As #1
           End If '<>-
           
        End If '<>""
-       i = i + 1
-       Msg2.Caption = "Read bom1 file line: " & i
+       I = I + 1
+       Msg2.Caption = "Read bom1 file line: " & I
        DoEvents
    Loop
 Close #1
 Msg1.Caption = "Bom1 file closed!"
-If i = 0 Then
+If I = 0 Then
   MsgBox "Shit ,the bom1 file is null!", vbCritical
   Exit Sub
 End If
@@ -2128,9 +2414,9 @@ End If
 End Sub
 Private Sub Open_Bom2_Read()
 On Error Resume Next
-Dim Mystr As String
+Dim MyStr As String
 Dim strTmp() As String
-Dim i
+Dim I
 Dim t
 strBom2Path = Trim(txtBom2.Text)
 If Dir(strBom2Path) = "" Then
@@ -2148,12 +2434,12 @@ End If
    'open PrmPath & "BomCompare\Bom_1"
 Open strBom2Path For Input As #1
    Do Until EOF(1)
-     Line Input #1, Mystr
+     Line Input #1, MyStr
        Msg1.Caption = "Reading Bom2 file..."
-       Mystr = LCase(Trim(Mystr))
-       If Mystr <> "" Then
-          If Left(Mystr, 1) <> "-" Then
-            strTmp = Split(Mystr, " ")
+       MyStr = LCase(Trim(MyStr))
+       If MyStr <> "" Then
+          If Left(MyStr, 1) <> "-" Then
+            strTmp = Split(MyStr, " ")
               If Trim(strTmp(UBound(strTmp))) <> "" Then
                  If Dir(PrmPath & "BomCompare\Testplan_Tmp_Analog\" & strTmp(UBound(strTmp))) & ".*" <> "" Then
                      'create Bom2 analog file
@@ -2172,22 +2458,22 @@ Open strBom2Path For Input As #1
           End If '<>-
           
        End If '<>""
-       i = i + 1
-       Msg2.Caption = "Read Bom2 file line: " & i
+       I = I + 1
+       Msg2.Caption = "Read Bom2 file line: " & I
        DoEvents
    Loop
 Close #1
  Msg1.Caption = "Bom2 file closed!"
- If i = 0 Then
+ If I = 0 Then
   MsgBox "Shit ,the bom2 file is null!", vbCritical
   Exit Sub
 End If
 End Sub
 Private Sub Open_Bom3_Read()
 On Error Resume Next
-Dim Mystr As String
+Dim MyStr As String
 Dim strTmp() As String
-Dim i
+Dim I
 Dim t
 strBom3Path = Trim(txtBom3.Text)
 If Dir(strBom3Path) = "" Then
@@ -2205,12 +2491,12 @@ End If
 
 Open strBom3Path For Input As #1
    Do Until EOF(1)
-     Line Input #1, Mystr
+     Line Input #1, MyStr
        Msg1.Caption = "Reading Bom3 file..."
-       Mystr = LCase(Trim(Mystr))
-       If Mystr <> "" Then
-          If Left(Mystr, 1) <> "-" Then
-            strTmp = Split(Mystr, " ")
+       MyStr = LCase(Trim(MyStr))
+       If MyStr <> "" Then
+          If Left(MyStr, 1) <> "-" Then
+            strTmp = Split(MyStr, " ")
               If Trim(strTmp(UBound(strTmp))) <> "" Then
                  If Dir(PrmPath & "BomCompare\Testplan_Tmp_Analog\" & strTmp(UBound(strTmp))) & ".*" <> "" Then
                      'create Bom3 analog file
@@ -2229,13 +2515,13 @@ Open strBom3Path For Input As #1
           End If '<>-
           
        End If '<>""
-       i = i + 1
-       Msg2.Caption = "Read Bom3 file line: " & i
+       I = I + 1
+       Msg2.Caption = "Read Bom3 file line: " & I
        DoEvents
    Loop
 Close #1
  Msg1.Caption = "Bom3 file closed!"
- If i = 0 Then
+ If I = 0 Then
   MsgBox "Shit ,the bom3 file is null!", vbCritical
   Exit Sub
 End If
@@ -2243,9 +2529,9 @@ End If
  
 End Sub
 Private Sub Open_Bom4_Read()
-Dim Mystr As String
+Dim MyStr As String
 Dim strTmp() As String
-Dim i
+Dim I
 Dim t
 On Error Resume Next
 strBom4Path = Trim(txtBom4.Text)
@@ -2264,12 +2550,12 @@ End If
 
 Open strBom4Path For Input As #1
    Do Until EOF(1)
-     Line Input #1, Mystr
+     Line Input #1, MyStr
        Msg1.Caption = "Reading Bom4 file..."
-       Mystr = LCase(Trim(Mystr))
-       If Mystr <> "" Then
-          If Left(Mystr, 1) <> "-" Then
-            strTmp = Split(Mystr, " ")
+       MyStr = LCase(Trim(MyStr))
+       If MyStr <> "" Then
+          If Left(MyStr, 1) <> "-" Then
+            strTmp = Split(MyStr, " ")
               If Trim(strTmp(UBound(strTmp))) <> "" Then
                  If Dir(PrmPath & "BomCompare\Testplan_Tmp_Analog\" & strTmp(UBound(strTmp))) & ".*" <> "" Then
                      'create Bom4 analog file
@@ -2288,13 +2574,13 @@ Open strBom4Path For Input As #1
           End If '<>-
           
        End If '<>""
-       i = i + 1
-       Msg2.Caption = "Read Bom4 file line: " & i
+       I = I + 1
+       Msg2.Caption = "Read Bom4 file line: " & I
        DoEvents
    Loop
 Close #1
  Msg1.Caption = "Bom4 file closed!"
- If i = 0 Then
+ If I = 0 Then
   MsgBox "Shit ,the bom4 file is null!", vbCritical
   Exit Sub
 End If
@@ -2302,9 +2588,9 @@ End Sub
 
 
 Private Sub Open_Bom5_Read()
-Dim Mystr As String
+Dim MyStr As String
 Dim strTmp() As String
-Dim i
+Dim I
 Dim t
 On Error Resume Next
 strBom5Path = Trim(txtBom5.Text)
@@ -2322,12 +2608,12 @@ End If
    Kill PrmPath & "BomCompare\Bom_5\*.*"
 Open strBom5Path For Input As #1
    Do Until EOF(1)
-     Line Input #1, Mystr
+     Line Input #1, MyStr
        Msg1.Caption = "Reading Bom5 file..."
-       Mystr = LCase(Trim(Mystr))
-       If Mystr <> "" Then
-          If Left(Mystr, 1) <> "-" Then
-            strTmp = Split(Mystr, " ")
+       MyStr = LCase(Trim(MyStr))
+       If MyStr <> "" Then
+          If Left(MyStr, 1) <> "-" Then
+            strTmp = Split(MyStr, " ")
               If Trim(strTmp(UBound(strTmp))) <> "" Then
                  If Dir(PrmPath & "BomCompare\Testplan_Tmp_Analog\" & strTmp(UBound(strTmp))) & ".*" <> "" Then
                      'create Bom5 analog file
@@ -2346,13 +2632,13 @@ Open strBom5Path For Input As #1
           End If '<>-
           
        End If '<>""
-       i = i + 1
-       Msg2.Caption = "Read Bom5 file line: " & i
+       I = I + 1
+       Msg2.Caption = "Read Bom5 file line: " & I
        DoEvents
    Loop
 Close #1
 Msg1.Caption = "Bom5 file closed!"
-If i = 0 Then
+If I = 0 Then
   MsgBox "Shit ,the Bom5 file is null!", vbCritical
   Exit Sub
 End If
@@ -2360,9 +2646,9 @@ End If
  
 End Sub
 Private Sub Open_Bom6_Read()
-Dim Mystr As String
+Dim MyStr As String
 Dim strTmp() As String
-Dim i
+Dim I
 Dim t
 On Error Resume Next
 strBom6Path = Trim(txtBom6.Text)
@@ -2380,12 +2666,12 @@ End If
    Kill PrmPath & "BomCompare\Bom_6\*.*"
 Open strBom6Path For Input As #1
    Do Until EOF(1)
-     Line Input #1, Mystr
+     Line Input #1, MyStr
        Msg1.Caption = "Reading Bom6 file..."
-       Mystr = LCase(Trim(Mystr))
-       If Mystr <> "" Then
-          If Left(Mystr, 1) <> "-" Then
-            strTmp = Split(Mystr, " ")
+       MyStr = LCase(Trim(MyStr))
+       If MyStr <> "" Then
+          If Left(MyStr, 1) <> "-" Then
+            strTmp = Split(MyStr, " ")
               If Trim(strTmp(UBound(strTmp))) <> "" Then
                  If Dir(PrmPath & "BomCompare\Testplan_Tmp_Analog\" & strTmp(UBound(strTmp))) & ".*" <> "" Then
                      'create Bom6 analog file
@@ -2404,13 +2690,13 @@ Open strBom6Path For Input As #1
           End If '<>-
           
        End If '<>""
-       i = i + 1
-       Msg2.Caption = "Read Bom6 file line: " & i
+       I = I + 1
+       Msg2.Caption = "Read Bom6 file line: " & I
        DoEvents
    Loop
 Close #1
 Msg1.Caption = "Bom6 file closed!"
-If i = 0 Then
+If I = 0 Then
   MsgBox "Shit ,the Bom6 file is null!", vbCritical
   Exit Sub
 End If
@@ -2418,9 +2704,9 @@ End If
  
 End Sub
 Private Sub Open_Bom7_Read()
-Dim Mystr As String
+Dim MyStr As String
 Dim strTmp() As String
-Dim i
+Dim I
 Dim t
 On Error Resume Next
 strBom7Path = Trim(txtBom7.Text)
@@ -2438,12 +2724,12 @@ End If
    Kill PrmPath & "BomCompare\Bom_7\*.*"
 Open strBom7Path For Input As #1
    Do Until EOF(1)
-     Line Input #1, Mystr
+     Line Input #1, MyStr
        Msg1.Caption = "Reading Bom7 file..."
-       Mystr = LCase(Trim(Mystr))
-       If Mystr <> "" Then
-          If Left(Mystr, 1) <> "-" Then
-            strTmp = Split(Mystr, " ")
+       MyStr = LCase(Trim(MyStr))
+       If MyStr <> "" Then
+          If Left(MyStr, 1) <> "-" Then
+            strTmp = Split(MyStr, " ")
               If Trim(strTmp(UBound(strTmp))) <> "" Then
                  If Dir(PrmPath & "BomCompare\Testplan_Tmp_Analog\" & strTmp(UBound(strTmp))) & ".*" <> "" Then
                      'create Bom7 analog file
@@ -2462,13 +2748,13 @@ Open strBom7Path For Input As #1
           End If '<>-
           
        End If '<>""
-       i = i + 1
-       Msg2.Caption = "Read Bom7 file line: " & i
+       I = I + 1
+       Msg2.Caption = "Read Bom7 file line: " & I
        DoEvents
    Loop
 Close #1
 Msg1.Caption = "Bom7 file closed!"
-If i = 0 Then
+If I = 0 Then
   MsgBox "Shit ,the Bom7 file is null!", vbCritical
   Exit Sub
 End If
@@ -2477,9 +2763,9 @@ End If
 End Sub
 
 Private Sub Open_Bom8_Read()
-Dim Mystr As String
+Dim MyStr As String
 Dim strTmp() As String
-Dim i
+Dim I
 Dim t
 On Error Resume Next
 strBom8Path = Trim(txtBom8.Text)
@@ -2497,12 +2783,12 @@ End If
    Kill PrmPath & "BomCompare\Bom_8\*.*"
 Open strBom8Path For Input As #1
    Do Until EOF(1)
-     Line Input #1, Mystr
+     Line Input #1, MyStr
        Msg1.Caption = "Reading Bom8 file..."
-       Mystr = LCase(Trim(Mystr))
-       If Mystr <> "" Then
-          If Left(Mystr, 1) <> "-" Then
-            strTmp = Split(Mystr, " ")
+       MyStr = LCase(Trim(MyStr))
+       If MyStr <> "" Then
+          If Left(MyStr, 1) <> "-" Then
+            strTmp = Split(MyStr, " ")
               If Trim(strTmp(UBound(strTmp))) <> "" Then
                  If Dir(PrmPath & "BomCompare\Testplan_Tmp_Analog\" & strTmp(UBound(strTmp))) & ".*" <> "" Then
                      'create Bom8 analog file
@@ -2521,19 +2807,27 @@ Open strBom8Path For Input As #1
           End If '<>-
           
        End If '<>""
-       i = i + 1
-       Msg2.Caption = "Read Bom8 file line: " & i
+       I = I + 1
+       Msg2.Caption = "Read Bom8 file line: " & I
        DoEvents
    Loop
 Close #1
 Msg1.Caption = "Bom8 file closed!"
-If i = 0 Then
+If I = 0 Then
   MsgBox "Shit ,the Bom8 file is null!", vbCritical
   Exit Sub
 End If
 End Sub
 
  
+
+Private Sub cmdToVerBoard_Click()
+frmBomValue.Show
+End Sub
+
+Private Sub Command1_Click()
+frmLibEdit.Show
+End Sub
 
 Private Sub Form_Load()
 On Error Resume Next
@@ -2614,7 +2908,13 @@ On Error Resume Next
 '  Msg4.Width = comOK.Width
 ' comOK.Height = txtBomTxt1.Height / 2 + 100
 '
- 
+     txtBom2.Enabled = False
+    txtBom3.Enabled = False
+    txtBom4.Enabled = False
+    txtBom5.Enabled = False
+    txtBom6.Enabled = False
+    txtBom7.Enabled = False
+    txtBom8.Enabled = False
 End Sub
 
 Private Sub Form_Unload(Cancel As Integer)
@@ -2644,13 +2944,13 @@ End Sub
 
 Private Sub Kill_Device()
 On Error Resume Next
-Dim Mystr
+Dim MyStr
   Open PrmPath & "BomCompare\Kill_Device" For Input As #44
      Do Until EOF(44)
-        Line Input #44, Mystr
-        Mystr = Trim(Mystr)
-        If Mystr <> "" Then
-          Kill PrmPath & "BomCompare\Testplan_Tmp_Analog\" & Mystr
+        Line Input #44, MyStr
+        MyStr = Trim(MyStr)
+        If MyStr <> "" Then
+          Kill PrmPath & "BomCompare\Testplan_Tmp_Analog\" & MyStr
         End If
         DoEvents
      Loop
@@ -2714,7 +3014,8 @@ If Option1.Value = True Then
    Frame4.Enabled = True
    txtTestplan.Enabled = True
    cmdBom8Ge.Enabled = False
-   cmdBomAndBom = False
+   cmdBomAndBom.Enabled = False
+   cmdBom8GeVer.Enabled = False
     txtBom1.Enabled = True
     txtBom2.Enabled = True
     txtBom3.Enabled = True
@@ -2741,6 +3042,7 @@ If Option2.Value = True Then
    txtTestplan.Enabled = False
    cmdBomAndBom.Enabled = True
    cmdBom8Ge.Enabled = False
+   cmdBom8GeVer.Enabled = False
 
  
 End If
@@ -2753,6 +3055,7 @@ If Option3.Enabled = True Then
     Frame4.Enabled = False
     txtTestplan.Enabled = False
     cmdBomAndBom.Enabled = False
+    cmdBom8GeVer.Enabled = False
     txtBom1.Enabled = True
     txtBom2.Enabled = True
     txtBom3.Enabled = True
@@ -2761,6 +3064,25 @@ If Option3.Enabled = True Then
     txtBom6.Enabled = True
     txtBom7.Enabled = True
     txtBom8.Enabled = True
+End If
+End Sub
+
+Private Sub Option4_Click()
+If Option4.Enabled = True Then
+
+    cmdBom8Ge.Enabled = False
+    Frame4.Enabled = False
+    txtTestplan.Enabled = False
+    cmdBomAndBom.Enabled = False
+    cmdBom8GeVer.Enabled = True
+    txtBom1.Enabled = True
+    txtBom2.Enabled = False
+    txtBom3.Enabled = False
+    txtBom4.Enabled = False
+    txtBom5.Enabled = False
+    txtBom6.Enabled = False
+    txtBom7.Enabled = False
+    txtBom8.Enabled = False
 End If
 End Sub
 
@@ -2782,6 +3104,44 @@ With Me.CommonDialog1
         strBom1Path = ""
          l1.Caption = ""
         bRunBom1 = False
+      If Option4.Value = True Then
+        bRunBom2 = False
+        bRunBom3 = False
+        bRunBom4 = False
+        bRunBom5 = False
+        bRunBom6 = False
+        bRunBom7 = False
+        bRunBom8 = False
+        l2.Caption = ""
+        l3.Caption = ""
+        l4.Caption = ""
+        l5.Caption = ""
+        l6.Caption = ""
+        l7.Caption = ""
+        l8.Caption = ""
+        strBom1Path = ""
+        strBom2Path = ""
+        strBom3Path = ""
+        strBom4Path = ""
+        strBom5Path = ""
+        strBom6Path = ""
+        strBom7Path = ""
+        strBom8Path = ""
+        txtBom2.Text = " Please open bom2 file!(DblClick me open file!)"
+        txtBom3.Text = " Please open bom3 file!(DblClick me open file!)"
+        txtBom4.Text = " Please open bom4 file!(DblClick me open file!)"
+        txtBom5.Text = " Please open bom5 file!(DblClick me open file!)"
+        txtBom6.Text = " Please open bom6 file!(DblClick me open file!)"
+        txtBom7.Text = " Please open bom7 file!(DblClick me open file!)"
+        txtBom8.Text = " Please open bom8 file!(DblClick me open file!)"
+        txtBom2.Enabled = False
+        txtBom3.Enabled = False
+        txtBom4.Enabled = False
+        txtBom5.Enabled = False
+        txtBom6.Enabled = False
+        txtBom7.Enabled = False
+        txtBom8.Enabled = False
+      End If
       Exit Sub
       Else
         If txtBom1.Text = txtTestplan.Text Then
@@ -2844,12 +3204,61 @@ With Me.CommonDialog1
     End If
     'strBom1Path
 End With
+If Option4.Value = True And bRunBom1 = True Then
+    txtBom2.Enabled = True
+End If
+
+
+
 Exit Sub
 errh:
       txtBom1.Text = " Please open bom1 file!(DblClick me open file!)"
  l1.Caption = ""
         strBom1Path = ""
         bRunBom1 = False
+       If Option4.Value = True Then
+        bRunBom2 = False
+        bRunBom3 = False
+        bRunBom4 = False
+        bRunBom5 = False
+        bRunBom6 = False
+        bRunBom7 = False
+        bRunBom8 = False
+        l2.Caption = ""
+        l3.Caption = ""
+        l4.Caption = ""
+        l5.Caption = ""
+        l6.Caption = ""
+        l7.Caption = ""
+        l8.Caption = ""
+        strBom1Path = ""
+        strBom2Path = ""
+        strBom3Path = ""
+        strBom4Path = ""
+        strBom5Path = ""
+        strBom6Path = ""
+        strBom7Path = ""
+        strBom8Path = ""
+        txtBom2.Text = " Please open bom2 file!(DblClick me open file!)"
+        txtBom3.Text = " Please open bom3 file!(DblClick me open file!)"
+        txtBom4.Text = " Please open bom4 file!(DblClick me open file!)"
+        txtBom5.Text = " Please open bom5 file!(DblClick me open file!)"
+        txtBom6.Text = " Please open bom6 file!(DblClick me open file!)"
+        txtBom7.Text = " Please open bom7 file!(DblClick me open file!)"
+        txtBom8.Text = " Please open bom8 file!(DblClick me open file!)"
+        txtBom2.Enabled = False
+        txtBom3.Enabled = False
+        txtBom4.Enabled = False
+        txtBom5.Enabled = False
+        txtBom6.Enabled = False
+        txtBom7.Enabled = False
+        txtBom8.Enabled = False
+      End If
+       
+        
+        
+        
+        
 MsgBox Err.Description, vbCritical
 End Sub
 
@@ -2870,6 +3279,47 @@ With Me.CommonDialog1
          l2.Caption = ""
         strBom2Path = ""
         bRunBom2 = False
+    If Option4.Value = True Then
+         
+        bRunBom3 = False
+        bRunBom4 = False
+        bRunBom5 = False
+        bRunBom6 = False
+        bRunBom7 = False
+        bRunBom8 = False
+         
+        l3.Caption = ""
+        l4.Caption = ""
+        l5.Caption = ""
+        l6.Caption = ""
+        l7.Caption = ""
+        l8.Caption = ""
+        strBom1Path = ""
+         
+        strBom3Path = ""
+        strBom4Path = ""
+        strBom5Path = ""
+        strBom6Path = ""
+        strBom7Path = ""
+        strBom8Path = ""
+         
+        txtBom3.Text = " Please open bom3 file!(DblClick me open file!)"
+        txtBom4.Text = " Please open bom4 file!(DblClick me open file!)"
+        txtBom5.Text = " Please open bom5 file!(DblClick me open file!)"
+        txtBom6.Text = " Please open bom6 file!(DblClick me open file!)"
+        txtBom7.Text = " Please open bom7 file!(DblClick me open file!)"
+        txtBom8.Text = " Please open bom8 file!(DblClick me open file!)"
+         
+        txtBom3.Enabled = False
+        txtBom4.Enabled = False
+        txtBom5.Enabled = False
+        txtBom6.Enabled = False
+        txtBom7.Enabled = False
+        txtBom8.Enabled = False
+      End If
+
+        
+        
       Exit Sub
       Else
         If txtBom2.Text = txtTestplan.Text Then
@@ -2939,13 +3389,55 @@ With Me.CommonDialog1
     End If
     'strBom1Path
 End With
+
+If Option4.Value = True And bRunBom2 = True Then
+    txtBom3.Enabled = True
+End If
+
 Exit Sub
 errh:
       txtBom2.Text = " Please open bom2 file!(DblClick me open file!)"
  l2.Caption = ""
         strBom2Path = ""
         bRunBom2 = False
-
+    If Option4.Value = True Then
+         
+        bRunBom3 = False
+        bRunBom4 = False
+        bRunBom5 = False
+        bRunBom6 = False
+        bRunBom7 = False
+        bRunBom8 = False
+         
+        l3.Caption = ""
+        l4.Caption = ""
+        l5.Caption = ""
+        l6.Caption = ""
+        l7.Caption = ""
+        l8.Caption = ""
+        strBom1Path = ""
+         
+        strBom3Path = ""
+        strBom4Path = ""
+        strBom5Path = ""
+        strBom6Path = ""
+        strBom7Path = ""
+        strBom8Path = ""
+         
+        txtBom3.Text = " Please open bom3 file!(DblClick me open file!)"
+        txtBom4.Text = " Please open bom4 file!(DblClick me open file!)"
+        txtBom5.Text = " Please open bom5 file!(DblClick me open file!)"
+        txtBom6.Text = " Please open bom6 file!(DblClick me open file!)"
+        txtBom7.Text = " Please open bom7 file!(DblClick me open file!)"
+        txtBom8.Text = " Please open bom8 file!(DblClick me open file!)"
+         
+        txtBom3.Enabled = False
+        txtBom4.Enabled = False
+        txtBom5.Enabled = False
+        txtBom6.Enabled = False
+        txtBom7.Enabled = False
+        txtBom8.Enabled = False
+      End If
 MsgBox Err.Description, vbCritical
 End Sub
 
@@ -2967,6 +3459,47 @@ With Me.CommonDialog1
         strBom3Path = ""
           
         bRunBom3 = False
+    If Option4.Value = True Then
+         
+         
+        bRunBom4 = False
+        bRunBom5 = False
+        bRunBom6 = False
+        bRunBom7 = False
+        bRunBom8 = False
+         
+         
+        l4.Caption = ""
+        l5.Caption = ""
+        l6.Caption = ""
+        l7.Caption = ""
+        l8.Caption = ""
+        strBom1Path = ""
+         
+         
+        strBom4Path = ""
+        strBom5Path = ""
+        strBom6Path = ""
+        strBom7Path = ""
+        strBom8Path = ""
+         
+         
+        txtBom4.Text = " Please open bom4 file!(DblClick me open file!)"
+        txtBom5.Text = " Please open bom5 file!(DblClick me open file!)"
+        txtBom6.Text = " Please open bom6 file!(DblClick me open file!)"
+        txtBom7.Text = " Please open bom7 file!(DblClick me open file!)"
+        txtBom8.Text = " Please open bom8 file!(DblClick me open file!)"
+         
+         
+        txtBom4.Enabled = False
+        txtBom5.Enabled = False
+        txtBom6.Enabled = False
+        txtBom7.Enabled = False
+        txtBom8.Enabled = False
+      End If
+        
+        
+        
       Exit Sub
       Else
         If txtBom3.Text = txtTestplan.Text Then
@@ -3036,12 +3569,55 @@ With Me.CommonDialog1
     End If
     'strBom1Path
 End With
+If Option4.Value = True And bRunBom3 = True Then
+    txtBom4.Enabled = True
+End If
 Exit Sub
 errh:
       txtBom3.Text = " Please open bom3 file!(DblClick me open file!)"
  l3.Caption = ""
         strBom3Path = ""
         bRunBom3 = False
+    If Option4.Value = True Then
+         
+         
+        bRunBom4 = False
+        bRunBom5 = False
+        bRunBom6 = False
+        bRunBom7 = False
+        bRunBom8 = False
+         
+         
+        l4.Caption = ""
+        l5.Caption = ""
+        l6.Caption = ""
+        l7.Caption = ""
+        l8.Caption = ""
+        strBom1Path = ""
+         
+         
+        strBom4Path = ""
+        strBom5Path = ""
+        strBom6Path = ""
+        strBom7Path = ""
+        strBom8Path = ""
+         
+         
+        txtBom4.Text = " Please open bom4 file!(DblClick me open file!)"
+        txtBom5.Text = " Please open bom5 file!(DblClick me open file!)"
+        txtBom6.Text = " Please open bom6 file!(DblClick me open file!)"
+        txtBom7.Text = " Please open bom7 file!(DblClick me open file!)"
+        txtBom8.Text = " Please open bom8 file!(DblClick me open file!)"
+         
+         
+        txtBom4.Enabled = False
+        txtBom5.Enabled = False
+        txtBom6.Enabled = False
+        txtBom7.Enabled = False
+        txtBom8.Enabled = False
+      End If
+        
+        
 MsgBox Err.Description, vbCritical
 
 End Sub
@@ -3063,6 +3639,47 @@ With Me.CommonDialog1
          l4.Caption = ""
         strBom4Path = ""
         bRunBom4 = False
+    If Option4.Value = True Then
+         
+         
+        
+        bRunBom5 = False
+        bRunBom6 = False
+        bRunBom7 = False
+        bRunBom8 = False
+         
+         
+         
+        l5.Caption = ""
+        l6.Caption = ""
+        l7.Caption = ""
+        l8.Caption = ""
+        strBom1Path = ""
+         
+         
+        
+        strBom5Path = ""
+        strBom6Path = ""
+        strBom7Path = ""
+        strBom8Path = ""
+         
+         
+         
+        txtBom5.Text = " Please open bom5 file!(DblClick me open file!)"
+        txtBom6.Text = " Please open bom6 file!(DblClick me open file!)"
+        txtBom7.Text = " Please open bom7 file!(DblClick me open file!)"
+        txtBom8.Text = " Please open bom8 file!(DblClick me open file!)"
+         
+         
+         
+        txtBom5.Enabled = False
+        txtBom6.Enabled = False
+        txtBom7.Enabled = False
+        txtBom8.Enabled = False
+      End If
+        
+        
+        
       Exit Sub
       Else
         If txtBom4.Text = txtTestplan.Text Then
@@ -3138,6 +3755,10 @@ With Me.CommonDialog1
     End If
     'strBom1Path
 End With
+If Option4.Value = True And bRunBom4 = True Then
+    txtBom5.Enabled = True
+End If
+
 Exit Sub
 errh:
       txtBom4.Text = " Please open bom4 file!(DblClick me open file!)"
@@ -3167,6 +3788,47 @@ With Me.CommonDialog1
         strBom5Path = ""
          l5.Caption = ""
         bRunBom5 = False
+      If Option4.Value = True Then
+         
+         
+        
+        
+        bRunBom6 = False
+        bRunBom7 = False
+        bRunBom8 = False
+         
+         
+         
+        
+        l6.Caption = ""
+        l7.Caption = ""
+        l8.Caption = ""
+        strBom1Path = ""
+         
+         
+        
+         
+        strBom6Path = ""
+        strBom7Path = ""
+        strBom8Path = ""
+         
+         
+         
+         
+        txtBom6.Text = " Please open bom6 file!(DblClick me open file!)"
+        txtBom7.Text = " Please open bom7 file!(DblClick me open file!)"
+        txtBom8.Text = " Please open bom8 file!(DblClick me open file!)"
+         
+         
+         
+         
+        txtBom6.Enabled = False
+        txtBom7.Enabled = False
+        txtBom8.Enabled = False
+      End If
+        
+        
+        
       Exit Sub
       Else
         If txtBom5.Text = txtTestplan.Text Then
@@ -3229,12 +3891,58 @@ With Me.CommonDialog1
     End If
     'strBom1Path
 End With
+If Option4.Value = True And bRunBom5 = True Then
+    txtBom6.Enabled = True
+End If
+
+
 Exit Sub
 errh:
       txtBom5.Text = " Please open bom5 file!(DblClick me open file!)"
  l5.Caption = ""
         strBom5Path = ""
         bRunBom5 = False
+       If Option4.Value = True Then
+         
+         
+        
+        
+        bRunBom6 = False
+        bRunBom7 = False
+        bRunBom8 = False
+         
+         
+         
+        
+        l6.Caption = ""
+        l7.Caption = ""
+        l8.Caption = ""
+        strBom1Path = ""
+         
+         
+        
+         
+        strBom6Path = ""
+        strBom7Path = ""
+        strBom8Path = ""
+         
+         
+         
+         
+        txtBom6.Text = " Please open bom6 file!(DblClick me open file!)"
+        txtBom7.Text = " Please open bom7 file!(DblClick me open file!)"
+        txtBom8.Text = " Please open bom8 file!(DblClick me open file!)"
+         
+         
+         
+         
+        txtBom6.Enabled = False
+        txtBom7.Enabled = False
+        txtBom8.Enabled = False
+      End If
+        
+        
+        
 MsgBox Err.Description, vbCritical
 
 End Sub
@@ -3257,6 +3965,29 @@ With Me.CommonDialog1
         strBom6Path = ""
          l6.Caption = ""
         bRunBom6 = False
+      If Option4.Value = True Then
+
+        bRunBom7 = False
+        bRunBom8 = False
+
+        l7.Caption = ""
+        l8.Caption = ""
+        strBom1Path = ""
+         
+
+        strBom7Path = ""
+        strBom8Path = ""
+
+        txtBom7.Text = " Please open bom7 file!(DblClick me open file!)"
+        txtBom8.Text = " Please open bom8 file!(DblClick me open file!)"
+         
+
+        txtBom7.Enabled = False
+        txtBom8.Enabled = False
+      End If
+        
+        
+        
       Exit Sub
       Else
         If txtBom6.Text = txtTestplan.Text Then
@@ -3319,12 +4050,39 @@ With Me.CommonDialog1
     End If
     'strBom1Path
 End With
+If Option4.Value = True And bRunBom6 = True Then
+    txtBom7.Enabled = True
+End If
+
 Exit Sub
 errh:
       txtBom6.Text = " Please open Bom6 file!(DblClick me open file!)"
  l6.Caption = ""
         strBom6Path = ""
         bRunBom6 = False
+       If Option4.Value = True Then
+
+        bRunBom7 = False
+        bRunBom8 = False
+
+        l7.Caption = ""
+        l8.Caption = ""
+        strBom1Path = ""
+         
+
+        strBom7Path = ""
+        strBom8Path = ""
+
+        txtBom7.Text = " Please open bom7 file!(DblClick me open file!)"
+        txtBom8.Text = " Please open bom8 file!(DblClick me open file!)"
+         
+
+        txtBom7.Enabled = False
+        txtBom8.Enabled = False
+      End If
+        
+        
+        
 MsgBox Err.Description, vbCritical
 
 
@@ -3349,6 +4107,23 @@ With Me.CommonDialog1
         strBom7Path = ""
          l7.Caption = ""
         bRunBom7 = False
+       If Option4.Value = True Then
+ 
+        bRunBom8 = False
+ 
+        l8.Caption = ""
+        strBom1Path = ""
+         
+ 
+        strBom8Path = ""
+ 
+        txtBom8.Text = " Please open bom8 file!(DblClick me open file!)"
+         
+ 
+        txtBom8.Enabled = False
+      End If
+        
+        
       Exit Sub
       Else
         If txtBom7.Text = txtTestplan.Text Then
@@ -3411,12 +4186,33 @@ With Me.CommonDialog1
     End If
     'strBom1Path
 End With
+If Option4.Value = True And bRunBom7 = True Then
+    txtBom8.Enabled = True
+End If
 Exit Sub
 errh:
       txtBom7.Text = " Please open Bom7 file!(DblClick me open file!)"
  l7.Caption = ""
         strBom7Path = ""
         bRunBom7 = False
+          If Option4.Value = True Then
+ 
+        bRunBom8 = False
+ 
+        l8.Caption = ""
+        strBom1Path = ""
+         
+ 
+        strBom8Path = ""
+ 
+        txtBom8.Text = " Please open bom8 file!(DblClick me open file!)"
+         
+ 
+        txtBom8.Enabled = False
+      End If
+        
+        
+        
 MsgBox Err.Description, vbCritical
 
 
@@ -3503,6 +4299,7 @@ With Me.CommonDialog1
     End If
     'strBom1Path
 End With
+ 
 Exit Sub
 errh:
       txtBom8.Text = " Please open Bom8 file!(DblClick me open file!)"
@@ -3606,7 +4403,7 @@ End Sub
 
 Private Sub Create_Sub_analog_file()
  On Error Resume Next
- Dim Mystr As String
+ Dim MyStr As String
  Dim strTmp As String
     Open PrmPath & "BomCompare\sub_analog.txt" For Output As #19
 If bRunBom1 = True Then
@@ -3614,18 +4411,18 @@ If bRunBom1 = True Then
        Print #19,
     Open PrmPath & "BomCompare\Bom_1_Exist.txt" For Input As #11
        Do Until EOF(11)
-          Line Input #11, Mystr
+          Line Input #11, MyStr
             'Mystr = LCase(Mystr)
-            strTmp = Trim(LCase(Mystr))
+            strTmp = Trim(LCase(MyStr))
               If strTmp <> "" Then
                 If Boards = True Then
                     If InStr(Replace(strTmp, " ", ""), "!testcommentedintestorder") = 0 Then
-                       Print #19, Mystr & " " & strBoardsNumber
+                       Print #19, MyStr & " " & strBoardsNumber
                       Else
-                       Print #19, Mystr
+                       Print #19, MyStr
                     End If
                   Else
-                   Print #19, Mystr
+                   Print #19, MyStr
                 End If
               End If
                strTmp = ""
@@ -3640,23 +4437,23 @@ End If
 If bRunBom2 = True Then
        Print #19, "!#############" & Replace(l2.Caption, ".txt", "") & " bom2 Start#############"
        Print #19,
-       Mystr = ""
+       MyStr = ""
        strTmp = ""
     Open PrmPath & "BomCompare\Bom_2_Exist.txt" For Input As #12
         Do Until EOF(12)
-          Line Input #12, Mystr
+          Line Input #12, MyStr
             'Mystr = LCase(Mystr)
-            strTmp = Trim(LCase(Mystr))
+            strTmp = Trim(LCase(MyStr))
               If strTmp <> "" Then
                 If Boards = True Then
                     If InStr(Replace(strTmp, " ", ""), "!testcommentedintestorder") = 0 Then
-                       Print #19, Mystr & " " & strBoardsNumber
+                       Print #19, MyStr & " " & strBoardsNumber
                       Else
-                       Print #19, Mystr
+                       Print #19, MyStr
                     End If
                   
                   Else
-                   Print #19, Mystr
+                   Print #19, MyStr
                 End If
               End If
                  strTmp = ""
@@ -3671,23 +4468,23 @@ End If
 If bRunBom3 = True Then
        Print #19, "!#############" & Replace(l3.Caption, ".txt", "") & " bom3 Start#############"
        Print #19,
-       Mystr = ""
+       MyStr = ""
        strTmp = ""
         
     Open PrmPath & "BomCompare\Bom_3_Exist.txt" For Input As #13
         Do Until EOF(13)
-          Line Input #13, Mystr
+          Line Input #13, MyStr
             'Mystr = LCase(Mystr)
-            strTmp = Trim(LCase(Mystr))
+            strTmp = Trim(LCase(MyStr))
               If strTmp <> "" Then
                 If Boards = True Then
                     If InStr(Replace(strTmp, " ", ""), "!testcommentedintestorder") = 0 Then
-                       Print #19, Mystr & " " & strBoardsNumber
+                       Print #19, MyStr & " " & strBoardsNumber
                       Else
-                       Print #19, Mystr
+                       Print #19, MyStr
                     End If
                   Else
-                   Print #19, Mystr
+                   Print #19, MyStr
                 End If
               End If
                  strTmp = ""
@@ -3702,23 +4499,23 @@ End If
 If bRunBom4 = True Then
        Print #19, "!#############" & Replace(l4.Caption, ".txt", "") & " bom4 Start#############"
        Print #19,
-       Mystr = ""
+       MyStr = ""
        strTmp = ""
  
     Open PrmPath & "BomCompare\Bom_4_Exist.txt" For Input As #14
         Do Until EOF(14)
-          Line Input #14, Mystr
+          Line Input #14, MyStr
             'Mystr = LCase(Mystr)
-            strTmp = Trim(LCase(Mystr))
+            strTmp = Trim(LCase(MyStr))
               If strTmp <> "" Then
                 If Boards = True Then
                     If InStr(Replace(strTmp, " ", ""), "!testcommentedintestorder") = 0 Then
-                       Print #19, Mystr & " " & strBoardsNumber
+                       Print #19, MyStr & " " & strBoardsNumber
                       Else
-                       Print #19, Mystr
+                       Print #19, MyStr
                     End If
                   Else
-                   Print #19, Mystr
+                   Print #19, MyStr
                 End If
                  
                  
@@ -3735,23 +4532,23 @@ If bRunBom4 = True Then
 If bRunBom5 = True Then
        Print #19, "!#############" & Replace(l5.Caption, ".txt", "") & " bom5 Start#############"
        Print #19,
-       Mystr = ""
+       MyStr = ""
        strTmp = ""
     
     Open PrmPath & "BomCompare\Bom_5_Exist.txt" For Input As #15
         Do Until EOF(15)
-          Line Input #15, Mystr
+          Line Input #15, MyStr
            ' Mystr = LCase(Mystr)
-            strTmp = Trim(LCase(Mystr))
+            strTmp = Trim(LCase(MyStr))
               If strTmp <> "" Then
                 If Boards = True Then
                     If InStr(Replace(strTmp, " ", ""), "!testcommentedintestorder") = 0 Then
-                       Print #19, Mystr & " " & strBoardsNumber
+                       Print #19, MyStr & " " & strBoardsNumber
                       Else
-                       Print #19, Mystr
+                       Print #19, MyStr
                     End If
                   Else
-                   Print #19, Mystr
+                   Print #19, MyStr
                 End If
                  
               End If
@@ -3767,24 +4564,24 @@ End If
 If bRunBom6 = True Then
        Print #19, "!#############" & Replace(l6.Caption, ".txt", "") & " bom6 Start#############"
        Print #19,
-       Mystr = ""
+       MyStr = ""
        strTmp = ""
         
     Open PrmPath & "BomCompare\Bom_6_Exist.txt" For Input As #16
     
         Do Until EOF(16)
-          Line Input #16, Mystr
+          Line Input #16, MyStr
            ' Mystr = LCase(Mystr)
-            strTmp = Trim(LCase(Mystr))
+            strTmp = Trim(LCase(MyStr))
               If strTmp <> "" Then
                 If Boards = True Then
                     If InStr(Replace(strTmp, " ", ""), "!testcommentedintestorder") = 0 Then
-                       Print #19, Mystr & " " & strBoardsNumber
+                       Print #19, MyStr & " " & strBoardsNumber
                       Else
-                       Print #19, Mystr
+                       Print #19, MyStr
                     End If
                   Else
-                   Print #19, Mystr
+                   Print #19, MyStr
                 End If
                  
               End If
@@ -3800,25 +4597,25 @@ End If
 If bRunBom7 = True Then
         Print #19, "!#############" & Replace(l7.Caption, ".txt", "") & " bom7 Start#############"
        Print #19,
-       Mystr = ""
+       MyStr = ""
        strTmp = ""
     
     
     
     Open PrmPath & "BomCompare\Bom_7_Exist.txt" For Input As #17
         Do Until EOF(17)
-          Line Input #17, Mystr
+          Line Input #17, MyStr
             'Mystr = LCase(Mystr)
-            strTmp = Trim(LCase(Mystr))
+            strTmp = Trim(LCase(MyStr))
               If strTmp <> "" Then
                 If Boards = True Then
                     If InStr(Replace(strTmp, " ", ""), "!testcommentedintestorder") = 0 Then
-                       Print #19, Mystr & " " & strBoardsNumber
+                       Print #19, MyStr & " " & strBoardsNumber
                       Else
-                       Print #19, Mystr
+                       Print #19, MyStr
                     End If
                   Else
-                   Print #19, Mystr
+                   Print #19, MyStr
                 End If
                  
               End If
@@ -3834,23 +4631,23 @@ End If
 If bRunBom8 = True Then
         Print #19, "!#############" & Replace(l8.Caption, ".txt", "") & " bom8 Start#############"
        Print #19,
-       Mystr = ""
+       MyStr = ""
        strTmp = ""
     Open PrmPath & "BomCompare\Bom_8_Exist.txt" For Input As #18
         Do Until EOF(18)
-          Line Input #18, Mystr
+          Line Input #18, MyStr
            ' Mystr = LCase(Mystr)
-            strTmp = Trim(LCase(Mystr))
+            strTmp = Trim(LCase(MyStr))
               If strTmp <> "" Then
 
                 If Boards = True Then
                     If InStr(Replace(strTmp, " ", ""), "!testcommentedintestorder") = 0 Then
-                       Print #19, Mystr & " " & strBoardsNumber
+                       Print #19, MyStr & " " & strBoardsNumber
                       Else
-                       Print #19, Mystr
+                       Print #19, MyStr
                     End If
                   Else
-                   Print #19, Mystr
+                   Print #19, MyStr
                 End If
 
               End If
@@ -3865,23 +4662,23 @@ If bRunBom8 = True Then
 End If
        Print #19, "!#############Comm device Start#############"
        Print #19,
-       Mystr = ""
+       MyStr = ""
        strTmp = ""
          
     Open PrmPath & "BomCompare\Comm_Device_Exist.txt" For Input As #20
         Do Until EOF(20)
-          Line Input #20, Mystr
+          Line Input #20, MyStr
            ' Mystr = LCase(Mystr)
-            strTmp = Trim(LCase(Mystr))
+            strTmp = Trim(LCase(MyStr))
               If strTmp <> "" Then
                 If Boards = True Then
                     If InStr(Replace(strTmp, " ", ""), "!testcommentedintestorder") = 0 Then
-                       Print #19, Mystr & " " & strBoardsNumber
+                       Print #19, MyStr & " " & strBoardsNumber
                       Else
-                       Print #19, Mystr
+                       Print #19, MyStr
                     End If
                   Else
-                   Print #19, Mystr
+                   Print #19, MyStr
                 End If
               End If
                  strTmp = ""
@@ -3896,29 +4693,29 @@ End If
     
        Print #19, "!#############Testplan=True  All version not find! Start#############"
        Print #19,
-       Mystr = ""
+       MyStr = ""
        strTmp = ""
              
     Open PrmPath & "BomCompare\NotTest_in_Curr_Ver.txt" For Input As #21
     
          Do Until EOF(21)
-          Line Input #21, Mystr
+          Line Input #21, MyStr
            ' Mystr = LCase(Mystr)
-            strTmp = Trim(LCase(Mystr))
+            strTmp = Trim(LCase(MyStr))
               If strTmp <> "" Then
                 If Boards = True Then
                     If InStr(Replace(strTmp, " ", ""), "!testcommentedintestorder") = 0 Then
-                       Print #19, Mystr & " " & strBoardsNumber
+                       Print #19, MyStr & " " & strBoardsNumber
                       Else
-                       Print #19, Mystr
+                       Print #19, MyStr
                     End If
                   Else
-                   Print #19, Mystr
+                   Print #19, MyStr
                 End If
                  
               End If
                  strTmp = ""
-                 Mystr = ""
+                 MyStr = ""
                  DoEvents
         Loop
        Print #19,
@@ -3949,7 +4746,7 @@ Private Sub Bom8Comp_Bom1()
  Dim strDevice_LiaoHao As String
  Dim strDevice_Text As String
  Dim intFile_Line As Integer
- Dim Mystr As String
+ Dim MyStr As String
  Dim strTmp() As String
  On Error Resume Next
  MkDir PrmPath & "BomCompare\Bom_1"
@@ -3973,11 +4770,12 @@ End If
            Do Until EOF(50)
              Line Input #50, strBom1_DeviceName
                Msg1.Caption = "Reading bom1 file..."
-               Mystr = LCase(Trim(strBom1_DeviceName))
-               If Mystr <> "" Then
-                  If Left(Mystr, 1) <> "-" Then
-                    strTmp = Split(Mystr, " ")
+               MyStr = LCase(Trim(strBom1_DeviceName))
+               If MyStr <> "" Then
+                  If Left(MyStr, 1) <> "-" Then
+                    strTmp = Split(MyStr, " ")
                       If Trim(strTmp(UBound(strTmp))) <> "" Then
+                         ' Print #99, UCase(strTmp(UBound(strTmp))) & "," & UCase(strTmp(0)) & "," & l1.Caption & "," & UCase(Mystr)
                              'create bom1 analog file
                               Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) & ".sh" For Output As #22
                                    Print #22, strBom1_DeviceName
@@ -4017,7 +4815,7 @@ Private Sub Bom8Comp_Bom2()
  Dim strDevice_LiaoHao As String
  Dim strDevice_Text As String
  Dim intFile_Line As Integer
- Dim Mystr As String
+ Dim MyStr As String
  Dim strTmp() As String
  On Error Resume Next
  MkDir PrmPath & "BomCompare\Bom_2"
@@ -4041,12 +4839,13 @@ End If
            Do Until EOF(50)
              Line Input #50, strBom2_DeviceName
                Msg1.Caption = "Reading Bom2 file..."
-               Mystr = LCase(Trim(strBom2_DeviceName))
-               If Mystr <> "" Then
-                  If Left(Mystr, 1) <> "-" Then
-                    strTmp = Split(Mystr, " ")
+               MyStr = LCase(Trim(strBom2_DeviceName))
+               If MyStr <> "" Then
+                  If Left(MyStr, 1) <> "-" Then
+                    strTmp = Split(MyStr, " ")
                       If Trim(strTmp(UBound(strTmp))) <> "" Then
                              'create Bom2 analog file
+                         '    Print #99, UCase(strTmp(UBound(strTmp))) & "," & UCase(strTmp(0)) & "," & l2.Caption & "," & UCase(Mystr)
                               Open PrmPath & "BomCompare\Bom_2\" & strTmp(UBound(strTmp)) & "." & strTmp(0) & ".sh" For Output As #22
                                    Print #22, strBom2_DeviceName
                               Close #22
@@ -4086,7 +4885,7 @@ Private Sub Bom8Comp_Bom3()
  Dim strDevice_LiaoHao As String
  Dim strDevice_Text As String
  Dim intFile_Line As Integer
- Dim Mystr As String
+ Dim MyStr As String
  Dim strTmp() As String
  On Error Resume Next
  MkDir PrmPath & "BomCompare\Bom_3"
@@ -4110,12 +4909,13 @@ End If
            Do Until EOF(50)
              Line Input #50, strBom3_DeviceName
                Msg1.Caption = "Reading Bom3 file..."
-               Mystr = LCase(Trim(strBom3_DeviceName))
-               If Mystr <> "" Then
-                  If Left(Mystr, 1) <> "-" Then
-                    strTmp = Split(Mystr, " ")
+               MyStr = LCase(Trim(strBom3_DeviceName))
+               If MyStr <> "" Then
+                  If Left(MyStr, 1) <> "-" Then
+                    strTmp = Split(MyStr, " ")
                       If Trim(strTmp(UBound(strTmp))) <> "" Then
                              'create Bom3 analog file
+                           '  Print #99, UCase(strTmp(UBound(strTmp))) & "," & UCase(strTmp(0)) & "," & l3.Caption & "," & UCase(Mystr)
                               Open PrmPath & "BomCompare\Bom_3\" & strTmp(UBound(strTmp)) & "." & strTmp(0) & ".sh" For Output As #22
                                    Print #22, strBom3_DeviceName
                               Close #22
@@ -4155,7 +4955,7 @@ Private Sub Bom8Comp_Bom4()
  Dim strDevice_LiaoHao As String
  Dim strDevice_Text As String
  Dim intFile_Line As Integer
- Dim Mystr As String
+ Dim MyStr As String
  Dim strTmp() As String
  On Error Resume Next
  MkDir PrmPath & "BomCompare\Bom_4"
@@ -4179,12 +4979,13 @@ End If
            Do Until EOF(50)
              Line Input #50, strBom4_DeviceName
                Msg1.Caption = "Reading Bom4 file..."
-               Mystr = LCase(Trim(strBom4_DeviceName))
-               If Mystr <> "" Then
-                  If Left(Mystr, 1) <> "-" Then
-                    strTmp = Split(Mystr, " ")
+               MyStr = LCase(Trim(strBom4_DeviceName))
+               If MyStr <> "" Then
+                  If Left(MyStr, 1) <> "-" Then
+                    strTmp = Split(MyStr, " ")
                       If Trim(strTmp(UBound(strTmp))) <> "" Then
                              'create Bom4 analog file
+                          '   Print #99, UCase(strTmp(UBound(strTmp))) & "," & UCase(strTmp(0)) & "," & l4.Caption & "," & UCase(Mystr)
                               Open PrmPath & "BomCompare\Bom_4\" & strTmp(UBound(strTmp)) & "." & strTmp(0) & ".sh" For Output As #22
                                    Print #22, strBom4_DeviceName
                               Close #22
@@ -4225,7 +5026,7 @@ Private Sub Bom8Comp_Bom5()
  Dim strDevice_LiaoHao As String
  Dim strDevice_Text As String
  Dim intFile_Line As Integer
- Dim Mystr As String
+ Dim MyStr As String
  Dim strTmp() As String
  On Error Resume Next
  MkDir PrmPath & "BomCompare\Bom_5"
@@ -4249,12 +5050,13 @@ End If
            Do Until EOF(50)
              Line Input #50, strBom5_DeviceName
                Msg1.Caption = "Reading Bom5 file..."
-               Mystr = LCase(Trim(strBom5_DeviceName))
-               If Mystr <> "" Then
-                  If Left(Mystr, 1) <> "-" Then
-                    strTmp = Split(Mystr, " ")
+               MyStr = LCase(Trim(strBom5_DeviceName))
+               If MyStr <> "" Then
+                  If Left(MyStr, 1) <> "-" Then
+                    strTmp = Split(MyStr, " ")
                       If Trim(strTmp(UBound(strTmp))) <> "" Then
                              'create Bom5 analog file
+                           '  Print #99, UCase(strTmp(UBound(strTmp))) & "," & UCase(strTmp(0)) & "," & l5.Caption & "," & UCase(Mystr)
                               Open PrmPath & "BomCompare\Bom_5\" & strTmp(UBound(strTmp)) & "." & strTmp(0) & ".sh" For Output As #22
                                    Print #22, strBom5_DeviceName
                               Close #22
@@ -4294,7 +5096,7 @@ Private Sub Bom8Comp_Bom6()
  Dim strDevice_LiaoHao As String
  Dim strDevice_Text As String
  Dim intFile_Line As Integer
- Dim Mystr As String
+ Dim MyStr As String
  Dim strTmp() As String
  On Error Resume Next
  MkDir PrmPath & "BomCompare\Bom_6"
@@ -4318,12 +5120,13 @@ End If
            Do Until EOF(50)
              Line Input #50, strBom6_DeviceName
                Msg1.Caption = "Reading Bom6 file..."
-               Mystr = LCase(Trim(strBom6_DeviceName))
-               If Mystr <> "" Then
-                  If Left(Mystr, 1) <> "-" Then
-                    strTmp = Split(Mystr, " ")
+               MyStr = LCase(Trim(strBom6_DeviceName))
+               If MyStr <> "" Then
+                  If Left(MyStr, 1) <> "-" Then
+                    strTmp = Split(MyStr, " ")
                       If Trim(strTmp(UBound(strTmp))) <> "" Then
                              'create Bom6 analog file
+                           '  Print #99, UCase(strTmp(UBound(strTmp))) & "," & UCase(strTmp(0)) & "," & l6.Caption & "," & UCase(Mystr)
                               Open PrmPath & "BomCompare\Bom_6\" & strTmp(UBound(strTmp)) & "." & strTmp(0) & ".sh" For Output As #22
                                    Print #22, strBom6_DeviceName
                               Close #22
@@ -4363,7 +5166,7 @@ Private Sub Bom8Comp_Bom7()
  Dim strDevice_LiaoHao As String
  Dim strDevice_Text As String
  Dim intFile_Line As Integer
- Dim Mystr As String
+ Dim MyStr As String
  Dim strTmp() As String
  On Error Resume Next
  MkDir PrmPath & "BomCompare\Bom_7"
@@ -4387,12 +5190,13 @@ End If
            Do Until EOF(50)
              Line Input #50, strBom7_DeviceName
                Msg1.Caption = "Reading Bom7 file..."
-               Mystr = LCase(Trim(strBom7_DeviceName))
-               If Mystr <> "" Then
-                  If Left(Mystr, 1) <> "-" Then
-                    strTmp = Split(Mystr, " ")
+               MyStr = LCase(Trim(strBom7_DeviceName))
+               If MyStr <> "" Then
+                  If Left(MyStr, 1) <> "-" Then
+                    strTmp = Split(MyStr, " ")
                       If Trim(strTmp(UBound(strTmp))) <> "" Then
                              'create Bom7 analog file
+                           '  Print #99, UCase(strTmp(UBound(strTmp))) & "," & UCase(strTmp(0)) & "," & l7.Caption & "," & UCase(Mystr)
                               Open PrmPath & "BomCompare\Bom_7\" & strTmp(UBound(strTmp)) & "." & strTmp(0) & ".sh" For Output As #22
                                    Print #22, strBom7_DeviceName
                               Close #22
@@ -4433,7 +5237,7 @@ Private Sub Bom8Comp_Bom8()
  Dim strDevice_LiaoHao As String
  Dim strDevice_Text As String
  Dim intFile_Line As Integer
- Dim Mystr As String
+ Dim MyStr As String
  Dim strTmp() As String
  On Error Resume Next
  MkDir PrmPath & "BomCompare\Bom_8"
@@ -4457,12 +5261,13 @@ Open PrmPath & "BomCompare\BomAndBom_Comp\" & l8.Caption & "_Bom8.txt" For Outpu
            Do Until EOF(50)
              Line Input #50, strBom8_DeviceName
                Msg1.Caption = "Reading Bom8 file..."
-               Mystr = LCase(Trim(strBom8_DeviceName))
-               If Mystr <> "" Then
-                  If Left(Mystr, 1) <> "-" Then
-                    strTmp = Split(Mystr, " ")
+               MyStr = LCase(Trim(strBom8_DeviceName))
+               If MyStr <> "" Then
+                  If Left(MyStr, 1) <> "-" Then
+                    strTmp = Split(MyStr, " ")
                       If Trim(strTmp(UBound(strTmp))) <> "" Then
                              'create Bom8 analog file
+                           ' Print #99, UCase(strTmp(UBound(strTmp))) & "," & UCase(strTmp(0)) & "," & l8.Caption & "," & UCase(Mystr)
                               Open PrmPath & "BomCompare\Bom_8\" & strTmp(UBound(strTmp)) & "." & strTmp(0) & ".sh" For Output As #22
                                    Print #22, strBom8_DeviceName
                               Close #22
@@ -4507,8 +5312,8 @@ Dim inBom6 As Boolean
 Dim inBom7 As Boolean
 Dim inBom8 As Boolean
 Dim AllTure As Boolean
-Dim i As Integer
-i = 0
+Dim I As Integer
+I = 0
 Open PrmPath & "BomCompare\Comm.txt" For Output As #61
 Close #61
 
@@ -4521,7 +5326,7 @@ Close #61
        Open PrmPath & "BomCompare\Bom1.txt" For Output As #57
         Close #57
        Open PrmPath & "BomCompare\Bom1.txt" For Append As #57
-          Print #57, l1.Caption
+          Print #57, "!$$$$$" & "," & l1.Caption
          inBom1 = True
           Open PrmPath & "BomCompare\BomAndBom_Comp\" & l1.Caption & "_Bom1.txt" For Input As #58
             Do Until EOF(58)
@@ -4650,8 +5455,8 @@ Close #61
                    End If
                 End If
               End If
-              i = i + 1
-              Msg3.Caption = "Runing... " & i
+              I = I + 1
+              Msg3.Caption = "Runing... " & I
               DoEvents
             Loop
                TempShit = ""
@@ -4676,7 +5481,7 @@ Close #61
        
        
          Open PrmPath & "BomCompare\Bom2.txt" For Append As #57
-          Print #57, l2.Caption
+          Print #57, "!$$$$$" & "," & l2.Caption
          inBom2 = True
           Open PrmPath & "BomCompare\BomAndBom_Comp\" & l2.Caption & "_Bom2.txt" For Input As #58
             Do Until EOF(58)
@@ -4799,8 +5604,8 @@ Close #61
                 End If
               End If
               DoEvents
-              i = i + 1
-              Msg3.Caption = "Runing... " & i
+              I = I + 1
+              Msg3.Caption = "Runing... " & I
             Loop
              TempShit = ""
              AllTure = False
@@ -4824,7 +5629,7 @@ Close #61
                   Close #57
 
          Open PrmPath & "BomCompare\Bom3.txt" For Append As #57
-         Print #57, l3.Caption
+         Print #57, "!$$$$$" & "," & l3.Caption
          
          inBom3 = True
           Open PrmPath & "BomCompare\BomAndBom_Comp\" & l3.Caption & "_Bom3.txt" For Input As #58
@@ -4945,8 +5750,8 @@ Close #61
                  End If
                End If
               End If
-              i = i + 1
-              Msg3.Caption = "Runing... " & i
+              I = I + 1
+              Msg3.Caption = "Runing... " & I
               DoEvents
             Loop
              TempShit = ""
@@ -4970,7 +5775,7 @@ Close #61
                 Close #57
          
          Open PrmPath & "BomCompare\Bom4.txt" For Append As #57
-          Print #57, l4.Caption
+          Print #57, "!$$$$$" & "," & l4.Caption
          inBom4 = True
           Open PrmPath & "BomCompare\BomAndBom_Comp\" & l4.Caption & "_Bom4.txt" For Input As #58
             Do Until EOF(58)
@@ -5094,8 +5899,8 @@ Close #61
                 End If
               End If
               DoEvents
-                i = i + 1
-              Msg3.Caption = "Runing... " & i
+                I = I + 1
+              Msg3.Caption = "Runing... " & I
             Loop
              TempShit = ""
              AllTure = False
@@ -5121,7 +5926,7 @@ Close #61
         
         
          Open PrmPath & "BomCompare\Bom5.txt" For Append As #57
-         Print #57, l5.Caption
+         Print #57, "!$$$$$" & "," & l5.Caption
          inBom5 = True
           Open PrmPath & "BomCompare\BomAndBom_Comp\" & l5.Caption & "_Bom5.txt" For Input As #58
             Do Until EOF(58)
@@ -5243,8 +6048,8 @@ Close #61
                End If
               End If
               DoEvents
-              i = i + 1
-              Msg3.Caption = "Runing... " & i
+              I = I + 1
+              Msg3.Caption = "Runing... " & I
             Loop
              TempShit = ""
              AllTure = False
@@ -5268,7 +6073,7 @@ Close #61
 
           
          Open PrmPath & "BomCompare\Bom6.txt" For Append As #57
-          Print #57, l6.Caption
+          Print #57, "!$$$$$" & "," & l6.Caption
          inBom6 = True
           Open PrmPath & "BomCompare\BomAndBom_Comp\" & l6.Caption & "_Bom6.txt" For Input As #58
             Do Until EOF(58)
@@ -5389,8 +6194,8 @@ Close #61
                End If
               End If
               DoEvents
-              i = i + 1
-              Msg3.Caption = "Runing... " & i
+              I = I + 1
+              Msg3.Caption = "Runing... " & I
             Loop
              TempShit = ""
              AllTure = False
@@ -5412,7 +6217,7 @@ Close #61
           Close #57
 
          Open PrmPath & "BomCompare\Bom7.txt" For Append As #57
-         Print #57, l7.Caption
+         Print #57, "!$$$$$" & "," & l7.Caption
          inBom7 = True
           Open PrmPath & "BomCompare\BomAndBom_Comp\" & l7.Caption & "_Bom7.txt" For Input As #58
             Do Until EOF(58)
@@ -5533,8 +6338,8 @@ Close #61
                End If
               End If
               DoEvents
-              i = i + 1
-              Msg3.Caption = "Runing... " & i
+              I = I + 1
+              Msg3.Caption = "Runing... " & I
             Loop
              TempShit = ""
              AllTure = False
@@ -5557,7 +6362,7 @@ Close #61
     
     
          Open PrmPath & "BomCompare\Bom8.txt" For Append As #57
-         Print #57, l8.Caption
+         Print #57, "!$$$$$" & "," & l8.Caption
          inBom8 = True
           Open PrmPath & "BomCompare\BomAndBom_Comp\" & l8.Caption & "_Bom8.txt" For Input As #58
             Do Until EOF(58)
@@ -5677,8 +6482,8 @@ Close #61
                 End If
                End If
               End If
-              i = i + 1
-              Msg3.Caption = "Runing... " & i
+              I = I + 1
+              Msg3.Caption = "Runing... " & I
               DoEvents
             Loop
              TempShit = ""
@@ -5702,7 +6507,7 @@ Private Sub FileHeBin()
 Dim MyStr1 As String
 Open PrmPath & "BomCompare\BomDiff.txt" For Output As #57
     If bRunBom1 = True Then
-      Print #57, "!$$$$$#BOM1#$$$$$!!!!!!! bom1 " & l1.Caption
+      Print #57, "!$$$$$#BOM1#$$$$$!!!!!!! bom1 Start" & "," & l1.Caption
          If Dir(PrmPath & "BomCompare\Bom1.txt") <> "" Then
              Open PrmPath & "BomCompare\Bom1.txt" For Input As #58
                  Do Until EOF(58)
@@ -5724,7 +6529,7 @@ Open PrmPath & "BomCompare\BomDiff.txt" For Output As #57
       Print #57,
     End If
     If bRunBom2 = True Then
-      Print #57, "!$$$$$#BOM2#$$$$$!!!!!!! bom2 " & l2.Caption
+      Print #57, "!$$$$$#BOM2#$$$$$!!!!!!! bom2 Start" & "," & l2.Caption
          If Dir(PrmPath & "BomCompare\Bom2.txt") <> "" Then
              Open PrmPath & "BomCompare\Bom2.txt" For Input As #58
                  Do Until EOF(58)
@@ -5746,7 +6551,7 @@ Open PrmPath & "BomCompare\BomDiff.txt" For Output As #57
       Print #57,
     End If
       If bRunBom3 = True Then
-      Print #57, "!$$$$$#BOM3#$$$$$!!!!!!! bom3 " & l3.Caption
+      Print #57, "!$$$$$#BOM3#$$$$$!!!!!!! bom3 Start" & "," & l3.Caption
          If Dir(PrmPath & "BomCompare\Bom3.txt") <> "" Then
              Open PrmPath & "BomCompare\Bom3.txt" For Input As #58
                  Do Until EOF(58)
@@ -5769,7 +6574,7 @@ Open PrmPath & "BomCompare\BomDiff.txt" For Output As #57
     
     End If
     If bRunBom4 = True Then
-      Print #57, "!$$$$$#BOM4#$$$$$!!!!!!! bom4 " & l4.Caption
+      Print #57, "!$$$$$#BOM4#$$$$$!!!!!!! bom4 Start" & "," & l4.Caption
          If Dir(PrmPath & "BomCompare\Bom4.txt") <> "" Then
              Open PrmPath & "BomCompare\Bom4.txt" For Input As #58
                  Do Until EOF(58)
@@ -5792,7 +6597,7 @@ Open PrmPath & "BomCompare\BomDiff.txt" For Output As #57
     
     End If
      If bRunBom5 = True Then
-      Print #57, "!$$$$$#BOM5#$$$$$!!!!!!! bom5 " & l5.Caption
+      Print #57, "!$$$$$#BOM5#$$$$$!!!!!!! bom5 Start" & "," & l5.Caption
          If Dir(PrmPath & "BomCompare\Bom5.txt") <> "" Then
              Open PrmPath & "BomCompare\Bom5.txt" For Input As #58
                  Do Until EOF(58)
@@ -5837,7 +6642,7 @@ Open PrmPath & "BomCompare\BomDiff.txt" For Output As #57
      Print #57,
     End If
     If bRunBom7 = True Then
-      Print #57, "!$$$$$#BOM7#$$$$$!!!!!!! bom7 " & l7.Caption
+      Print #57, "!$$$$$#BOM7#$$$$$!!!!!!! bom7 Start" & "," & l7.Caption
          If Dir(PrmPath & "BomCompare\Bom7.txt") <> "" Then
              Open PrmPath & "BomCompare\Bom7.txt" For Input As #58
                  Do Until EOF(58)
@@ -5859,7 +6664,7 @@ Open PrmPath & "BomCompare\BomDiff.txt" For Output As #57
      Print #57,
     End If
     If bRunBom8 = True Then
-      Print #57, "!$$$$$#BOM8#$$$$$!!!!!!! bom8 " & l8.Caption
+      Print #57, "!$$$$$#BOM8#$$$$$!!!!!!! bom8 Start" & "," & l8.Caption
          If Dir(PrmPath & "BomCompare\Bom8.txt") <> "" Then
              Open PrmPath & "BomCompare\Bom8.txt" For Input As #58
                  Do Until EOF(58)
@@ -5881,7 +6686,7 @@ Open PrmPath & "BomCompare\BomDiff.txt" For Output As #57
      Print #57,
     End If
        Print #57, "!$$$$$#END_DIFF#$$$$$!!!!!!!"
-      Print #57, "!!!!!!!!!!!Comm Device "
+      Print #57, "!!!!!!!!!!!Comm Device Start"
          If Dir(PrmPath & "BomCompare\Comm.txt") <> "" Then
              Open PrmPath & "BomCompare\Comm.txt" For Input As #58
                  Do Until EOF(58)
@@ -5906,3 +6711,1609 @@ Open PrmPath & "BomCompare\BomDiff.txt" For Output As #57
     
 Close #57
 End Sub
+Private Sub ReadBom1_Ver_Out_Dir()
+ Dim strBom1_DeviceName As String
+ Dim intDevice_Ge As Integer
+ Dim strDevice_LiaoHao As String
+ Dim strDevice_Text As String
+ Dim intFile_Line As Integer
+ Dim MyStr As String
+ Dim strTmp() As String
+ Dim strBoardver() As String
+ 
+ On Error Resume Next
+ strBoardver = Split(l1.Caption, ".")
+ MkDir PrmPath & "BomCompare\Bom_1"
+intFile_Line = 0
+intDevice_Ge = 0
+strBom1Path = Trim(txtBom1.Text)
+If Dir(strBom1Path) = "" Then
+   txtBom1.Text = " Please open bom1 file!(DblClick me open file!)"
+   bRunBom1 = False
+   txtBom1.SetFocus
+   strBom1Path = ""
+   MsgBox "Bom1 not find!,please check path!", vbCritical
+   Exit Sub
+End If
+
+'open bom1 file
+  Kill PrmPath & "BomCompare\Bom_1\*.*"
+  'Kill PrmPath & "BomCompare\Bom_2\*.*"
+
+   Open strBom1Path For Input As #50
+   Open PrmPath & "BomCompare\Basic.txt" For Output As #59
+   Open PrmPath & "BomCompare\Bom8GeVer_Comp.txt" For Output As #58
+           Do Until EOF(50)
+             Line Input #50, strBom1_DeviceName
+               Msg1.Caption = "Reading bom1 file..."
+               MyStr = UCase(Trim(strBom1_DeviceName))
+               If MyStr <> "" Then
+                  If Left(MyStr, 1) <> "-" Then
+                    strTmp = Split(MyStr, " ")
+                      If Trim(strTmp(UBound(strTmp))) <> "" Then
+                             'create bom1 analog file
+                              strTmp(UBound(strTmp)) = Trim(strTmp(UBound(strTmp)))
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "/", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "\", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "*", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "|", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "?", "$$$$$$$$$$")
+                         '       strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), ".", "$$$$$$$$$$")
+                              
+                              
+'
+'                               Open PrmPath & "BomCompare\Bom_2\" & strTmp(UBound(strTmp)) & "." & strTmp(0) For Output As #23
+'                                   tmptmpStr = Replace(Mystr, strTmp(0), "")
+'                                   tmptmpStr = Trim(Replace(tmptmpStr, strTmp(UBound(strTmp)), ""))
+'                                   Print #23, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardVer(0)
+'                               Close #23
+                              Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Output As #22
+                            '  Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) For Output As #22
+                                   'Print #22, strBom1_DeviceName
+                                   tmptmpStr = Replace(MyStr, strTmp(0), "")
+                                   tmptmpStr = Trim(Replace(tmptmpStr, strTmp(UBound(strTmp)), ""))
+                                   Print #22, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
+                              Close #22
+                                  'Print #58, strTmp(UBound(strTmp)) & "." & strTmp(0)
+                                   
+                                   
+                                  ' Print #58, strTmp(UBound(strTmp))
+                               Print #59, strTmp(0) & "," & tmptmpStr & "," & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
+                               Print #58, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
+                             intDevice_Ge = intDevice_Ge + 1
+                             Msg3.Caption = Trim(strTmp(UBound(strTmp)))
+                             Msg4.Caption = "Device:" & intDevice_Ge
+                           '  Debug.Print strTmp(UBound(strTmp))
+                         
+                      End If
+                  End If '<>-
+                  
+               End If '<>""
+                intFile_Line = intFile_Line + 1
+               Msg2.Caption = "Read " & l1.Caption & "file line: " & intFile_Line
+               DoEvents
+               
+              
+           Loop
+ Close #50
+ Close #59
+ Close #58
+        Msg1.Caption = l1.Caption & " file closed!"
+        If intDevice_Ge = 0 Then
+          MsgBox "Shit ,the bom1 file is null!", vbCritical
+          Exit Sub
+        End If
+   
+ 
+End Sub
+
+Private Sub ReadBom2_Ver_Out_Dir()
+ Dim strBom1_DeviceName As String
+ Dim intDevice_Ge As Integer
+ Dim strDevice_LiaoHao As String
+ Dim strDevice_Text As String
+ Dim intFile_Line As Integer
+ Dim MyStr As String
+ Dim strTmp() As String
+ Dim strBoardver() As String
+ 
+ On Error Resume Next
+ strBoardver = Split(l2.Caption, ".")
+ MkDir PrmPath & "BomCompare\Bom_1"
+intFile_Line = 0
+intDevice_Ge = 0
+strBom2Path = Trim(txtBom2.Text)
+If Dir(strBom2Path) = "" Then
+   txtBom2.Text = " Please open bom2 file!(DblClick me open file!)"
+   bRunBom2 = False
+   txtBom2.SetFocus
+   strBom2Path = ""
+   MsgBox "Bom2 not find!,please check path!", vbCritical
+   Exit Sub
+End If
+
+'open bom1 file
+  'Kill PrmPath & "BomCompare\Bom_1\*.*"
+
+   Open strBom2Path For Input As #50
+    Open PrmPath & "BomCompare\Basic.txt" For Append As #59
+   Open PrmPath & "BomCompare\Bom8GeVer_Comp.txt" For Append As #58
+           Do Until EOF(50)
+             Line Input #50, strBom1_DeviceName
+               Msg1.Caption = "Reading bom2 file..."
+               MyStr = UCase(Trim(strBom1_DeviceName))
+               If MyStr <> "" Then
+                  If Left(MyStr, 1) <> "-" Then
+                    strTmp = Split(MyStr, " ")
+                      If Trim(strTmp(UBound(strTmp))) <> "" Then
+                             'create bom1 analog file
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "/", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "\", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "*", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "|", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "?", "$$$$$$$$$$")
+                              '  strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), ".", "$$$$$$$$$$")
+                             
+                             
+                              strTmp(UBound(strTmp)) = Trim(strTmp(UBound(strTmp)))
+                              If Dir(PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp))) = "" Then
+                                   Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Output As #22
+                                   Print #58, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
+                                   
+                                   Print #59, strTmp(0) & "," & tmptmpStr & "," & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
+                                   
+                              Else
+                              
+                                  Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Append As #22
+                              End If
+                            '  Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) For Output As #22
+                                   'Print #22, strBom1_DeviceName
+                                   tmptmpStr = Replace(MyStr, strTmp(0), "")
+                                   tmptmpStr = Trim(Replace(tmptmpStr, strTmp(UBound(strTmp)), ""))
+                                   Print #22, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
+                              Close #22
+                                  'Print #58, strTmp(UBound(strTmp)) & "." & strTmp(0)
+                                   
+                                  
+                                  
+                             intDevice_Ge = intDevice_Ge + 1
+                             Msg3.Caption = Trim(strTmp(UBound(strTmp)))
+                             Msg4.Caption = "Device:" & intDevice_Ge
+                           '  Debug.Print strTmp(UBound(strTmp))
+                         
+                      End If
+                  End If '<>-
+                  
+               End If '<>""
+                intFile_Line = intFile_Line + 1
+               Msg2.Caption = "Read " & l2.Caption & "file line: " & intFile_Line
+               DoEvents
+               
+              
+           Loop
+ Close #50
+ Close #58
+ Close #59
+        Msg1.Caption = l2.Caption & " file closed!"
+        If intDevice_Ge = 0 Then
+          MsgBox "Shit ,the bom2 file is null!", vbCritical
+          Exit Sub
+        End If
+   
+ 
+End Sub
+
+
+Private Sub ReadBom3_Ver_Out_Dir()
+ Dim strBom1_DeviceName As String
+ Dim intDevice_Ge As Integer
+ Dim strDevice_LiaoHao As String
+ Dim strDevice_Text As String
+ Dim intFile_Line As Integer
+ Dim MyStr As String
+ Dim strTmp() As String
+ Dim strBoardver() As String
+ 
+ On Error Resume Next
+ strBoardver = Split(l3.Caption, ".")
+ MkDir PrmPath & "BomCompare\Bom_1"
+intFile_Line = 0
+intDevice_Ge = 0
+strBom3Path = Trim(txtBom3.Text)
+If Dir(strBom3Path) = "" Then
+   txtBom3.Text = " Please open bom3 file!(DblClick me open file!)"
+   bRunBom3 = False
+   txtBom3.SetFocus
+   strBom3Path = ""
+   MsgBox "Bom3 not find!,please check path!", vbCritical
+   Exit Sub
+End If
+
+'open bom1 file
+  'Kill PrmPath & "BomCompare\Bom_1\*.*"
+
+   Open strBom3Path For Input As #50
+    Open PrmPath & "BomCompare\Basic.txt" For Append As #59
+   Open PrmPath & "BomCompare\Bom8GeVer_Comp.txt" For Append As #58
+           Do Until EOF(50)
+             Line Input #50, strBom1_DeviceName
+               Msg1.Caption = "Reading bom3 file..."
+               MyStr = UCase(Trim(strBom1_DeviceName))
+               If MyStr <> "" Then
+                  If Left(MyStr, 1) <> "-" Then
+                    strTmp = Split(MyStr, " ")
+                      If Trim(strTmp(UBound(strTmp))) <> "" Then
+                             'create bom1 analog file
+                                 strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "/", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "\", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "*", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "|", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "?", "$$$$$$$$$$")
+                            '    strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), ".", "$$$$$$$$$$")
+                             
+                             
+                              strTmp(UBound(strTmp)) = Trim(strTmp(UBound(strTmp)))
+                              If Dir(PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp))) = "" Then
+                                   Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Output As #22
+                                   
+                                   Print #59, strTmp(0) & "," & tmptmpStr & "," & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
+                              Else
+                              
+                                  Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Append As #22
+                              End If
+                            '  Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) For Output As #22
+                                   'Print #22, strBom1_DeviceName
+                                   tmptmpStr = Replace(MyStr, strTmp(0), "")
+                                   tmptmpStr = Trim(Replace(tmptmpStr, strTmp(UBound(strTmp)), ""))
+                                   Print #22, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
+                              Close #22
+                                  'Print #58, strTmp(UBound(strTmp)) & "." & strTmp(0)
+                                   
+                                  
+                                  
+                             intDevice_Ge = intDevice_Ge + 1
+                             Msg3.Caption = Trim(strTmp(UBound(strTmp)))
+                             Msg4.Caption = "Device:" & intDevice_Ge
+                           '  Debug.Print strTmp(UBound(strTmp))
+                         
+                      End If
+                  End If '<>-
+                  
+               End If '<>""
+                intFile_Line = intFile_Line + 1
+               Msg2.Caption = "Read " & l3.Caption & "file line: " & intFile_Line
+               DoEvents
+               
+              
+           Loop
+ Close #50
+ Close #58
+ Close #59
+        Msg1.Caption = l3.Caption & " file closed!"
+        If intDevice_Ge = 0 Then
+          MsgBox "Shit ,the bom3 file is null!", vbCritical
+          Exit Sub
+        End If
+   
+ 
+End Sub
+
+Private Sub ReadBom4_Ver_Out_Dir()
+ Dim strBom1_DeviceName As String
+ Dim intDevice_Ge As Integer
+ Dim strDevice_LiaoHao As String
+ Dim strDevice_Text As String
+ Dim intFile_Line As Integer
+ Dim MyStr As String
+ Dim strTmp() As String
+ Dim strBoardver() As String
+ 
+ On Error Resume Next
+ strBoardver = Split(l4.Caption, ".")
+ MkDir PrmPath & "BomCompare\Bom_1"
+intFile_Line = 0
+intDevice_Ge = 0
+strBom4Path = Trim(txtBom4.Text)
+If Dir(strBom4Path) = "" Then
+   txtBom4.Text = " Please open bom4 file!(DblClick me open file!)"
+   bRunBom4 = False
+   txtBom4.SetFocus
+   strBom4Path = ""
+   MsgBox "Bom4 not find!,please check path!", vbCritical
+   Exit Sub
+End If
+
+'open bom1 file
+  'Kill PrmPath & "BomCompare\Bom_1\*.*"
+
+   Open strBom4Path For Input As #50
+    Open PrmPath & "BomCompare\Basic.txt" For Append As #59
+   Open PrmPath & "BomCompare\Bom8GeVer_Comp.txt" For Append As #58
+           Do Until EOF(50)
+             Line Input #50, strBom1_DeviceName
+               Msg1.Caption = "Reading bom4 file..."
+               MyStr = UCase(Trim(strBom1_DeviceName))
+               If MyStr <> "" Then
+                  If Left(MyStr, 1) <> "-" Then
+                    strTmp = Split(MyStr, " ")
+                      If Trim(strTmp(UBound(strTmp))) <> "" Then
+                             'create bom1 analog file
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "/", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "\", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "*", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "|", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "?", "$$$$$$$$$$")
+                              '  strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), ".", "$$$$$$$$$$")
+                             
+                             
+                              strTmp(UBound(strTmp)) = Trim(strTmp(UBound(strTmp)))
+                              If Dir(PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp))) = "" Then
+                                   Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Output As #22
+                                   Print #58, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
+                                   
+                                   Print #59, strTmp(0) & "," & tmptmpStr & "," & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
+                                   
+                              Else
+                              
+                                  Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Append As #22
+                              End If
+                            '  Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) For Output As #22
+                                   'Print #22, strBom1_DeviceName
+                                   tmptmpStr = Replace(MyStr, strTmp(0), "")
+                                   tmptmpStr = Trim(Replace(tmptmpStr, strTmp(UBound(strTmp)), ""))
+                                   Print #22, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
+                              Close #22
+                                  'Print #58, strTmp(UBound(strTmp)) & "." & strTmp(0)
+                                   
+                                  
+                                  
+                             intDevice_Ge = intDevice_Ge + 1
+                             Msg3.Caption = Trim(strTmp(UBound(strTmp)))
+                             Msg4.Caption = "Device:" & intDevice_Ge
+                           '  Debug.Print strTmp(UBound(strTmp))
+                         
+                      End If
+                  End If '<>-
+                  
+               End If '<>""
+                intFile_Line = intFile_Line + 1
+               Msg2.Caption = "Read " & l4.Caption & "file line: " & intFile_Line
+               DoEvents
+               
+              
+           Loop
+ Close #50
+ Close #58
+ Close #59
+        Msg1.Caption = l4.Caption & " file closed!"
+        If intDevice_Ge = 0 Then
+          MsgBox "Shit ,the bom4 file is null!", vbCritical
+          Exit Sub
+        End If
+   
+ 
+End Sub
+Private Sub ReadBom5_Ver_Out_Dir()
+ Dim strBom1_DeviceName As String
+ Dim intDevice_Ge As Integer
+ Dim strDevice_LiaoHao As String
+ Dim strDevice_Text As String
+ Dim intFile_Line As Integer
+ Dim MyStr As String
+ Dim strTmp() As String
+ Dim strBoardver() As String
+ 
+ On Error Resume Next
+ strBoardver = Split(l5.Caption, ".")
+ MkDir PrmPath & "BomCompare\Bom_1"
+intFile_Line = 0
+intDevice_Ge = 0
+strBom5Path = Trim(txtBom5.Text)
+If Dir(strBom5Path) = "" Then
+   txtBom5.Text = " Please open bom5 file!(DblClick me open file!)"
+   bRunBom5 = False
+   txtBom5.SetFocus
+   strBom5Path = ""
+   MsgBox "Bom5 not find!,please check path!", vbCritical
+   Exit Sub
+End If
+
+'open bom1 file
+  'Kill PrmPath & "BomCompare\Bom_1\*.*"
+
+   Open strBom5Path For Input As #50
+    Open PrmPath & "BomCompare\Basic.txt" For Append As #59
+   Open PrmPath & "BomCompare\Bom8GeVer_Comp.txt" For Append As #58
+           Do Until EOF(50)
+             Line Input #50, strBom1_DeviceName
+               Msg1.Caption = "Reading bom5 file..."
+               MyStr = UCase(Trim(strBom1_DeviceName))
+               If MyStr <> "" Then
+                  If Left(MyStr, 1) <> "-" Then
+                    strTmp = Split(MyStr, " ")
+                      If Trim(strTmp(UBound(strTmp))) <> "" Then
+                             'create bom1 analog file
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "/", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "\", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "*", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "|", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "?", "$$$$$$$$$$")
+                              '  strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), ".", "$$$$$$$$$$")
+                             
+                             
+                              strTmp(UBound(strTmp)) = Trim(strTmp(UBound(strTmp)))
+                              If Dir(PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp))) = "" Then
+                                   Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Output As #22
+                                   Print #58, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
+                                   
+                                   Print #59, strTmp(0) & "," & tmptmpStr & "," & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
+                                   
+                              Else
+                              
+                                  Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Append As #22
+                              End If
+                            '  Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) For Output As #22
+                                   'Print #22, strBom1_DeviceName
+                                   tmptmpStr = Replace(MyStr, strTmp(0), "")
+                                   tmptmpStr = Trim(Replace(tmptmpStr, strTmp(UBound(strTmp)), ""))
+                                   Print #22, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
+                              Close #22
+                                  'Print #58, strTmp(UBound(strTmp)) & "." & strTmp(0)
+                                   
+                                  
+                                  
+                             intDevice_Ge = intDevice_Ge + 1
+                             Msg3.Caption = Trim(strTmp(UBound(strTmp)))
+                             Msg4.Caption = "Device:" & intDevice_Ge
+                           '  Debug.Print strTmp(UBound(strTmp))
+                         
+                      End If
+                  End If '<>-
+                  
+               End If '<>""
+                intFile_Line = intFile_Line + 1
+               Msg2.Caption = "Read " & l5.Caption & "file line: " & intFile_Line
+               DoEvents
+               
+              
+           Loop
+ Close #50
+ Close #58
+ Close #59
+        Msg1.Caption = l5.Caption & " file closed!"
+        If intDevice_Ge = 0 Then
+          MsgBox "Shit ,the bom5 file is null!", vbCritical
+          Exit Sub
+        End If
+   
+ 
+End Sub
+Private Sub ReadBom6_Ver_Out_Dir()
+ Dim strBom1_DeviceName As String
+ Dim intDevice_Ge As Integer
+ Dim strDevice_LiaoHao As String
+ Dim strDevice_Text As String
+ Dim intFile_Line As Integer
+ Dim MyStr As String
+ Dim strTmp() As String
+ Dim strBoardver() As String
+ 
+ On Error Resume Next
+ strBoardver = Split(l6.Caption, ".")
+ MkDir PrmPath & "BomCompare\Bom_1"
+intFile_Line = 0
+intDevice_Ge = 0
+strBom6Path = Trim(txtBom6.Text)
+If Dir(strBom6Path) = "" Then
+   txtBom6.Text = " Please open bom6 file!(DblClick me open file!)"
+   bRunBom6 = False
+   txtBom6.SetFocus
+   strBom6Path = ""
+   MsgBox "Bom6 not find!,please check path!", vbCritical
+   Exit Sub
+End If
+
+'open bom1 file
+  'Kill PrmPath & "BomCompare\Bom_1\*.*"
+
+   Open strBom6Path For Input As #50
+    Open PrmPath & "BomCompare\Basic.txt" For Append As #59
+   Open PrmPath & "BomCompare\Bom8GeVer_Comp.txt" For Append As #58
+           Do Until EOF(50)
+             Line Input #50, strBom1_DeviceName
+               Msg1.Caption = "Reading bom1 file..."
+               MyStr = UCase(Trim(strBom1_DeviceName))
+               If MyStr <> "" Then
+                  If Left(MyStr, 1) <> "-" Then
+                    strTmp = Split(MyStr, " ")
+                      If Trim(strTmp(UBound(strTmp))) <> "" Then
+                             'create bom1 analog file
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "/", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "\", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "*", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "|", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "?", "$$$$$$$$$$")
+                              '  strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), ".", "$$$$$$$$$$")
+                             
+                             
+                              strTmp(UBound(strTmp)) = Trim(strTmp(UBound(strTmp)))
+                              If Dir(PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp))) = "" Then
+                                   Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Output As #22
+                                   Print #58, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
+                                   
+                                   Print #59, strTmp(0) & "," & tmptmpStr & "," & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
+                                   
+                              Else
+                              
+                                  Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Append As #22
+                              End If
+                            '  Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) For Output As #22
+                                   'Print #22, strBom1_DeviceName
+                                   tmptmpStr = Replace(MyStr, strTmp(0), "")
+                                   tmptmpStr = Trim(Replace(tmptmpStr, strTmp(UBound(strTmp)), ""))
+                                   Print #22, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
+                              Close #22
+                                  'Print #58, strTmp(UBound(strTmp)) & "." & strTmp(0)
+                                   
+                                  
+                                  
+                             intDevice_Ge = intDevice_Ge + 1
+                             Msg3.Caption = Trim(strTmp(UBound(strTmp)))
+                             Msg4.Caption = "Device:" & intDevice_Ge
+                           '  Debug.Print strTmp(UBound(strTmp))
+                         
+                      End If
+                  End If '<>-
+                  
+               End If '<>""
+                intFile_Line = intFile_Line + 1
+               Msg2.Caption = "Read " & l6.Caption & "file line: " & intFile_Line
+               DoEvents
+               
+              
+           Loop
+ Close #50
+ Close #58
+ Close #59
+        Msg1.Caption = l6.Caption & " file closed!"
+        If intDevice_Ge = 0 Then
+          MsgBox "Shit ,the bom6 file is null!", vbCritical
+          Exit Sub
+        End If
+   
+ 
+End Sub
+Private Sub ReadBom7_Ver_Out_Dir()
+ Dim strBom1_DeviceName As String
+ Dim intDevice_Ge As Integer
+ Dim strDevice_LiaoHao As String
+ Dim strDevice_Text As String
+ Dim intFile_Line As Integer
+ Dim MyStr As String
+ Dim strTmp() As String
+ Dim strBoardver() As String
+ 
+ On Error Resume Next
+ strBoardver = Split(l7.Caption, ".")
+ MkDir PrmPath & "BomCompare\Bom_1"
+intFile_Line = 0
+intDevice_Ge = 0
+strBom7Path = Trim(txtBom7.Text)
+If Dir(strBom7Path) = "" Then
+   txtBom7.Text = " Please open bom7 file!(DblClick me open file!)"
+   bRunBom7 = False
+   txtBom7.SetFocus
+   strBom7Path = ""
+   MsgBox "Bom7 not find!,please check path!", vbCritical
+   Exit Sub
+End If
+
+'open bom1 file
+  'Kill PrmPath & "BomCompare\Bom_1\*.*"
+
+   Open strBom7Path For Input As #50
+    Open PrmPath & "BomCompare\Basic.txt" For Append As #59
+   Open PrmPath & "BomCompare\Bom8GeVer_Comp.txt" For Append As #58
+           Do Until EOF(50)
+             Line Input #50, strBom1_DeviceName
+               Msg1.Caption = "Reading bom1 file..."
+               MyStr = UCase(Trim(strBom1_DeviceName))
+               If MyStr <> "" Then
+                  If Left(MyStr, 1) <> "-" Then
+                    strTmp = Split(MyStr, " ")
+                      If Trim(strTmp(UBound(strTmp))) <> "" Then
+                             'create bom1 analog file
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "/", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "\", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "*", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "|", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "?", "$$$$$$$$$$")
+                              '  strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), ".", "$$$$$$$$$$")
+                             
+                             
+                              strTmp(UBound(strTmp)) = Trim(strTmp(UBound(strTmp)))
+                              If Dir(PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp))) = "" Then
+                                   Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Output As #22
+                                   Print #58, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
+                                   
+                                   Print #59, strTmp(0) & "," & tmptmpStr & "," & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
+                                   
+                              Else
+                              
+                                  Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Append As #22
+                              End If
+                            '  Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) For Output As #22
+                                   'Print #22, strBom1_DeviceName
+                                   tmptmpStr = Replace(MyStr, strTmp(0), "")
+                                   tmptmpStr = Trim(Replace(tmptmpStr, strTmp(UBound(strTmp)), ""))
+                                   Print #22, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
+                              Close #22
+                                  'Print #58, strTmp(UBound(strTmp)) & "." & strTmp(0)
+                                   
+                                  
+                                  
+                             intDevice_Ge = intDevice_Ge + 1
+                             Msg3.Caption = Trim(strTmp(UBound(strTmp)))
+                             Msg4.Caption = "Device:" & intDevice_Ge
+                           '  Debug.Print strTmp(UBound(strTmp))
+                         
+                      End If
+                  End If '<>-
+                  
+               End If '<>""
+                intFile_Line = intFile_Line + 1
+               Msg2.Caption = "Read " & l7.Caption & "file line: " & intFile_Line
+               DoEvents
+               
+              
+           Loop
+ Close #50
+ Close #58
+ Close #59
+        Msg1.Caption = l7.Caption & " file closed!"
+        If intDevice_Ge = 0 Then
+          MsgBox "Shit ,the bom7 file is null!", vbCritical
+          Exit Sub
+        End If
+   
+ 
+End Sub
+
+Private Sub ReadBom8_Ver_Out_Dir()
+ Dim strBom1_DeviceName As String
+ Dim intDevice_Ge As Integer
+ Dim strDevice_LiaoHao As String
+ Dim strDevice_Text As String
+ Dim intFile_Line As Integer
+ Dim MyStr As String
+ Dim strTmp() As String
+ Dim strBoardver() As String
+ 
+ On Error Resume Next
+ strBoardver = Split(l8.Caption, ".")
+ MkDir PrmPath & "BomCompare\Bom_1"
+intFile_Line = 0
+intDevice_Ge = 0
+strBom8Path = Trim(txtBom8.Text)
+If Dir(strBom8Path) = "" Then
+   txtBom8.Text = " Please open bom8 file!(DblClick me open file!)"
+   bRunBom8 = False
+   txtBom8.SetFocus
+   strBom8Path = ""
+   MsgBox "Bom8 not find!,please check path!", vbCritical
+   Exit Sub
+End If
+
+'open bom1 file
+  'Kill PrmPath & "BomCompare\Bom_1\*.*"
+
+   Open strBom8Path For Input As #50
+    Open PrmPath & "BomCompare\Basic.txt" For Append As #59
+   Open PrmPath & "BomCompare\Bom8GeVer_Comp.txt" For Append As #58
+           Do Until EOF(50)
+             Line Input #50, strBom1_DeviceName
+               Msg1.Caption = "Reading bom1 file..."
+               MyStr = UCase(Trim(strBom1_DeviceName))
+               If MyStr <> "" Then
+                  If Left(MyStr, 1) <> "-" Then
+                    strTmp = Split(MyStr, " ")
+                      If Trim(strTmp(UBound(strTmp))) <> "" Then
+                             'create bom1 analog file
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "/", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "\", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "*", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "|", "$$$$$$$$$$")
+                                strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "?", "$$$$$$$$$$")
+                              '  strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), ".", "$$$$$$$$$$")
+                             
+                             
+                              strTmp(UBound(strTmp)) = Trim(strTmp(UBound(strTmp)))
+                              If Dir(PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp))) = "" Then
+                                   Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Output As #22
+                                   Print #58, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
+                                   
+                                   Print #59, strTmp(0) & "," & tmptmpStr & "," & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
+                                   
+                              Else
+                              
+                                  Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Append As #22
+                              End If
+                            '  Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) For Output As #22
+                                   'Print #22, strBom1_DeviceName
+                                   tmptmpStr = Replace(MyStr, strTmp(0), "")
+                                   tmptmpStr = Trim(Replace(tmptmpStr, strTmp(UBound(strTmp)), ""))
+                                   Print #22, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
+                              Close #22
+                                  'Print #58, strTmp(UBound(strTmp)) & "." & strTmp(0)
+                                   
+                                  
+                                  
+                             intDevice_Ge = intDevice_Ge + 1
+                             Msg3.Caption = Trim(strTmp(UBound(strTmp)))
+                             Msg4.Caption = "Device:" & intDevice_Ge
+                           '  Debug.Print strTmp(UBound(strTmp))
+                         
+                      End If
+                  End If '<>-
+                  
+               End If '<>""
+                intFile_Line = intFile_Line + 1
+               Msg2.Caption = "Read " & l8.Caption & "file line: " & intFile_Line
+               DoEvents
+               
+              
+           Loop
+ Close #50
+ Close #58
+ Close #59
+        Msg1.Caption = l8.Caption & " file closed!"
+        If intDevice_Ge = 0 Then
+          MsgBox "Shit ,the bom8 file is null!", vbCritical
+          Exit Sub
+        End If
+   
+ 
+End Sub
+
+Private Sub Start_8Ge_Ver_Bom_Comp()
+Dim MyStr As String
+Dim strMyStr As String
+
+Dim intI As Integer
+Dim intJ As Integer
+Dim bJumper As Boolean
+Dim bPinLib As Boolean
+Dim bConnect As Boolean
+Dim bDiode As Boolean
+Dim bCap As Boolean
+Dim bRes As Boolean
+Dim strBoardPN As String
+Dim bBom1Find As Boolean
+Dim bBom2Find As Boolean
+Dim bBom3Find As Boolean
+Dim bBom4Find As Boolean
+Dim bBom5Find As Boolean
+Dim bBom6Find As Boolean
+Dim bBom7Find As Boolean
+Dim bBom8Find As Boolean
+
+
+
+
+intJ = 0
+intI = 0
+'Open PrmPath & "BomCompare\8GeBom_Jumper.txt" For Output As #74
+'Open PrmPath & "BomCompare\8GeBom_Diode.txt" For Output As #75
+'Open PrmPath & "BomCompare\8GeBom_Connect.txt" For Output As #76
+'Open PrmPath & "BomCompare\8GeBom_PinLib.txt" For Output As #74
+
+Open PrmPath & "BomCompare\8GeBom_Basic_Device.txt" For Output As #73
+
+Open PrmPath & "BomCompare\8GeVer_Bom.txt" For Output As #72
+
+
+Open PrmPath & "BomCompare\Bom8GeVer_Comp.txt" For Input As #58
+    Do Until EOF(58)
+      Line Input #58, MyStr
+
+  
+      
+      MyStr = Trim(MyStr)
+      If Trim(MyStr) <> "" Then
+          If MyStr = "Q20.1" Then
+             Debug.Print
+          End If
+           MyStr = Replace(MyStr, "/", "$$$$$$$$$$")
+           MyStr = Replace(MyStr, "\", "$$$$$$$$$$")
+           MyStr = Replace(MyStr, "*", "$$$$$$$$$$")
+           MyStr = Replace(MyStr, "|", "$$$$$$$$$$")
+           MyStr = Replace(MyStr, "?", "$$$$$$$$$$")
+         '  Mystr = Replace(Mystr, ".", "$$$$$$$$$$")
+           Open PrmPath & "BomCompare\Bom_1\" & MyStr For Input As #71
+             Dim strLineStr_0() As String
+             Dim strBomVerstr(10) As String
+             Dim strLineStr() As String
+                   For t = 0 To 10
+                     strBomVerstr(t) = ""
+                   Next
+               
+                Do Until EOF(71)
+                  Line Input #71, strMyStr
+                  
+
+                  
+                  
+                   strMyStr = UCase(Trim(strMyStr))
+                 If strMyStr <> "" Then
+                 intJ = intJ + 1
+                    strBomVerstr(intJ) = strMyStr
+                    
+                 End If
+                 If intJ >= 8 Then Exit Do
+                Loop
+                
+bBom1Find = False
+bBom2Find = False
+bBom3Find = False
+bBom4Find = False
+bBom5Find = False
+bBom6Find = False
+bBom7Find = False
+bBom8Find = False
+                
+                
+                
+                Print #73, strBomVerstr(1)
+                
+                        If strBomVerstr(1) <> "" Then
+                           strLineStr_0 = Split(strBomVerstr(1), ",")
+                        End If
+                        Print #72, strLineStr_0(0) & "," & strLineStr_0(1) & "," & strLineStr_0(2)
+                                 strTmpCaption = Replace(Trim(UCase(l1.Caption)), ".TXT", "")
+                               If bRunBom1 = True And UCase(Trim(strLineStr_0(3))) = strTmpCaption Then
+                                  bBom1Find = True
+                               End If
+                                 strTmpCaption = Replace(Trim(UCase(l2.Caption)), ".TXT", "")
+                                If bRunBom2 = True And UCase(Trim(strLineStr_0(3))) = strTmpCaption Then
+                                  bBom2Find = True
+                               End If
+                               
+                                  strTmpCaption = Replace(Trim(UCase(l3.Caption)), ".TXT", "")
+                               If bRunBom3 = True And UCase(Trim(strLineStr_0(3))) = strTmpCaption Then
+                                  bBom3Find = True
+                               End If
+                                 strTmpCaption = Replace(Trim(UCase(l4.Caption)), ".TXT", "")
+                                If bRunBom4 = True And UCase(Trim(strLineStr_0(3))) = strTmpCaption Then
+                                  bBom4Find = True
+                               End If
+                               
+                               
+                                 strTmpCaption = Replace(Trim(UCase(l5.Caption)), ".TXT", "")
+                               If bRunBom5 = True And UCase(Trim(strLineStr_0(3))) = strTmpCaption Then
+                                  bBom5Find = True
+                               End If
+                                 strTmpCaption = Replace(Trim(UCase(l6.Caption)), ".TXT", "")
+                                If UCase(Trim(strLineStr_0(3))) = strTmpCaption Then
+                                  bBom6Find = True
+                               End If
+                               
+                                  strTmpCaption = Replace(Trim(UCase(l7.Caption)), ".TXT", "")
+                               If bRunBom7 = True And UCase(Trim(strLineStr_0(3))) = strTmpCaption Then
+                                  bBom7Find = True
+                               End If
+                                 strTmpCaption = Replace(Trim(UCase(l8.Caption)), ".TXT", "")
+                                If bRunBom8 = True And UCase(Trim(strLineStr_0(3))) = strTmpCaption Then
+                                  bBom8Find = True
+                               End If
+                   
+                   
+                   
+                   
+                       If intBomGeShu = intJ Then
+                                 For g = 1 To intJ
+                               '  If strBomVerstr(g) <> "" Then
+                                    strLineStr_0 = Split(strBomVerstr(g), ",")
+                                      strLineStr = Split(strBomVerstr(g + 1), ",")
+                    
+                                      If strLineStr(1) <> strLineStr_0(1) And strLineStr(0) = strLineStr_0(0) Then
+        
+                                             Print #72, strBomVerstr(g)
+                                      End If
+                                                      strTmpCaption = Replace(Trim(UCase(l1.Caption)), ".TXT", "")
+                                                    If bRunBom1 = True And UCase(Trim(strLineStr(3))) = strTmpCaption Then
+                                                       bBom1Find = True
+                                                    End If
+                                                      strTmpCaption = Replace(Trim(UCase(l2.Caption)), ".TXT", "")
+                                                     If bRunBom2 = True And UCase(Trim(strLineStr(3))) = strTmpCaption Then
+                                                       bBom2Find = True
+                                                    End If
+                                                    
+                                                       strTmpCaption = Replace(Trim(UCase(l3.Caption)), ".TXT", "")
+                                                    If bRunBom3 = True And UCase(Trim(strLineStr(3))) = strTmpCaption Then
+                                                       bBom3Find = True
+                                                    End If
+                                                      strTmpCaption = Replace(Trim(UCase(l4.Caption)), ".TXT", "")
+                                                     If bRunBom4 = True And UCase(Trim(strLineStr(3))) = strTmpCaption Then
+                                                       bBom4Find = True
+                                                    End If
+                                                    
+                                                    
+                                                      strTmpCaption = Replace(Trim(UCase(l5.Caption)), ".TXT", "")
+                                                    If bRunBom5 = True And UCase(Trim(strLineStr(3))) = strTmpCaption Then
+                                                       bBom5Find = True
+                                                    End If
+                                                      strTmpCaption = Replace(Trim(UCase(l6.Caption)), ".TXT", "")
+                                                     If bRunBom6 = True And UCase(Trim(strLineStr(3))) = strTmpCaption Then
+                                                       bBom6Find = True
+                                                    End If
+                                                    
+                                                       strTmpCaption = Replace(Trim(UCase(l7.Caption)), ".TXT", "")
+                                                    If bRunBom7 = True And UCase(Trim(strLineStr(3))) = strTmpCaption Then
+                                                       bBom7Find = True
+                                                    End If
+                                                      strTmpCaption = Replace(Trim(UCase(l8.Caption)), ".TXT", "")
+                                                     If bRunBom8 = True And UCase(Trim(strLineStr(3))) = strTmpCaption Then
+                                                       bBom8Find = True
+                                                    End If
+                                      
+                                      
+                                      
+                                      
+                                      
+                                      
+                                      
+                                '  End If
+                              Next
+                            Else
+                                For g = 2 To intBomGeShu
+                               
+                                  If strBomVerstr(g) = "" Then
+                                             'strLineStr = Split(strBomVerstr(g), ",")
+                                            ' If strLineStr(1) <> strLineStr_0(1) And strLineStr(0) = strLineStr_0(0) Then
+                                              '  Print #72, strBomVerstr(g)
+                                                 strTmpCaption = Replace(Trim(UCase(l1.Caption)), ".TXT", "")
+                                                     
+                                                If bBom1Find = False And bRunBom1 = True Then
+                                                       Print #72, strLineStr_0(0) & ",Not Find in:,, " & strTmpCaption
+                                                End If
+                                                strTmpCaption = ""
+                                                
+                                                 strTmpCaption = Replace(Trim(UCase(l2.Caption)), ".TXT", "")
+                                                     
+                                                If bBom2Find = False And bRunBom2 = True Then
+                                                       Print #72, strLineStr_0(0) & ",Not Find in:,, " & strTmpCaption
+                                                End If
+                                                strTmpCaption = ""
+
+                                                 strTmpCaption = Replace(Trim(UCase(l3.Caption)), ".TXT", "")
+                                                     
+                                                If bBom3Find = False And bRunBom3 = True Then
+                                                       Print #72, strLineStr_0(0) & ",Not Find in:,, " & strTmpCaption
+                                                End If
+                                                strTmpCaption = ""
+ 
+
+                                                 strTmpCaption = Replace(Trim(UCase(l4.Caption)), ".TXT", "")
+                                                     
+                                                If bBom4Find = False And bRunBom4 = True Then
+                                                       Print #72, strLineStr_0(0) & ",Not Find in:,, " & strTmpCaption
+                                                End If
+                                                strTmpCaption = ""
+
+                                                 strTmpCaption = Replace(Trim(UCase(l5.Caption)), ".TXT", "")
+                                                     
+                                                If bBom5Find = False And bRunBom5 = True Then
+                                                       Print #72, strLineStr_0(0) & ",Not Find in:,, " & strTmpCaption
+                                                End If
+                                                strTmpCaption = ""
+                                                
+                                                 strTmpCaption = Replace(Trim(UCase(l6.Caption)), ".TXT", "")
+                                                     
+                                                If bBom6Find = False And bRunBom6 = True Then
+                                                       Print #72, strLineStr_0(0) & ",Not Find in:,, " & strTmpCaption
+                                                End If
+                                                strTmpCaption = ""
+
+                                                 strTmpCaption = Replace(Trim(UCase(l7.Caption)), ".TXT", "")
+                                                     
+                                                If bBom7Find = False And bRunBom7 = True Then
+                                                       Print #72, strLineStr_0(0) & ",Not Find in:,, " & strTmpCaption
+                                                End If
+                                                strTmpCaption = ""
+ 
+
+                                                 strTmpCaption = Replace(Trim(UCase(l8.Caption)), ".TXT", "")
+                                                     
+                                                If bBom8Find = False And bRunBom8 = True Then
+                                                       Print #72, strLineStr_0(0) & ",Not Find in:,, " & strTmpCaption
+                                                End If
+                                                strTmpCaption = ""
+
+                                            'End If
+                                            
+                                            Exit For
+                                        Else
+                                           strLineStr = Split(strBomVerstr(g), ",")
+                                          If strLineStr(1) <> strLineStr_0(1) And strLineStr(0) = strLineStr_0(0) Then
+                                              Print #72, strBomVerstr(g)
+                                                      strTmpCaption = Replace(Trim(UCase(l1.Caption)), ".TXT", "")
+                                                    If bRunBom1 = True And UCase(Trim(strLineStr(3))) = strTmpCaption Then
+                                                       bBom1Find = True
+                                                    End If
+                                                      strTmpCaption = Replace(Trim(UCase(l2.Caption)), ".TXT", "")
+                                                     If bRunBom2 = True And UCase(Trim(strLineStr(3))) = strTmpCaption Then
+                                                       bBom2Find = True
+                                                    End If
+                                                    
+                                                       strTmpCaption = Replace(Trim(UCase(l3.Caption)), ".TXT", "")
+                                                    If bRunBom3 = True And UCase(Trim(strLineStr(3))) = strTmpCaption Then
+                                                       bBom3Find = True
+                                                    End If
+                                                      strTmpCaption = Replace(Trim(UCase(l4.Caption)), ".TXT", "")
+                                                     If bRunBom4 = True And UCase(Trim(strLineStr(3))) = strTmpCaption Then
+                                                       bBom4Find = True
+                                                    End If
+                                                    
+                                                    
+                                                      strTmpCaption = Replace(Trim(UCase(l5.Caption)), ".TXT", "")
+                                                    If bRunBom5 = True And UCase(Trim(strLineStr(3))) = strTmpCaption Then
+                                                       bBom5Find = True
+                                                    End If
+                                                      strTmpCaption = Replace(Trim(UCase(l6.Caption)), ".TXT", "")
+                                                     If bRunBom6 = True And UCase(Trim(strLineStr(3))) = strTmpCaption Then
+                                                       bBom6Find = True
+                                                    End If
+                                                    
+                                                       strTmpCaption = Replace(Trim(UCase(l7.Caption)), ".TXT", "")
+                                                    If bRunBom7 = True And UCase(Trim(strLineStr(3))) = strTmpCaption Then
+                                                       bBom7Find = True
+                                                    End If
+                                                      strTmpCaption = Replace(Trim(UCase(l8.Caption)), ".TXT", "")
+                                                     If bRunBom8 = True And UCase(Trim(strLineStr(3))) = strTmpCaption Then
+                                                       bBom8Find = True
+                                                    End If
+                                                                   
+                                              
+                                              
+                                              
+                                              
+                                              
+                                          End If
+                                             
+                                    End If
+                                     
+                                Next
+                         
+                         
+                         
+                        End If
+                         
+                 
+            DoEvents
+           MyStr = ""
+           intJ = 0
+           strMyStr = ""
+                
+           Close #71
+
+      End If
+
+    Loop
+
+  Close #72
+  Close #73
+Close #58
+Kill PrmPath & "BomCompare\Bom8GeVer_Comp.txt"
+End Sub
+Private Sub Read_BomFile()
+Dim MyStr As String
+Dim intI As String
+Dim strDeviceName As String
+Dim tmpStr() As String
+Dim tmpSTR1 As String
+Dim DeviceType_ As String
+Dim DeviceType_A As String
+Dim DeviceType_1 As String
+Dim CValue As String
+Dim RValue As String
+Dim strCAP() As String
+Dim strRES() As String
+Dim strReadText As String
+Dim LowToJumper
+Dim strDeviceNomber As String
+Dim bListPinLib As Boolean
+strCH = txtCH.Text
+strCL = txtCL.Text
+strRH = txtRH.Text
+strRL = txtRH.Text
+strDH = txtDH.Text
+strDL = txtDL.Text
+
+
+If CheckC.Value = 1 Then
+   bListCatacitor = True
+   Else
+   bListCatacitor = False
+End If
+
+If Checklb.Value = 1 Then
+   bListPinLib = True
+   Else
+   bListPinLib = False
+End If
+
+ 
+If CheckR.Value = 1 Then
+   bListResistor = True
+   Else
+   bListResistor = False
+End If
+If CheckD.Value = 1 Then
+   bListDiode = True
+   Else
+   bListDiode = False
+End If
+
+ 
+
+
+On Error GoTo EX
+  ' Open PrmPath & "ReadBomValue\WaitCheck.txt" For Output As #7
+  '   Print #7, Now
+   '   Print #7,
+   Open PrmPath & "ReadBomValue\Jumper.txt" For Output As #6
+    ' Print #6, Now
+      Print #6,
+   If bListCatacitor = True Then
+      Open PrmPath & "ReadBomValue\Catacitor.txt" For Output As #2
+      'Print #2, Now
+      Print #2,
+   End If
+   If bListResistor = True Then
+      Open PrmPath & "ReadBomValue\Resistor.txt" For Output As #4
+     ' Print #4, Now
+      Print #4,
+   End If
+   If bListDiode = True Then
+      Open PrmPath & "ReadBomValue\Diode.txt" For Output As #8
+    '  Print #8, Now
+      Print #8,
+   
+   End If
+   
+ If bListPinLib = True Then
+      Open PrmPath & "ReadBomValue\Pin Linrary.txt" For Output As #9
+   '   Print #9, Now
+      Print #9,
+   
+   End If
+   
+   
+   
+      Open PrmPath & "ReadBomValue\Unknow.txt" For Output As #5
+      '   Print #5, Now
+         Print #5,
+      Close #5
+   Open Trim(txtBomPath.Text) For Input As #1
+      Do Until EOF(1)
+        Line Input #1, MyStr
+         strReadText = MyStr
+           MyStr = Trim(UCase(MyStr))
+           
+             If MyStr <> "" And Left(MyStr, 1) <> "!" Then
+                If Left(MyStr, 1) <> "-" Then
+                  tmpStr = Split(MyStr, " ")
+                  strDeviceNomber = Trim(tmpStr(0))
+                  strDeviceName = tmpStr(UBound(tmpStr))
+                  tmpSTR1 = Trim(tmpSTR1)
+                  tmpSTR1 = Trim(Replace(MyStr, tmpStr(0), ""))
+                  tmpStr = Split(tmpSTR1, " ")
+                  DeviceType_ = Trim(tmpStr(0))
+                  Select Case DeviceType_
+                    
+                     Case "CONN"
+                     Case "SKT"
+                     Case "HEAD"
+                     Case "EMI"
+                     Case "BOSS"
+                     Case "2HIP"
+                                If CheckIND.Value = 1 Then
+                                   Print #6, strDeviceName; Tab(25); "CLOSED;" '; Tab(35); "PN""" & strDeviceName & """  ;"
+                                   strReadText = "OK"
+                                End If
+                     
+                     
+                     Case "SKT"
+                     Case "CHIP"
+                         tmpSTR1 = Trim(Replace(tmpSTR1, tmpStr(0), ""))
+                         tmpSTR1 = Trim(tmpSTR1)
+                         tmpStr = Split(tmpSTR1, " ")
+                         DeviceType_A = Trim(tmpStr(0))
+                          If Len(DeviceType_A) > 1 Then
+                             Select Case Left(DeviceType_A, 3)
+                                 
+                               Case "CAP"
+                                 If bListCatacitor = True Then
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, strDeviceName, ""))
+                                   tmpSTR1 = Trim(tmpSTR1)
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "CAP", ""))
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "T", ""))
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "F", ""))
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "NEO", ""))
+                                   tmpSTR1 = Trim(tmpSTR1)
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "POS", ""))
+                                   tmpSTR1 = Trim(tmpSTR1)
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "C ", ""))
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "C", ""))
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "EL", ""))
+                                   tmpSTR1 = Trim(tmpSTR1)
+                                   strCAP = Split(tmpSTR1, " ")
+
+                                     If InStr(strCAP(0), "U") <> 0 And InStr(strCAP(0), "V") <> 0 Then
+                                         CValue = Left(strCAP(0), InStr(strCAP(0), "U"))
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                           strReadText = "OK"
+                                        Else
+                                         If InStr(strCAP(0), "N") <> 0 And InStr(strCAP(0), "V") <> 0 Then
+                                             CValue = Left(strCAP(0), InStr(strCAP(0), "N"))
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                               strReadText = "OK"
+                                            Else
+                                             If InStr(strCAP(0), "P") <> 0 And InStr(strCAP(0), "V") <> 0 Then
+                                               CValue = Left(strCAP(0), InStr(strCAP(0), "P"))
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                                strReadText = "OK"
+                                               Else
+                                                 CValue = strCAP(0)
+                                               
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                                strReadText = "OK"
+                                             End If 'P,V
+                                         End If 'N,V
+
+                                     End If 'U,V
+                                     
+                                 End If 'bListCatacitor=true
+                                 
+                               Case "RES"
+                                 If bListResistor = True Then
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, strDeviceName, ""))
+                                   tmpSTR1 = Trim(tmpSTR1)
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "RES", ""))
+                                   tmpSTR1 = Trim(tmpSTR1)
+                                   strRES = Split(tmpSTR1, " ")
+                                   RValue = strRES(0)
+                                       RValue1 = Val(RValue)
+                                    If Right(RValue, 1) <> "K" And Right(RValue, 1) <> "M" And InStr(RValue, "K") = 0 And InStr(RValue, "M") = 0 Then
+                                       If CheckJumper.Value = 1 Then
+                                           
+                                           LowToJumper = Val(txtJumper.Text)
+                                        If RValue1 < LowToJumper Then
+                                           Print #6, strDeviceName; Tab(25); "CLOSED;" '; Tab(35); ' "PN""" & strDeviceName & """  ;      !BOM Value: " & RValue
+                                           strReadText = "OK"
+                                           Else
+                                             Print #4, strDeviceName; Tab(25); RValue; Tab(35); strRH; Tab(40); strRL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                            strReadText = "OK"
+                                        End If
+                                      End If
+                                      Else
+                                         Print #4, strDeviceName; Tab(25); RValue; Tab(35); strRH; Tab(40); strRL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                          strReadText = "OK"
+                                   End If
+                                   
+'                                   Print #4, strDeviceName; Tab(25); RValue; Tab(35); strRH; Tab(40); strRL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+'                                    strReadText = "OK"
+                                 End If
+                               Case "LED"
+                                   If bListPinLib = True Then
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                       strReadText = "OK"
+                                   End If
+                                  
+                                  
+                               Case "FUS"
+                                If CheckIND.Value = 1 Then
+                                   Print #6, strDeviceName; Tab(25); "CLOSED;" '; Tab(35); "PN""" & strDeviceName & """  ;"
+                                   strReadText = "OK"
+                                End If
+                               Case "NTW"
+                                   If bListPinLib = True Then
+                                        Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                      strReadText = "OK"
+                                   End If
+                               Case "BEA"
+                                   If CheckIND.Value = 1 Then
+                                       Print #6, strDeviceName; Tab(25); "CLOSED;" ' ;Tab(35); "PN""" & strDeviceName & """  ;"
+                                       strReadText = "OK"
+                                    End If
+                               
+                               Case "CHO"
+                                   If CheckIND.Value = 1 Then
+                                       Print #6, strDeviceName; Tab(25); "CLOSED;" '; Tab(35); "PN""" & strDeviceName & """  ;"
+                                       strReadText = "OK"
+                                    End If
+                               
+                               Case "IND"
+                                If CheckIND.Value = 1 Then
+                                   Print #6, strDeviceName; Tab(25); "CLOSED;" '; Tab(35); "PN""" & strDeviceName & """  ;"
+                                   strReadText = "OK"
+                                End If
+                                
+                               Case "VAR"
+                              Case "0.0"
+                                 'If bListCatacitor = True Then
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, strDeviceName, ""))
+                                   tmpSTR1 = Trim(tmpSTR1)
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "CAP", ""))
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "NEO", ""))
+                                   tmpSTR1 = Trim(tmpSTR1)
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "POS", ""))
+                                   tmpSTR1 = Trim(tmpSTR1)
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "C ", ""))
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "C", ""))
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "EL", ""))
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "F", ""))
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "T", ""))
+                                   tmpSTR1 = Trim(tmpSTR1)
+                                   strCAP = Split(tmpSTR1, " ")
+
+                                     If InStr(strCAP(0), "U") <> 0 And InStr(strCAP(0), "V") <> 0 Then
+                                         CValue = Left(strCAP(0), InStr(strCAP(0), "U"))
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                           strReadText = "OK"
+                                        Else
+                                         If InStr(strCAP(0), "N") <> 0 And InStr(strCAP(0), "V") <> 0 Then
+                                             CValue = Left(strCAP(0), InStr(strCAP(0), "N"))
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                               strReadText = "OK"
+                                            Else
+                                             If InStr(strCAP(0), "P") <> 0 And InStr(strCAP(0), "V") <> 0 Then
+                                               CValue = Left(strCAP(0), InStr(strCAP(0), "P"))
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                                strReadText = "OK"
+                                               Else
+                                                 CValue = strCAP(0)
+                                               
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                                strReadText = "OK"
+                                             End If 'P,V
+                                         End If 'N,V
+
+                                     End If 'U,V
+                                     
+                                ' End If 'bListCatacitor=true
+                               
+                               
+                               
+                               
+                             End Select
+                          Else
+                             If Left(DeviceType_A, 1) = "C" Then
+                                 If bListCatacitor = True Then
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, strDeviceName, ""))
+                                   tmpSTR1 = Trim(tmpSTR1)
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "CAP", ""))
+                                   tmpSTR1 = Trim(tmpSTR1)
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "POS", ""))
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "NEO", ""))
+                                   tmpSTR1 = Trim(tmpSTR1)
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "C ", ""))
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "C", ""))
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "T", ""))
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "F", ""))
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "EL", ""))
+                                   tmpSTR1 = Trim(tmpSTR1)
+                                   strCAP = Split(tmpSTR1, " ")
+
+                                     If InStr(strCAP(0), "U") <> 0 And InStr(strCAP(0), "V") <> 0 Then
+                                         CValue = Left(strCAP(0), InStr(strCAP(0), "U"))
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                           strReadText = "OK"
+                                        Else
+                                         If InStr(strCAP(0), "N") <> 0 And InStr(strCAP(0), "V") <> 0 Then
+                                             CValue = Left(strCAP(0), InStr(strCAP(0), "N"))
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                               strReadText = "OK"
+                                            
+                                            Else
+                                             If InStr(strCAP(0), "P") <> 0 And InStr(strCAP(0), "V") <> 0 Then
+                                               CValue = Left(strCAP(0), InStr(strCAP(0), "P"))
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                               strReadText = "OK"
+                                               
+                                               Else
+                                                 CValue = strCAP(0)
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                                strReadText = "OK"
+                                             End If 'P,V
+                                         End If 'N,V
+
+                                     End If 'U,V
+                                 End If 'bListCatacitor=true
+ 
+                    
+                    
+                    
+                           End If 'Left(DeviceType_A, 1) = "C"
+                             
+                             
+                          End If 'Len(DeviceType_A) > 1
+                     Case "IC"
+                                   If bListPinLib = True Then
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                       strReadText = "OK"
+                                   End If
+                     Case "XFORM"
+                                   If bListPinLib = True Then
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                       strReadText = "OK"
+                                   End If
+                     
+                     Case "THERM"
+                         
+  'great 091123
+  
+                                If bListResistor = True Then
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, strDeviceName, ""))
+                                   tmpSTR1 = Trim(tmpSTR1)
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "THERM", ""))
+                                   tmpSTR1 = Trim(tmpSTR1)
+                                   strRES = Split(tmpSTR1, " ")
+                                   RValue = strRES(0)
+                                       RValue1 = Val(RValue)
+                                    If Right(RValue, 1) <> "K" And Right(RValue, 1) <> "M" And InStr(RValue, "K") = 0 And InStr(RValue, "M") = 0 Then
+                                       If CheckJumper.Value = 1 Then
+                                           
+                                           LowToJumper = Val(txtJumper.Text)
+                                        If RValue1 < LowToJumper Then
+                                           Print #6, strDeviceName; Tab(25); "CLOSED;" '; Tab(35); "PN""" & strDeviceName & """  ;      !BOM Value: " & RValue
+                                           strReadText = "OK"
+                                           Else
+                                             Print #4, strDeviceName; Tab(25); RValue; Tab(35); strRH; Tab(40); strRL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                            strReadText = "OK"
+                                        End If
+                                      End If
+                                      Else
+                                         Print #4, strDeviceName; Tab(25); RValue; Tab(35); strRH; Tab(40); strRL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                          strReadText = "OK"
+                                   End If
+                                   
+'                                   Print #4, strDeviceName; Tab(25); RValue; Tab(35); strRH; Tab(40); strRL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+'                                    strReadText = "OK"
+                                 End If
+                                  
+                                  
+  
+  
+  
+  
+  
+                     Case "IR"
+                       
+                                   If bListPinLib = True Then
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                      strReadText = "OK"
+                                   End If
+                     Case "RESO"
+                                   If bListPinLib = True Then
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                       strReadText = "OK"
+                                   End If
+                       
+                     Case "XTAL"
+                     
+                                   If bListPinLib = True Then
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                      strReadText = "OK"
+                                   End If
+                     
+                     Case "DIODE"
+                       If bListDiode = True Then
+                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """    ;"
+                           strReadText = "OK"
+                       End If
+                     
+                     Case "DIODES"
+                       If bListDiode = True Then
+                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """    ;"
+                           strReadText = "OK"
+                       End If
+                     
+                     Case "LED"
+                                   If bListPinLib = True Then
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                       strReadText = "OK"
+                                   End If
+                     
+                     
+                     Case "XTOR"
+                                   If bListPinLib = True Then
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                   
+                                      strReadText = "OK"
+                                   
+                                   End If
+                     Case "FET"
+                      If bListPinLib = True Then
+                           Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                           strReadText = "OK"
+                      
+                      End If
+                     Case "STANDOFF"
+
+'                                If CheckIND.Value = 1 Then
+'                                   Print #6, strDeviceName; Tab(25); "OPEN"; Tab(35); "PN""" & strDeviceName & """  ;"
+'                                   strReadText = "OK"
+'                                End If
+                     
+                  End Select
+
+
+                    
+                End If 'Left(Mystr, 1) <> "-"
+             End If 'Mystr <> ""
+            If strReadText <> "OK" Then
+                Open PrmPath & "ReadBomValue\Unknow.txt" For Append As #3
+                   Print #3, strReadText
+                Close #3
+                
+            End If
+            strReadText = ""
+            DoEvents
+            tmpSTR1 = ""
+            MyStr = ""
+            strDeviceName = ""
+            CValue = ""
+            RValue = ""
+             RValue1 = ""
+             strDeviceNomber = ""
+      Loop
+   Close #1
+   If bListCatacitor = True Then
+     Close #2
+   End If
+  
+ ' Resistor
+  
+   If bListResistor = True Then
+     Close #4
+   End If
+     Close #6
+   '  Close #7
+   If bListDiode = True Then
+      Close #8
+   End If
+   
+  If bListPinLib = True Then
+      Close #9
+   End If
+   MsgBox "OK" & Chr(13) & Chr(10) & "File save path:" & PrmPath & "ReadBomValue\", vbInformation
+  
+Exit Sub
+EX:
+MsgBox Err.Description, vbCritical
+
+End Sub
+
+
+
+Private Sub Creat_Basic_Bom(strPath As String, strPartName As String, MyStr As String, strBoardver As String)
+ On Error Resume Next
+ Dim tmptmpStr As String
+ MkDir PrmPath & "BomCompare\Basic"
+          strPath = Trim(strPath)
+          If Dir(PrmPath & "BomCompare\Basic\" & strPath) = "" Then
+               Open PrmPath & "BomCompare\Basic\" & strPath For Output As #22
+               Print #58, strTmp(UBound(strTmp))
+          Else
+          
+              Open PrmPath & "BomCompare\Basic\" & strPath For Append As #22
+          End If
+        '  Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) For Output As #22
+               'Print #22, strBom1_DeviceName
+               tmptmpStr = Replace(MyStr, strPath, "")
+               tmptmpStr = Trim(Replace(tmptmpStr, strPath, ""))
+               Print #22, strPath & "," & strPartName & "," & tmptmpStr & "," & strBoardver
+          Close #22
+End Sub
+
