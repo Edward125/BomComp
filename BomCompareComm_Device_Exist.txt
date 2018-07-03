@@ -1,0 +1,2 @@
+test "analog/c1"
+test "analog/c1"
