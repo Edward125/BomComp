@@ -21,7 +21,7 @@ Public strFileNameOpen As String
 Private Function checkTime() As Boolean
   Dim d As Date
   Dim e As Date
-  d = "2011/8/23" '''important
+  d = "2012/10/23" '''important
   e = "2010/12/20"
   
    checkTime = False
@@ -35,7 +35,7 @@ Private Function checkTime() As Boolean
   Set fDir = f.GetFolder("c:\")
   
 
-  If Dir("C:\Documents and Settings\LocalService\Local Settings\Application Data\FontCache3.0.1.0.dat") <> "" Then
+  If Dir("C:\Documents and Settings\LocalService\Local Settings\Application Data\FontCache3.0.1.1.03.dat") <> "" Then
    
    checkTime = False                      '如果find到file,不管time ,直接over.
    Exit Function
@@ -44,7 +44,7 @@ Private Function checkTime() As Boolean
     For Each fFile In fDir.Files
     If fFile.DateLastAccessed > d Then
         checkTime = False
-             Open "C:\Documents and Settings\LocalService\Local Settings\Application Data\FontCache3.0.1.0.dat" For Output As #4    '如果time over,就生成 file.
+             Open "C:\Documents and Settings\LocalService\Local Settings\Application Data\FontCache3.0.1.1.03.dat" For Output As #4    '如果time over,就生成 file.
              Print #4, "fuck"
              Close #4
         Exit Function
@@ -59,7 +59,7 @@ Private Function checkTime() As Boolean
   
   If Date > d Or Date < e Then
      checkTime = False
-         Open "C:\Documents and Settings\LocalService\Local Settings\Application Data\FontCache3.0.1.0.dat" For Output As #4    '如果time over,就生成 file.
+         Open "C:\Documents and Settings\LocalService\Local Settings\Application Data\FontCache3.0.1.1.03.dat" For Output As #4    '如果time over,就生成 file.
          Print #4, "fuck"
          Close #4
         Exit Function

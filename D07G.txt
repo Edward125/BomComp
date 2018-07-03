@@ -1,0 +1,1 @@
+418F3                "IC CPU PRC,Z670,1.5,LCT,1C,C0"                           1    CPU1

@@ -3,7 +3,7 @@ Object = "{F9043C88-F6F2-101A-A3C9-08002B2F49FB}#1.2#0"; "comdlg32.ocx"
 Begin VB.Form frmLibEdit 
    BorderStyle     =   4  'Fixed ToolWindow
    Caption         =   "Wistron Bom to 3070 Board File Format"
-   ClientHeight    =   4230
+   ClientHeight    =   3615
    ClientLeft      =   45
    ClientTop       =   390
    ClientWidth     =   10965
@@ -11,7 +11,7 @@ Begin VB.Form frmLibEdit
    LinkTopic       =   "Form1"
    MaxButton       =   0   'False
    MinButton       =   0   'False
-   ScaleHeight     =   4230
+   ScaleHeight     =   3615
    ScaleWidth      =   10965
    StartUpPosition =   2  'CenterScreen
    Begin VB.CommandButton cmdExit 
@@ -25,7 +25,7 @@ Begin VB.Form frmLibEdit
          Italic          =   0   'False
          Strikethrough   =   0   'False
       EndProperty
-      Height          =   1815
+      Height          =   1215
       Left            =   5160
       TabIndex        =   9
       Top             =   2280
@@ -35,7 +35,7 @@ Begin VB.Form frmLibEdit
       Height          =   1335
       Left            =   120
       TabIndex        =   4
-      Top             =   2760
+      Top             =   2160
       Width           =   4935
       Begin VB.Label Msg1 
          BeginProperty Font 
@@ -116,10 +116,10 @@ Begin VB.Form frmLibEdit
          Strikethrough   =   0   'False
       EndProperty
       Height          =   1455
-      Left            =   5160
+      Left            =   120
       TabIndex        =   3
       Top             =   600
-      Width           =   5655
+      Width           =   10695
    End
    Begin VB.CheckBox Check1 
       Caption         =   "OutLibFile"
@@ -305,7 +305,7 @@ End If
                       If Trim(strTmp(UBound(strTmp))) <> "" Then
                          If Dir(PrmPath & "Pin_Lib\" & strTmp(0)) <> "" Then
                                 Open PrmPath & "Pin_Lib\" & strTmp(0) For Input As #10
-                                     Input #10, strMyStr
+                                     Line Input #10, strMyStr
                                      strMyStr = Trim(UCase(strMyStr))
                                      strText = Split(strMyStr, Chr(9))
                                          If Left(strText(3), 1) = """" Then

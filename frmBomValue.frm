@@ -1,17 +1,16 @@
 VERSION 5.00
 Object = "{F9043C88-F6F2-101A-A3C9-08002B2F49FB}#1.2#0"; "comdlg32.ocx"
 Begin VB.Form frmBomValue 
-   Caption         =   "Read BOM device value to 3070board format..1.0"
+   Caption         =   "Read BOM device value to 3070board format..3.0"
    ClientHeight    =   4275
    ClientLeft      =   60
    ClientTop       =   345
    ClientWidth     =   8145
    LinkTopic       =   "Form1"
-   LockControls    =   -1  'True
    MaxButton       =   0   'False
    ScaleHeight     =   4275
    ScaleWidth      =   8145
-   StartUpPosition =   2  'ÆÁÄ»ÖÐÐÄ
+   StartUpPosition =   2  'CenterScreen
    Begin VB.Frame Frame1 
       Height          =   855
       Left            =   120
@@ -56,6 +55,7 @@ Begin VB.Form frmBomValue
       End
       Begin VB.CheckBox CheckD 
          Caption         =   "Diode"
+         ForeColor       =   &H000040C0&
          Height          =   495
          Left            =   2760
          TabIndex        =   7
@@ -65,12 +65,12 @@ Begin VB.Form frmBomValue
       End
       Begin VB.CheckBox CheckCn 
          Caption         =   "Connector"
-         Enabled         =   0   'False
          ForeColor       =   &H000000FF&
          Height          =   495
          Left            =   5160
          TabIndex        =   6
          Top             =   240
+         Value           =   1  'Checked
          Width           =   1215
       End
       Begin VB.CheckBox CheckC 
@@ -115,6 +115,15 @@ Begin VB.Form frmBomValue
       TabIndex        =   9
       Top             =   1560
       Width           =   7935
+      Begin VB.CheckBox cDisplayName 
+         Caption         =   "Display Device Name"
+         Height          =   255
+         Left            =   240
+         TabIndex        =   30
+         Top             =   2160
+         Value           =   1  'Checked
+         Width           =   1935
+      End
       Begin MSComDlg.CommonDialog CommonDialog2 
          Left            =   6840
          Top             =   2160
@@ -152,9 +161,10 @@ Begin VB.Form frmBomValue
             Strikethrough   =   0   'False
          EndProperty
          Height          =   255
-         Left            =   7560
+         Left            =   7680
          TabIndex        =   2
-         Top             =   1440
+         Top             =   720
+         Visible         =   0   'False
          Width           =   255
       End
       Begin VB.TextBox txtDH 
@@ -172,7 +182,7 @@ Begin VB.Form frmBomValue
          Left            =   1800
          MaxLength       =   3
          TabIndex        =   25
-         Text            =   "0.9"
+         Text            =   "0.8"
          Top             =   840
          Width           =   495
       End
@@ -214,12 +224,12 @@ Begin VB.Form frmBomValue
             Italic          =   0   'False
             Strikethrough   =   0   'False
          EndProperty
-         ForeColor       =   &H00FF0000&
+         ForeColor       =   &H000000FF&
          Height          =   285
          Left            =   3720
          MaxLength       =   2
          TabIndex        =   20
-         Text            =   "11"
+         Text            =   "10"
          Top             =   1320
          Width           =   375
       End
@@ -242,7 +252,7 @@ Begin VB.Form frmBomValue
             Italic          =   0   'False
             Strikethrough   =   0   'False
          EndProperty
-         ForeColor       =   &H00FF0000&
+         ForeColor       =   &H000080FF&
          Height          =   375
          Left            =   7200
          MaxLength       =   3
@@ -261,7 +271,7 @@ Begin VB.Form frmBomValue
             Italic          =   0   'False
             Strikethrough   =   0   'False
          EndProperty
-         ForeColor       =   &H00FF0000&
+         ForeColor       =   &H000080FF&
          Height          =   375
          Left            =   7200
          MaxLength       =   3
@@ -280,12 +290,12 @@ Begin VB.Form frmBomValue
             Italic          =   0   'False
             Strikethrough   =   0   'False
          EndProperty
-         ForeColor       =   &H00FF0000&
+         ForeColor       =   &H00FF00FF&
          Height          =   375
          Left            =   4080
          MaxLength       =   3
          TabIndex        =   13
-         Text            =   "30"
+         Text            =   "20"
          Top             =   360
          Width           =   495
       End
@@ -299,12 +309,12 @@ Begin VB.Form frmBomValue
             Italic          =   0   'False
             Strikethrough   =   0   'False
          EndProperty
-         ForeColor       =   &H00FF0000&
+         ForeColor       =   &H00FF00FF&
          Height          =   375
          Left            =   1800
          MaxLength       =   3
          TabIndex        =   12
-         Text            =   "30"
+         Text            =   "20"
          Top             =   360
          Width           =   495
       End
@@ -438,6 +448,7 @@ Dim PrmPath As String
 Dim bListCatacitor As Boolean
 Dim bListResistor As Boolean
 Dim bListDiode As Boolean
+Dim bListConnect As Boolean
 Dim strCH As String
 Dim strCL As String
 Dim strRH As String
@@ -482,10 +493,12 @@ MkDir PrmPath & "ReadBomValue"
 End Sub
 
 Private Sub Read_BomFile()
+On Error Resume Next
 Dim Mystr As String
 Dim intI As String
 Dim strDeviceName As String
 Dim TmpStr() As String
+Dim strXXX() As String
 Dim tmpSTR1 As String
 Dim DeviceType_ As String
 Dim DeviceType_A As String
@@ -498,6 +511,7 @@ Dim strReadText As String
 Dim LowToJumper
 Dim strDeviceNomber As String
 Dim bListPinLib As Boolean
+Dim strPN_Str As String
 strCH = txtCH.Text
 strCL = txtCL.Text
 strRH = txtRH.Text
@@ -529,42 +543,50 @@ If CheckD.Value = 1 Then
    Else
    bListDiode = False
 End If
+If CheckCn.Value = 1 Then
+   bListConnect = True
+   Else
+   bListConnect = False
+End If
 
- 
 
 
-On Error GoTo EX
   ' Open PrmPath & "ReadBomValue\WaitCheck.txt" For Output As #7
   '   Print #7, Now
    '   Print #7,
    Open PrmPath & "ReadBomValue\Jumper.txt" For Output As #6
-    ' Print #6, Now
+      Print #6, "JUMPER"
       Print #6,
    If bListCatacitor = True Then
       Open PrmPath & "ReadBomValue\Capacitor.txt" For Output As #2
-      'Print #2, Now
+      Print #2, "CAPACITOR"
       Print #2,
    End If
    If bListResistor = True Then
       Open PrmPath & "ReadBomValue\Resistor.txt" For Output As #4
-     ' Print #4, Now
+      Print #4, "RESISTOR"
       Print #4,
    End If
    If bListDiode = True Then
       Open PrmPath & "ReadBomValue\Diode.txt" For Output As #8
-    '  Print #8, Now
+      Print #8, "DIODE"
       Print #8,
    
    End If
    
- If bListPinLib = True Then
+   If bListPinLib = True Then
       Open PrmPath & "ReadBomValue\Pin Library.txt" For Output As #9
-   '   Print #9, Now
+      Print #9, "PIN LIBRARY"
       Print #9,
    
    End If
    
-   
+ If bListConnect = True Then
+      Open PrmPath & "ReadBomValue\Connector.txt" For Output As #24
+       Print #24, "CONNECTOR"
+      Print #24,
+ 
+ End If
    
       Open PrmPath & "ReadBomValue\Unknow.txt" For Output As #5
       '   Print #5, Now
@@ -578,71 +600,512 @@ On Error GoTo EX
            
              If Mystr <> "" And Left(Mystr, 1) <> "!" Then
                 If Left(Mystr, 1) <> "-" Then
+                  Mystr = Replace(Mystr, """", "")
+                  
+                  Mystr = Replace(Mystr, "_", " ")
                   TmpStr = Split(Mystr, " ")
                   strDeviceNomber = Trim(TmpStr(0))
                   strDeviceName = TmpStr(UBound(TmpStr))
+                  
+                  'PART NUMBER
+                  '==================================
+                   If strDeviceNomber = "78.10234.1F1" Or strDeviceNomber = "78.22523.5B1" _
+                        Or strDeviceNomber = "78.47523.5CL" _
+                        Or strDeviceNomber = "77.C1571.09L" _
+                     Then
+                       Mystr = Replace(Mystr, "CHIP C", "CHIP C ") 'CAP
+                   End If
+                  '==================================
+                  
                   tmpSTR1 = Trim(tmpSTR1)
                   tmpSTR1 = Trim(Replace(Mystr, TmpStr(0), ""))
+                     strPN_Str = tmpSTR1
+                   If cDisplayName.Value = 0 Then
+                      strXXX = Split(tmpSTR1, "   ")
+                      strPN_Str = strXXX(0)
+                      Erase strXXX
+                   End If
+                     
                   TmpStr = Split(tmpSTR1, " ")
                   DeviceType_ = Trim(TmpStr(0))
-                  Select Case DeviceType_
+                  '=============================
+                     If Left(DeviceType_, 4) = "POLY" Then
+                         tmpSTR1 = Trim(Replace(tmpSTR1, TmpStr(0), ""))
+                         DeviceType_ = "POLY"
+                         TmpStr(0) = "POLY"
+                     End If
+                     
+                     'THERMISTOR
+                     If Trim(TmpStr(0)) = "THERMISTOR" Then
+                         tmpSTR1 = Trim(Replace(tmpSTR1, TmpStr(0), ""))
+                         DeviceType_ = "THERMIS"
+                         TmpStr(0) = "THERMIS"
+                     End If
+                     
+                     If InStr(UCase(Mystr), "ANTENNA SPRING") <> 0 Then
+                         tmpSTR1 = Trim(Replace(tmpSTR1, TmpStr(0), ""))
+                         DeviceType_ = "ANTENNA"
+                         TmpStr(0) = "ANTENNA"
+                     End If
+                     If Trim(TmpStr(1)) = "EMI" Then
+                         tmpSTR1 = Trim(Replace(tmpSTR1, TmpStr(0), ""))
+                         DeviceType_ = "EMI"
+                         TmpStr(0) = "EMI"
+                     End If
                     
+                     If DeviceType_ = "CHP" Then DeviceType_ = "CHIP"
+                     
+                     If DeviceType_ = "MLCC" Then
+                          DeviceType_ = "CHIP"
+                          TmpStr(0) = "CHIP"
+                          tmpSTR1 = Trim(Replace(tmpSTR1, "MLCC", "CHIP CAP"))
+                     End If
+                     'SSIP CAP
+                     If DeviceType_ = "SSIP" Then
+                       If InStr(UCase(Mystr), "SSIP CAP") <> 0 Then
+                       
+                          DeviceType_ = "CHIP"
+                          TmpStr(0) = "CHIP"
+                          tmpSTR1 = Trim(Replace(tmpSTR1, "SSIP", "CHIP"))
+                       End If
+                     End If
+                     
+                     If DeviceType_ = "RES" Then
+                          DeviceType_ = "CHIP"
+                          TmpStr(0) = "CHIP"
+                          tmpSTR1 = Trim(Replace(tmpSTR1, "RES", "CHIP RES"))
+                     End If
+                      If DeviceType_ = "CAP" Then
+                          DeviceType_ = "CHIP"
+                          TmpStr(0) = "CHIP"
+                          tmpSTR1 = Trim(Replace(tmpSTR1, "CAP", "CHIP CAP"))
+                     End If
+                     If DeviceType_ = "FERRITE" Then
+                          DeviceType_ = "CHIP"
+                          TmpStr(0) = "CHIP"
+                          tmpSTR1 = Trim(Replace(tmpSTR1, "FERRITE", "CHIP BEAD"))
+                     End If
+                     If DeviceType_ = "FEREITE" Then
+                          DeviceType_ = "CHIP"
+                          TmpStr(0) = "CHIP"
+                          tmpSTR1 = Trim(Replace(tmpSTR1, "FEREITE", "CHIP BEAD"))
+                     End If
+                     
+                     
+                  '===================================================
+                  Select Case DeviceType_
+                     Case "TEMP.SENSOR"
+                          'PIN LIB
+                                 If bListPinLib = True Then
+                                      Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                    strReadText = "OK"
+                                 End If
+                     Case "LNA"
+                         'PIN LIB
+                                 If bListPinLib = True Then
+                                      Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                    strReadText = "OK"
+                                 End If
+                     Case "ACCELEROMETER"
+                         'PIN LIB
+                                 If bListPinLib = True Then
+                                      Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                    strReadText = "OK"
+                                 End If
+                     Case "SW"
+                     'conn
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "PN""" & strDeviceName & """" & ";"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
+                     Case "802.11B/G/N"
+                         'PIN LIB
+                                 If bListPinLib = True Then
+                                      Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                    strReadText = "OK"
+                                 End If
+                     Case "POLYSWITCH"
+                             'JUMPER
+                                If CheckIND.Value = 1 Then
+                                    Print #6, strDeviceName; Tab(25); "CLOSED;"; Tab(100); "!" & strPN_Str ' ;Tab(35); "PN""" & strDeviceName & """  ;"
+                                    strReadText = "OK"
+                                 End If
+                     
+                     Case "ARIES"
+                      'conn NT
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "NT;"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
+                     
+                     Case "CHASSIS"
+                     'conn NT
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "NT;"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
+                     Case "SAW"
+                        'PIN LIB
+                                 If bListPinLib = True Then
+                                      Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                    strReadText = "OK"
+                                 End If
+                     Case "C.S"
+                     
+                        'PIN LIB
+                                 If bListPinLib = True Then
+                                      Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                    strReadText = "OK"
+                                 End If
+                     Case "ANTENNA"
+                     'conn
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "PN""" & strDeviceName & """" & ";"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
+                     
+                     Case "WTOB"
+                     'conn
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "PN""" & strDeviceName & """" & ";"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
+                     
+                     Case "SCHOTTKY"
+                     'diode
+                            If bListDiode = True Then
+                                Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                strReadText = "OK"
+                            End If
+                     
+                     Case "INDUCTOR"
+                      'jumper
+                                If CheckIND.Value = 1 Then
+                                   Print #6, strDeviceName; Tab(25); "CLOSED;"; Tab(100); "!" & strPN_Str '; Tab(35); "PN""" & strDeviceName & """  ;"
+                                   strReadText = "OK"
+                                End If
+                     Case "FPC"
+                     'conn
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "PN""" & strDeviceName & """" & ";"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
+                                       
+                   
+                     Case "STAND-OFF"
+                     'conn
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "PN""" & strDeviceName & """" & ";"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
+                     
+                     Case "SPRING"
+                     'conn
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "NT;"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
+                     Case "ID"
+                        'PIN LIB
+                                
+                                 If bListPinLib = True Then
+                                      Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                    strReadText = "OK"
+                                 End If
+           
+                     Case "EMISPRINGS8-100G"
+                     'conn
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "NT;"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
+                     Case "EP101TA"
+                      'conn
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "PN""" & strDeviceName & """" & ";"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
+                     Case "BOSS-MB-STAND-OFF-A-LS20"
+                     'conn
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "PN""" & strDeviceName & """" & ";"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
+                     Case "POLYSWITH"
+                            'JUMPER
+                                If CheckIND.Value = 1 Then
+                                    Print #6, strDeviceName; Tab(25); "CLOSED;"; Tab(100); "!" & strPN_Str ' ;Tab(35); "PN""" & strDeviceName & """  ;"
+                                    strReadText = "OK"
+                                 End If
+                     
+                     Case "THERMIS"
+                     'RES
+                                If bListResistor = True Then
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, strDeviceName, ""))
+                                   tmpSTR1 = Trim(tmpSTR1)
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "THERMIS", ""))
+                                   tmpSTR1 = Trim(tmpSTR1)
+                                   strRES = Split(tmpSTR1, " ")
+                                   RValue = strRES(0)
+                                       RValue1 = Val(RValue)
+                                    If Right(RValue, 1) <> "K" And Right(RValue, 1) <> "M" And InStr(RValue, "K") = 0 And InStr(RValue, "M") = 0 Then
+                                       If CheckJumper.Value = 1 Then
+                                           
+                                           LowToJumper = Val(txtJumper.Text)
+                                        If RValue1 < LowToJumper Then
+                                           Print #6, strDeviceName; Tab(25); "CLOSED;" '; Tab(35); "PN""" & strDeviceName & """  ;      !BOM Value: " & RValue
+                                           strReadText = "OK"
+                                           Else
+                                             Print #4, strDeviceName; Tab(25); RValue; Tab(35); strRH; Tab(40); strRL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                            strReadText = "OK"
+                                        End If
+                                      End If
+                                      Else
+                                         Print #4, strDeviceName; Tab(25); RValue; Tab(35); strRH; Tab(40); strRL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                          strReadText = "OK"
+                                   End If
+                                   
+'                                   Print #4, strDeviceName; Tab(25); RValue; Tab(35); strRH; Tab(40); strRL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+'                                    strReadText = "OK"
+                                 End If
+                     
+                     
+                     Case "POLY"
+                     'jumper
+                                If CheckIND.Value = 1 Then
+                                   Print #6, strDeviceName; Tab(25); "CLOSED;"; Tab(100); "!" & strPN_Str '; Tab(35); "PN""" & strDeviceName & """  ;"
+                                   strReadText = "OK"
+                                End If
+                     
+                     Case "POLYSW"
+                     'jumper
+                                If CheckIND.Value = 1 Then
+                                   Print #6, strDeviceName; Tab(25); "CLOSED;"; Tab(100); "!" & strPN_Str '; Tab(35); "PN""" & strDeviceName & """  ;"
+                                   strReadText = "OK"
+                                End If
+                     
+                     Case "HOLDER"
+                     'conn
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "PN""" & strDeviceName & """" & ";"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
+                     
+                     
+                     Case "SOCKET"
+                     'conn
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "PN""" & strDeviceName & """" & ";"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
+                     
+                     Case "COMN"
+                     'conn
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "PN""" & strDeviceName & """" & ";"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
                      Case "CONN"
+                     'conn
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "PN""" & strDeviceName & """" & ";"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
                      Case "SKT"
+                     'conn
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "PN""" & strDeviceName & """" & ";"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
+                     
                      Case "HEAD"
+                     'conn
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "PN""" & strDeviceName & """" & ";"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
+                     
                      Case "EMI"
+                     'conn
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "NT;"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
+
+                     
                      Case "BOSS"
+                     'conn
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "PN""" & strDeviceName & """" & ";"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
+                     
+                     
+                     
                      Case "2HIP"
                                 If CheckIND.Value = 1 Then
-                                   Print #6, strDeviceName; Tab(25); "CLOSED;" '; Tab(35); "PN""" & strDeviceName & """  ;"
+                                   Print #6, strDeviceName; Tab(25); "CLOSED;"; Tab(100); "!" & strPN_Str '; Tab(35); "PN""" & strDeviceName & """  ;"
                                    strReadText = "OK"
                                 End If
                      
                      
                      Case "SKT"
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "PN""" & strDeviceName & """" & ";"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
+                     
+                     
                      Case "CHIP"
+                     
                          tmpSTR1 = Trim(Replace(tmpSTR1, TmpStr(0), ""))
                          tmpSTR1 = Trim(tmpSTR1)
                          TmpStr = Split(tmpSTR1, " ")
                          DeviceType_A = Trim(TmpStr(0))
+                         
+                         'ANTENNA
+                             If UCase(DeviceType_A) = "ANTENNA" Then
+                               DeviceType_A = Trim(Replace(DeviceType_A, "ANTENNA", "LIB"))
+                               tmpSTR1 = Trim(Replace(tmpSTR1, "ANTENNA", "LIB"))
+                            End If
+                         
+                         'DUPLEXER
+                            If UCase(DeviceType_A) = "DUPLEXER" Then
+                               DeviceType_A = Trim(Replace(DeviceType_A, "DUPLEXER", "LIB"))
+                               tmpSTR1 = Trim(Replace(tmpSTR1, "DUPLEXER", "LIB"))
+                            End If
+                         
+                         'POSCAP
+                         
+                            If UCase(DeviceType_A) = "POSCAP" Then
+                               DeviceType_A = Trim(Replace(DeviceType_A, "POS", ""))
+                               tmpSTR1 = Trim(Replace(tmpSTR1, "POS", ""))
+                            End If
+                        'FPCAP
+                            
+                            If UCase(DeviceType_A) = "FPCAP" Then
+                               DeviceType_A = Trim(Replace(DeviceType_A, "FP", ""))
+                               tmpSTR1 = Trim(Replace(tmpSTR1, "FP", ""))
+                            End If
+                        'ARRESTER
+                            If UCase(DeviceType_A) = "ARRESTER" Then
+                               DeviceType_A = Trim(Replace(DeviceType_A, "ARRESTER", "OPN"))
+                               tmpSTR1 = Trim(Replace(tmpSTR1, "ARRESTER", "OPN"))
+                            End If
+                         'BAED
+                            If UCase(DeviceType_A) = "BAED" Then
+                               DeviceType_A = Trim(Replace(DeviceType_A, "BAED", "BAE"))
+                               tmpSTR1 = Trim(Replace(tmpSTR1, "BAED", "BAE"))
+                            End If
+                          'COIL
+                            If UCase(DeviceType_A) = "COIL" Then
+                               DeviceType_A = Trim(Replace(DeviceType_A, "COIL", "BAE"))
+                               tmpSTR1 = Trim(Replace(tmpSTR1, "COIL", "BAE"))
+                            End If
+                          'CMM
+                           'TRXXX
+                            If UCase(DeviceType_A) = "CMM" Then
+                               DeviceType_A = Trim(Replace(DeviceType_A, "CMM", "LIB"))
+                               tmpSTR1 = Trim(Replace(tmpSTR1, "CMM", "LIB"))
+                            End If
+                          'COMM
+                            If UCase(DeviceType_A) = "COMM" Then
+                               DeviceType_A = Trim(Replace(DeviceType_A, "COMM", "LIB"))
+                               tmpSTR1 = Trim(Replace(tmpSTR1, "COMM", "LIB"))
+                            End If
+                           'EMIFIL
+                             If UCase(DeviceType_A) = "EMIFIL" Then
+                               DeviceType_A = Trim(Replace(DeviceType_A, "EMIFIL", "LIB"))
+                               tmpSTR1 = Trim(Replace(tmpSTR1, "EMIFIL", "LIB"))
+                            End If
+
                           If Len(DeviceType_A) > 1 Then
                              Select Case Left(DeviceType_A, 3)
+                               Case "LIB"
+                               'PIN LIB
+                                         If bListPinLib = True Then
+                                              Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                            strReadText = "OK"
+                                         End If
+                               Case "ESD"
+                               'PIN LIB
+                                         If bListPinLib = True Then
+                                              Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                            strReadText = "OK"
+                                         End If
+ 
                                  
+                               Case "BAE"
+                                'BAED  IND TO JUMP
+                                 If CheckIND.Value = 1 Then
+                                   Print #6, strDeviceName; Tab(25); "CLOSED;"; Tab(100); "!" & strPN_Str '; Tab(35); "PN""" & strDeviceName & """  ;"
+                                   strReadText = "OK"
+                                End If
+                               Case "OPN"
+                               'JUMPER OPEN ESD
+                                 If CheckIND.Value = 1 Then
+                                   Print #6, strDeviceName; Tab(25); "OPEN;"; Tab(100); "!" & strPN_Str '; Tab(35); "PN""" & strDeviceName & """  ;"
+                                   strReadText = "OK"
+                                End If
+                               Case "FIL"
+                               
+                               'PIN LIB
+                                 If UCase(Trim(TmpStr(0))) = "FILTER" Then
+                                        
+                                         If bListPinLib = True Then
+                                              Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                            strReadText = "OK"
+                                         End If
+                                 End If
+                               Case "CHK"
+                                    If CheckIND.Value = 1 Then
+                                       Print #6, strDeviceName; Tab(25); "CLOSED;"; Tab(100); "!" & strPN_Str '; Tab(35); "PN""" & strDeviceName & """  ;"
+                                       strReadText = "OK"
+                                    End If
+                               
                                Case "CAP"
+                               
                                  If bListCatacitor = True Then
                                    tmpSTR1 = Trim(Replace(tmpSTR1, strDeviceName, ""))
                                    tmpSTR1 = Trim(tmpSTR1)
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "TAN", ""))
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "MLCC", ""))
                                    tmpSTR1 = Trim(Replace(tmpSTR1, "CAP", ""))
                                    tmpSTR1 = Trim(Replace(tmpSTR1, "T", ""))
                                    tmpSTR1 = Trim(Replace(tmpSTR1, "F", ""))
                                    tmpSTR1 = Trim(Replace(tmpSTR1, "NEO", ""))
+                                   
                                    tmpSTR1 = Trim(tmpSTR1)
                                    tmpSTR1 = Trim(Replace(tmpSTR1, "POS", ""))
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "POL", ""))
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "NPO", ""))
                                    tmpSTR1 = Trim(tmpSTR1)
                                    tmpSTR1 = Trim(Replace(tmpSTR1, "C ", ""))
                                    tmpSTR1 = Trim(Replace(tmpSTR1, "C", ""))
                                    tmpSTR1 = Trim(Replace(tmpSTR1, "EL", ""))
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "ARR", ""))
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "FP", ""))
                                    tmpSTR1 = Trim(tmpSTR1)
                                    strCAP = Split(tmpSTR1, " ")
 
                                      If InStr(strCAP(0), "U") <> 0 And InStr(strCAP(0), "V") <> 0 Then
                                          CValue = Left(strCAP(0), InStr(strCAP(0), "U"))
-                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
                                            strReadText = "OK"
                                         Else
                                          If InStr(strCAP(0), "N") <> 0 And InStr(strCAP(0), "V") <> 0 Then
                                              CValue = Left(strCAP(0), InStr(strCAP(0), "N"))
-                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
                                                strReadText = "OK"
                                             Else
                                              If InStr(strCAP(0), "P") <> 0 And InStr(strCAP(0), "V") <> 0 Then
                                                CValue = Left(strCAP(0), InStr(strCAP(0), "P"))
-                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
                                                 strReadText = "OK"
                                                Else
                                                  CValue = strCAP(0)
                                                
-                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
                                                 strReadText = "OK"
                                              End If 'P,V
                                          End If 'N,V
@@ -652,6 +1115,7 @@ On Error GoTo EX
                                  End If 'bListCatacitor=true
                                  
                                Case "RES"
+                               'RES
                                  If bListResistor = True Then
                                    tmpSTR1 = Trim(Replace(tmpSTR1, strDeviceName, ""))
                                    tmpSTR1 = Trim(tmpSTR1)
@@ -665,53 +1129,57 @@ On Error GoTo EX
                                            
                                            LowToJumper = Val(txtJumper.Text)
                                         If RValue1 < LowToJumper Then
-                                           Print #6, strDeviceName; Tab(25); "CLOSED;" '; Tab(35); ' "PN""" & strDeviceName & """  ;      !BOM Value: " & RValue
+                                           Print #6, strDeviceName; Tab(25); "CLOSED;"; Tab(100); "!" & strPN_Str '; Tab(35); ' "PN""" & strDeviceName & """  ;      !BOM Value: " & RValue
                                            strReadText = "OK"
                                            Else
-                                             Print #4, strDeviceName; Tab(25); RValue; Tab(35); strRH; Tab(40); strRL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                             Print #4, strDeviceName; Tab(25); RValue; Tab(35); strRH; Tab(40); strRL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
                                             strReadText = "OK"
                                         End If
                                       End If
                                       Else
-                                         Print #4, strDeviceName; Tab(25); RValue; Tab(35); strRH; Tab(40); strRL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                         Print #4, strDeviceName; Tab(25); RValue; Tab(35); strRH; Tab(40); strRL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
                                           strReadText = "OK"
                                    End If
                                    
-'                                   Print #4, strDeviceName; Tab(25); RValue; Tab(35); strRH; Tab(40); strRL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+'                                   Print #4, strDeviceName; Tab(25); RValue; Tab(35); strRH; Tab(40); strRL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
 '                                    strReadText = "OK"
                                  End If
                                Case "LED"
+                                  'PIN LIB
                                    If bListPinLib = True Then
-                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
                                        strReadText = "OK"
                                    End If
                                   
                                   
                                Case "FUS"
+                               'JUMPER
                                 If CheckIND.Value = 1 Then
-                                   Print #6, strDeviceName; Tab(25); "CLOSED;" '; Tab(35); "PN""" & strDeviceName & """  ;"
+                                   Print #6, strDeviceName; Tab(25); "CLOSED;"; Tab(100); "!" & strPN_Str '; Tab(35); "PN""" & strDeviceName & """  ;"
                                    strReadText = "OK"
                                 End If
                                Case "NTW"
+                                  'PIN LIB
                                    If bListPinLib = True Then
-                                        Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                        Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
                                       strReadText = "OK"
                                    End If
                                Case "BEA"
+                               'JUMPER
                                    If CheckIND.Value = 1 Then
-                                       Print #6, strDeviceName; Tab(25); "CLOSED;" ' ;Tab(35); "PN""" & strDeviceName & """  ;"
+                                       Print #6, strDeviceName; Tab(25); "CLOSED;"; Tab(100); "!" & strPN_Str ' ;Tab(35); "PN""" & strDeviceName & """  ;"
                                        strReadText = "OK"
                                     End If
                                
                                Case "CHO"
                                    If CheckIND.Value = 1 Then
-                                       Print #6, strDeviceName; Tab(25); "CLOSED;" '; Tab(35); "PN""" & strDeviceName & """  ;"
+                                       Print #6, strDeviceName; Tab(25); "CLOSED;"; Tab(100); "!" & strPN_Str '; Tab(35); "PN""" & strDeviceName & """  ;"
                                        strReadText = "OK"
                                     End If
                                
                                Case "IND"
                                 If CheckIND.Value = 1 Then
-                                   Print #6, strDeviceName; Tab(25); "CLOSED;" '; Tab(35); "PN""" & strDeviceName & """  ;"
+                                   Print #6, strDeviceName; Tab(25); "CLOSED;"; Tab(100); "!" & strPN_Str '; Tab(35); "PN""" & strDeviceName & """  ;"
                                    strReadText = "OK"
                                 End If
                                 
@@ -735,22 +1203,22 @@ On Error GoTo EX
 
                                      If InStr(strCAP(0), "U") <> 0 And InStr(strCAP(0), "V") <> 0 Then
                                          CValue = Left(strCAP(0), InStr(strCAP(0), "U"))
-                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
                                            strReadText = "OK"
                                         Else
                                          If InStr(strCAP(0), "N") <> 0 And InStr(strCAP(0), "V") <> 0 Then
                                              CValue = Left(strCAP(0), InStr(strCAP(0), "N"))
-                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
                                                strReadText = "OK"
                                             Else
                                              If InStr(strCAP(0), "P") <> 0 And InStr(strCAP(0), "V") <> 0 Then
                                                CValue = Left(strCAP(0), InStr(strCAP(0), "P"))
-                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
                                                 strReadText = "OK"
                                                Else
                                                  CValue = strCAP(0)
                                                
-                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
                                                 strReadText = "OK"
                                              End If 'P,V
                                          End If 'N,V
@@ -783,23 +1251,23 @@ On Error GoTo EX
 
                                      If InStr(strCAP(0), "U") <> 0 And InStr(strCAP(0), "V") <> 0 Then
                                          CValue = Left(strCAP(0), InStr(strCAP(0), "U"))
-                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
                                            strReadText = "OK"
                                         Else
                                          If InStr(strCAP(0), "N") <> 0 And InStr(strCAP(0), "V") <> 0 Then
                                              CValue = Left(strCAP(0), InStr(strCAP(0), "N"))
-                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
                                                strReadText = "OK"
                                             
                                             Else
                                              If InStr(strCAP(0), "P") <> 0 And InStr(strCAP(0), "V") <> 0 Then
                                                CValue = Left(strCAP(0), InStr(strCAP(0), "P"))
-                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
                                                strReadText = "OK"
                                                
                                                Else
                                                  CValue = strCAP(0)
-                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                               Print #2, strDeviceName; Tab(25); CValue; Tab(35); strCH; Tab(40); strCL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
                                                 strReadText = "OK"
                                              End If 'P,V
                                          End If 'N,V
@@ -815,17 +1283,20 @@ On Error GoTo EX
                              
                           End If 'Len(DeviceType_A) > 1
                      Case "IC"
+                        'PIN LIB
                                    If bListPinLib = True Then
-                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
                                        strReadText = "OK"
                                    End If
                      Case "XFORM"
+                        'PIN LIB
                                    If bListPinLib = True Then
-                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
                                        strReadText = "OK"
                                    End If
                      
                      Case "THERM"
+                     'RES
                          
   'great 091123
   
@@ -833,6 +1304,7 @@ On Error GoTo EX
                                    tmpSTR1 = Trim(Replace(tmpSTR1, strDeviceName, ""))
                                    tmpSTR1 = Trim(tmpSTR1)
                                    tmpSTR1 = Trim(Replace(tmpSTR1, "THERM", ""))
+                                   tmpSTR1 = Trim(Replace(tmpSTR1, "SMD", ""))
                                    tmpSTR1 = Trim(tmpSTR1)
                                    strRES = Split(tmpSTR1, " ")
                                    RValue = strRES(0)
@@ -845,12 +1317,12 @@ On Error GoTo EX
                                            Print #6, strDeviceName; Tab(25); "CLOSED;" '; Tab(35); "PN""" & strDeviceName & """  ;      !BOM Value: " & RValue
                                            strReadText = "OK"
                                            Else
-                                             Print #4, strDeviceName; Tab(25); RValue; Tab(35); strRH; Tab(40); strRL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                             Print #4, strDeviceName; Tab(25); RValue; Tab(35); strRH; Tab(40); strRL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
                                             strReadText = "OK"
                                         End If
                                       End If
                                       Else
-                                         Print #4, strDeviceName; Tab(25); RValue; Tab(35); strRH; Tab(40); strRL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
+                                         Print #4, strDeviceName; Tab(25); RValue; Tab(35); strRH; Tab(40); strRL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
                                           strReadText = "OK"
                                    End If
                                    
@@ -859,69 +1331,663 @@ On Error GoTo EX
                                  End If
                                   
                                   
-  
-  
-  
-  
+                     Case "AUDIO"
+                         'PIN LIB
+                                   If bListPinLib = True Then
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                      strReadText = "OK"
+                                   End If
+                     Case "N-MOSFET"
+                         'PIN LIB
+                                   If bListPinLib = True Then
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                      strReadText = "OK"
+                                   End If
+                     Case "P-MOSFET"
+                        'PIN LIB
+                                   If bListPinLib = True Then
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                      strReadText = "OK"
+                                   End If
+                     Case "MOS"
+                        'PIN LIB
+                                   If bListPinLib = True Then
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                      strReadText = "OK"
+                                   End If
   
                      Case "IR"
-                       
+                       'PIN LIB
                                    If bListPinLib = True Then
-                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
                                       strReadText = "OK"
                                    End If
                      Case "RESO"
+                         'PIN LIB
                                    If bListPinLib = True Then
-                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
                                        strReadText = "OK"
                                    End If
-                       
-                     Case "XTAL"
-                     
+                     Case "DUAL"
+                         'PIN LIB
                                    If bListPinLib = True Then
-                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                      strReadText = "OK"
+                                   End If
+                     
+                     Case "OSC"
+                         'PIN LIB
+                                   If bListPinLib = True Then
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                      strReadText = "OK"
+                                   End If
+                     Case "XTAL"
+                         'PIN LIB
+                                   If bListPinLib = True Then
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
                                       strReadText = "OK"
                                    End If
                      
                      Case "DIODE"
-                       If bListDiode = True Then
-                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """    ;"
-                           strReadText = "OK"
-                       End If
+                     
+                         tmpSTR1 = Trim(Replace(tmpSTR1, TmpStr(0), ""))
+                         tmpSTR1 = Trim(tmpSTR1)
+                         TmpStr = Split(tmpSTR1, " ")
+                         DeviceType_A = Trim(TmpStr(0))
+                          If Len(DeviceType_A) > 1 Then
+                             Select Case UCase(DeviceType_A)
+                               Case "RB521S-30"
+                               'DIODE
+                                         If bListDiode = True Then
+                                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                           strReadText = "OK"
+                                         End If
+
+                               Case "V.R"
+                               'DIODE
+                                  If UCase(TmpStr(1)) = "BZX384-C15" Then
+                                    If bListDiode = True Then
+                                        Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & "DIODE" & """;"; Tab(100); "!" & strPN_Str
+                                        strReadText = "OK"
+                                    End If
+                                  End If
+                               Case "BAT54A"
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                               Case "ARRAY"
+                               'pin lib
+                                             If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                               Case "ARR"
+                                 'PIN LIB
+                                      'IP4220CZ6
+                                     
+                                     If UCase(TmpStr(1)) = "IP4220CZ6" Then
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                                     End If
+                               
+                               Case "ESD"
+                                     'PRTR5V0U2X
+                                     'PIN LIB
+                                     If UCase(TmpStr(1)) = "PRTR5V0U2X" Then
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                                     End If
+                                     'PESD5V0S2BT
+                                     'PIN LIB
+                                     If UCase(TmpStr(1)) = "PESD5V0S2BT" Then
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                                     End If
+                               
+                               
+                               
+                               Case "SCHOTTKY"
+                               'PIN LIB
+                                    If bListPinLib = True Then
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                       strReadText = "OK"
+                                   End If
+                               Case "SDMG0340LC-7-F"
+                               'PIN LIB
+                                    If bListPinLib = True Then
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                       strReadText = "OK"
+                                   End If
+                               Case "CH715FPT"
+                               'PIN LIB
+                                    If bListPinLib = True Then
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                       strReadText = "OK"
+                                   End If
+                               Case "SW"
+                               'PIN LIB
+                                    If bListPinLib = True Then
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                       strReadText = "OK"
+                                   End If
+                               Case "FAST"
+                               'PIN LIB
+                                    If bListPinLib = True Then
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                       strReadText = "OK"
+                                   End If
+                               
+                               Case "BAT54SPT"
+                               'PIN LIB
+                                    If bListPinLib = True Then
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                       strReadText = "OK"
+                                   End If
+                               Case "CH751H-40PT"
+                               'DIODE
+                                    If bListDiode = True Then
+                                        Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & "DIODE" & """;"; Tab(100); "!" & strPN_Str
+                                        strReadText = "OK"
+                                    End If
+                               Case "SDMK0340L-7-F"
+                               'DIODE
+                                    If bListDiode = True Then
+                                        Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & "DIODE" & """;"; Tab(100); "!" & strPN_Str
+                                        strReadText = "OK"
+                                    End If
+                               Case "CH521S-30"
+                                'DIODE
+                                    If bListDiode = True Then
+                                        Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & "DIODE" & """;"; Tab(100); "!" & strPN_Str
+                                        strReadText = "OK"
+                                    End If
+                               Case "SSM5818SLPT"
+                                'DIODE
+                                    If bListDiode = True Then
+                                        Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & "DIODE" & """;"; Tab(100); "!" & strPN_Str
+                                        strReadText = "OK"
+                                    End If
+                               Case "ZEN"
+                               
+                               'DIODE
+                                    If bListDiode = True Then
+                                        Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & "DIODE" & """;"; Tab(100); "!" & strPN_Str
+                                        strReadText = "OK"
+                                    End If
+                               Case "SB"
+                                  'diode
+                                    'B340LA-13-F
+                                      If UCase(TmpStr(1)) = "B340LA-13-F" Then
+                                       If bListDiode = True Then
+                                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                           strReadText = "OK"
+                                       End If
+                                    End If
+                               Case "TVS"
+                               'DIODE
+                                    If bListDiode = True Then
+                                        Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & "DIODE" & """;"; Tab(100); "!" & strPN_Str
+                                        strReadText = "OK"
+                                    End If
+                               
+                               
+                               Case "S.B."
+                                   'BAT54CM
+                                     If UCase(TmpStr(1)) = "BAT54CM" Then
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                                     End If
+                                    'SS3020-HE
+                                     If UCase(TmpStr(1)) = "SS3020-HE" Then
+                                       If bListDiode = True Then
+                                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                           strReadText = "OK"
+                                       End If
+                                   End If
+                               
+                               
+                               
+                               Case "S.B"
+                                'diode to lib
+                                   'BAT54A-7-F
+                                       If UCase(TmpStr(1)) = "BAT54A-7-F" Then
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                                     End If
+                                   'BAS40-05W
+                                      If UCase(TmpStr(1)) = "BAS40-05W" Then
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                                     End If
+                                   
+                                   
+
+                                   
+                                   
+                                   'RB715F
+                                     If UCase(TmpStr(1)) = "RB715F" Then
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                                     End If
+                               
+                               
+                                   
+                                   'BAT54SW
+                                     If UCase(TmpStr(1)) = "BAT54SW" Then
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                                     End If
+                                   
+                                   'BAT54CW
+                                     If UCase(TmpStr(1)) = "BAT54CW" Then
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                                     End If
+                                   
+                                   'BAT54-7-F
+                                     If UCase(TmpStr(1)) = "BAT54-7-F" Then
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                                     End If
+                                   
+                                   
+                                   'CH731UPT
+                                     If UCase(TmpStr(1)) = "CH731UPT" Then
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                                     End If
+                                   
+                                   'BAT54
+                                     If UCase(TmpStr(1)) = "BAT54" Then
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                                     End If
+                                   'BAT54CW-7-F
+                                     If UCase(TmpStr(1)) = "BAT54CW-7-F" Then
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                                     End If
+                               
+                               
+                                   'SBR10U45SP5-13
+                                     If UCase(TmpStr(1)) = "SBR10U45SP5-13" Then
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                                     End If
+                                   
+                                   'BAT54C-7-F
+                                     If UCase(TmpStr(1)) = "BAT54C-7-F" Then
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                                     End If
+                                   
+                                   
+                                   
+                                   'CH551H-30PT
+                                    If UCase(TmpStr(1)) = "CH551H-30PT" Then
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                                   End If
+                                   
+                                   'BAT54CPT
+                                   '
+                                   
+                                   If UCase(TmpStr(1)) = "BAT54CPT" Then
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                                   End If
+                                   
+                                   'RB551V-30
+                                   If UCase(TmpStr(1)) = "RB551V-30" Then
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                                   End If
+                                   
+                                   
+                                   'BAS40CW
+                                   If UCase(TmpStr(1)) = "BAS40CW" Then
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                                   End If
+                                    'BAT54C
+                                   If UCase(TmpStr(1)) = "BAT54C" Then
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                                   End If
+                                   'BAT54S
+                                   If UCase(TmpStr(1)) = "BAT54S" Then
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                                   End If
+                                   'BAT54S-7-F
+                                   If UCase(TmpStr(1)) = "BAT54S-7-F" Then
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                                   End If
+                                   'RB551V30
+                                   If UCase(TmpStr(1)) = "RB551V30" Then
+                                            If bListPinLib = True Then
+                                                Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                                strReadText = "OK"
+                                            End If
+                                   End If
+                                   
+                                   
+                                   
+
+                                 'diode
+
+                                     
+                                     'SMD34JGP
+                                        If UCase(TmpStr(1)) = "SMD34JGP" Then
+                                         If bListDiode = True Then
+                                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                           strReadText = "OK"
+                                         End If
+                                       End If
+                                    'SBR3U40P1-7
+                                       If UCase(TmpStr(1)) = "SBR3U40P1-7" Then
+                                         If bListDiode = True Then
+                                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                           strReadText = "OK"
+                                         End If
+                                       End If
+                                    
+                                    'B140-13-F
+                                    
+                                      If UCase(TmpStr(1)) = "B140-13-F" Then
+                                       If bListDiode = True Then
+                                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                           strReadText = "OK"
+                                       End If
+                                    End If
+                                    'RB751S40T1G
+                                       If UCase(TmpStr(1)) = "RB751S40T1G" Then
+                                       If bListDiode = True Then
+                                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                           strReadText = "OK"
+                                       End If
+                                    End If
+                                    
+                                    'MBR130T1G
+                                       If UCase(TmpStr(1)) = "MBR130T1G" Then
+                                       If bListDiode = True Then
+                                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                           strReadText = "OK"
+                                       End If
+                                    End If
+                                    
+                                    
+                                    
+                                    'B240A-13
+                                      If UCase(TmpStr(1)) = "B240A-13" Then
+                                       If bListDiode = True Then
+                                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                           strReadText = "OK"
+                                       End If
+                                    End If
+                                
+                                    'RB500V-40TE-17
+                                      If UCase(TmpStr(1)) = "RB500V-40TE-17" Then
+                                       If bListDiode = True Then
+                                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                           strReadText = "OK"
+                                       End If
+                                    End If
+                                    
+                                    
+                                   'CH520S-30PT
+                                     If UCase(TmpStr(1)) = "CH520S-30PT" Then
+                                       If bListDiode = True Then
+                                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                           strReadText = "OK"
+                                       End If
+                                    End If
+                                     'SMD24JGP
+                                     If UCase(TmpStr(1)) = "SMD24JGP" Then
+                                       If bListDiode = True Then
+                                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                           strReadText = "OK"
+                                       End If
+                                    End If
+                                     
+                                    'SSM0160SGP
+                                    If UCase(TmpStr(1)) = "SSM0160SGP" Then
+                                       If bListDiode = True Then
+                                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                           strReadText = "OK"
+                                       End If
+                                    End If
+                                    'SS0520
+                                    If UCase(TmpStr(1)) = "SS0520" Then
+                                       If bListDiode = True Then
+                                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                           strReadText = "OK"
+                                       End If
+                                    End If
+                                    'B0530WS-7-F
+                                    If UCase(TmpStr(1)) = "B0530WS-7-F" Then
+                                       If bListDiode = True Then
+                                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                           strReadText = "OK"
+                                       End If
+                                   End If
+                                    
+                                    '1PS76SB21
+                                   If UCase(TmpStr(1)) = "1PS76SB21" Then
+                                       If bListDiode = True Then
+                                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                           strReadText = "OK"
+                                       End If
+                                   End If
+                                    
+                                    
+                                    
+                                   'CH035H-40PT
+                                   If UCase(TmpStr(1)) = "CH035H-40PT" Then
+                                       If bListDiode = True Then
+                                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                           strReadText = "OK"
+                                       End If
+                                   End If
+                                
+                                   'CH751H-40PT
+                                   If UCase(TmpStr(1)) = "CH751H-40PT" Then
+                                       If bListDiode = True Then
+                                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                           strReadText = "OK"
+                                       End If
+                                   End If
+                                   'RB520CS-30
+                                    If UCase(TmpStr(1)) = "RB520CS-30" Then
+                                       If bListDiode = True Then
+                                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                           strReadText = "OK"
+                                       End If
+                                   End If
+                                   
+                                   
+                                   'SD103AWS
+                                   If UCase(TmpStr(1)) = "SD103AWS" Then
+                                       If bListDiode = True Then
+                                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                           strReadText = "OK"
+                                       End If
+                                   End If
+                                  '
+                                   'RB751V-40
+                                   If UCase(TmpStr(1)) = "RB751V-40" Then
+                                       If bListDiode = True Then
+                                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+                                           strReadText = "OK"
+                                       End If
+                                   End If
+
+                                   
+                             End Select
+                             
+                             Else
+                             
+                          End If
+                     
+                     
+                         
+'                       If bListDiode = True Then
+'                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+'                           strReadText = "OK"
+'                       End If
                      
                      Case "DIODES"
-                       If bListDiode = True Then
-                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """    ;"
-                           strReadText = "OK"
-                       End If
-                     
-                     Case "LED"
+'                       If bListDiode = True Then
+'                           Print #8, strDeviceName; Tab(25); strDH; Tab(35); strDL; Tab(45); "PN""" & strDeviceName & """;"; Tab(100); "!" & strPN_Str
+'                           strReadText = "OK"
+'                       End If
+                     Case "ESD"
+                     'PIN LIB
+                            If Trim(TmpStr(1)) = "PROTECTION" Then
                                    If bListPinLib = True Then
-                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                                       strReadText = "OK"
+                                   End If
+                            End If
+                     Case "LED"
+                     'PIN LIB
+                                   If bListPinLib = True Then
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
                                        strReadText = "OK"
                                    End If
                      
                      
                      Case "XTOR"
+                     'PIN LIB
                                    If bListPinLib = True Then
-                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
                                    
                                       strReadText = "OK"
                                    
                                    End If
-                     Case "FET"
+                     Case "MICROPHONE"
+                      'PIN LIB
+                      'SPM0423HD4H-WB
                       If bListPinLib = True Then
-                           Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                        If UCase(TmpStr(1)) = "SPM0423HD4H-WB" Then
+                           Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                           strReadText = "OK"
+                        End If
+                      End If
+                     Case "LVDS"
+                     'PIN LIB
+                      If bListPinLib = True Then
+                           Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                           strReadText = "OK"
+                      
+                      End If
+                     Case "NFC"
+                     'PIN LIB
+                      If bListPinLib = True Then
+                           Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                           strReadText = "OK"
+                      
+                      End If
+                     Case "WLAN"
+                     'PIN LIB
+                      If bListPinLib = True Then
+                           Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
+                           strReadText = "OK"
+                      
+                      End If
+                     Case "FET"
+                     'PIN LIB
+                      If bListPinLib = True Then
+                           Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """;"; Tab(100); "!" & strPN_Str
                            strReadText = "OK"
                       
                       End If
                      Case "STANDOFF"
 
-'                                If CheckIND.Value = 1 Then
-'                                   Print #6, strDeviceName; Tab(25); "OPEN"; Tab(35); "PN""" & strDeviceName & """  ;"
-'                                   strReadText = "OK"
-'                                End If
+                      'conn NT  H1,H2
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "NT;"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
+                      Case "NUT-SMT"
+                      'conn NT  H1,H2
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "NT;"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
+                      Case "BOSSNUT"
+                      'conn NT  H1,H2
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "NT;"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
+                     Case "NUT"
                      
+                      'conn NT  H1,H2
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "NT;"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
+                     
+                     Case "BRKT"
+                     'conn  RCT
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "PN""" & strDeviceName & """" & ";"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
+                     Case "HLD"
+
+                     'conn  RCT
+                            If bListConnect = True Then
+                               Print #24, strDeviceName; Tab(25); "PN""" & strDeviceName & """" & ";"; Tab(100); "!" & strPN_Str
+                               strReadText = "OK"
+                            End If
                   End Select
 
 
@@ -963,6 +2029,9 @@ On Error GoTo EX
   If bListPinLib = True Then
       Close #9
    End If
+  If bListConnect = True Then
+      Close #24
+  End If
    MsgBox "OK" & Chr(13) & Chr(10) & "File save path:" & PrmPath & "ReadBomValue\", vbInformation
   
 Exit Sub
@@ -977,7 +2046,7 @@ Unload Me
 End Sub
 
 Private Sub mcGo_Click()
-On Error GoTo EX
+On Error Resume Next
   
    If Trim(txtBomPath.Text) = "" Then txtBomPath.Text = " Please open bom file!(DblClick me open file!)"
     If Dir(txtBomPath.Text) = "" Then
@@ -1003,6 +2072,7 @@ On Error GoTo EX
        End If
        
       Call Read_BomFile
+      Call File_HE_Bing
     'end
     mcGo.Enabled = True
     mcGo.SetFocus
@@ -1014,7 +2084,7 @@ mcGo.Enabled = True
 End Sub
 
 Private Sub txtBomPath_DblClick()
-On Error GoTo errh
+On Error Resume Next
 With Me.CommonDialog1
     .CancelError = True
     '.Filter = "*.txt|*.txt|*.log|*.log|*.*|*.*"
@@ -1045,4 +2115,73 @@ MsgBox Err.Description, vbCritical
     txtBomPath.SetFocus
 
 
+End Sub
+Private Sub File_HE_Bing()
+    On Error Resume Next
+    
+     Open PrmPath & "ReadBomValue\Bom_To_Board.txt" For Output As #26
+     'Capacitor
+   If CheckC.Value = 1 Then
+      Open PrmPath & "ReadBomValue\Capacitor.txt" For Input As #27
+         Do Until EOF(27)
+           Line Input #27, Mystr
+           Print #26, Mystr
+         Loop
+      Close #27
+        Print #26,
+       'connect
+   End If
+   If CheckCn.Value = 1 Then
+      Open PrmPath & "ReadBomValue\Connector.txt" For Input As #27
+         Do Until EOF(27)
+           Line Input #27, Mystr
+           Print #26, Mystr
+         Loop
+      Close #27
+        Print #26,
+        
+   End If
+      'diode
+   If CheckD.Value = 1 Then
+      Open PrmPath & "ReadBomValue\Diode.txt" For Input As #27
+         Do Until EOF(27)
+           Line Input #27, Mystr
+           Print #26, Mystr
+         Loop
+      Close #27
+      Print #26,
+   End If
+   If CheckJumper.Value = 1 Or CheckIND.Value = 1 Then
+   
+      'Jumper
+       Open PrmPath & "ReadBomValue\Jumper.txt" For Input As #27
+         Do Until EOF(27)
+           Line Input #27, Mystr
+           Print #26, Mystr
+         Loop
+      Close #27
+      Print #26,
+   End If
+      'Pin Library.txt
+   If Checklb.Value = 1 Then
+       Open PrmPath & "ReadBomValue\Pin Library.txt" For Input As #27
+         Do Until EOF(27)
+           Line Input #27, Mystr
+           Print #26, Mystr
+         Loop
+      Close #27
+      Print #26,
+   End If
+      'Resistor
+   If CheckR.Value = 1 Then
+       Open PrmPath & "ReadBomValue\Resistor.txt" For Input As #27
+         Do Until EOF(27)
+           Line Input #27, Mystr
+           Print #26, Mystr
+         Loop
+      Close #27
+   End If
+      
+      
+     Close #26
 End Sub

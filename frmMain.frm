@@ -1,7 +1,7 @@
 VERSION 5.00
 Object = "{F9043C88-F6F2-101A-A3C9-08002B2F49FB}#1.2#0"; "comdlg32.ocx"
 Begin VB.Form frmMain 
-   Caption         =   "Testplan and bom version compare (soft version 6.8 great_guo)"
+   Caption         =   "Bom compare (soft version 8.0 great_guo)"
    ClientHeight    =   5760
    ClientLeft      =   165
    ClientTop       =   165
@@ -80,17 +80,21 @@ Begin VB.Form frmMain
       Top             =   0
       Width           =   2535
       Begin VB.CommandButton Command1 
+         BackColor       =   &H00FFC0C0&
          Caption         =   "Lib Tool (bom to 3070 board)"
          Height          =   375
          Left            =   120
+         Style           =   1  'Graphical
          TabIndex        =   39
          Top             =   4680
          Width           =   2295
       End
       Begin VB.CommandButton cmdToVerBoard 
+         BackColor       =   &H0080C0FF&
          Caption         =   "Read board value tool"
          Height          =   375
          Left            =   120
+         Style           =   1  'Graphical
          TabIndex        =   38
          Top             =   4200
          Width           =   2295
@@ -703,7 +707,7 @@ If Check3.Value = 1 Then
     strAnalog_ = "analog/"
     
 End If
-frmCreateTestplan.Show
+frmCreateTestplan.Show 1
 End Sub
 
 Private Sub cmdBom8Ge_Click()
@@ -1273,6 +1277,7 @@ If bTwoBom = True Then
       Msg4.Caption = "_ compare ok!"
       Frame3.Enabled = True
         Call Kill_File
+        Call Bom1_2_To_CSV
     MsgBox l1.Caption & " and " & l2.Caption & " compare ok!", vbInformation
      Option1.Enabled = True
      Option2.Enabled = True
@@ -1286,6 +1291,7 @@ If bTwoBom = True Then
      'Option2.Enabled = False
      cmdBom8GeVer.Enabled = True
      Frame2.Enabled = True
+       RmDir PrmPath & "BomCompare\CvsBom1"
 End If
 
 End Sub
@@ -1314,7 +1320,7 @@ End If
 'open bom1 file
    Kill PrmPath & "BomCompare\Bom_2\*.*"
       Open PrmPath & "BomCompare\Bom1_and_Bom2_Compare.txt" For Output As #54
-        Print #54, "!============================" & l2.Caption & " file  =True ," & l1.Caption & " file not find devices============================="
+        Print #54, "!=#BOM_1#===========================" & l2.Caption & " file  =True ," & l1.Caption & " file not find devices============================="
    Open strBom2Path For Input As #52
            Do Until EOF(52)
              Line Input #52, strBom2_DeviceName
@@ -1372,7 +1378,7 @@ End If
               
            Loop
  Close #52
-        Print #54, "!============================" & l1.Caption & " file  =True ," & l2.Caption & " file not find devices============================="
+        Print #54, "!=#BOM_2#===========================" & l1.Caption & " file  =True ," & l2.Caption & " file not find devices============================="
  Close #54
         Msg1.Caption = l2.Caption & " file closed!"
         If intDevice_Ge = 0 Then
@@ -1559,9 +1565,9 @@ End If
 Start:
  
  If bRunTestplan = True And bAllVer = True Then
-     cmdOk.Enabled = False
+     cmdOK.Enabled = False
      cmdBoards.Enabled = False
-     cmdOk.Enabled = False
+     cmdOK.Enabled = False
      Check3.Enabled = False
      Check1.Enabled = False
      Check2.Enabled = False
@@ -1598,7 +1604,7 @@ Start:
      Call Kill_File
      Call Kill_Device
       Check3.Enabled = True
-     cmdOk.Enabled = True
+     cmdOK.Enabled = True
      txtBom1.Enabled = True
      txtBom2.Enabled = True
      txtBom3.Enabled = True
@@ -1696,7 +1702,7 @@ Call Kill_File
  
 Msg4.Caption = "Compare analog file end!"
 cmdToVerBoard.Enabled = True
-     cmdOk.Enabled = True
+     cmdOK.Enabled = True
      Check3.Enabled = True
      cmdBoards.Enabled = True
   Option1.Enabled = True
@@ -3098,7 +3104,7 @@ End Sub
  
 
 Private Sub cmdToVerBoard_Click()
-frmBomValue.Show
+frmBomValue.Show 1
 End Sub
 
 Private Sub Command1_Click()
@@ -3106,6 +3112,8 @@ Private Sub Command1_Click()
 frmLibEdit.Show
 Me.Hide
 End Sub
+
+
 
 Private Sub Form_Load()
 On Error Resume Next
@@ -8611,6 +8619,12 @@ On Error GoTo EX
                      
                      
                      Case "SKT"
+                                If CheckIND.Value = 1 Then
+                                   Print #6, strDeviceName; Tab(25); "CLOSED;" '; Tab(35); "PN""" & strDeviceName & """  ;"
+                                   strReadText = "OK"
+                                End If
+                     
+                     
                      Case "CHIP"
                          tmpSTR1 = Trim(Replace(tmpSTR1, TmpStr(0), ""))
                          tmpSTR1 = Trim(tmpSTR1)
@@ -8618,7 +8632,11 @@ On Error GoTo EX
                          DeviceType_A = Trim(TmpStr(0))
                           If Len(DeviceType_A) > 1 Then
                              Select Case Left(DeviceType_A, 3)
-                                 
+                               Case "CHK"
+                                If CheckIND.Value = 1 Then
+                                   Print #6, strDeviceName; Tab(25); "CLOSED;" '; Tab(35); "PN""" & strDeviceName & """  ;"
+                                   strReadText = "OK"
+                                End If
                                Case "CAP"
                                  If bListCatacitor = True Then
                                    tmpSTR1 = Trim(Replace(tmpSTR1, strDeviceName, ""))
@@ -9071,3 +9089,126 @@ End Sub
 Private Sub txtVer_8_LostFocus()
 txtVer_8.Text = UCase(txtVer_8.Text)
 End Sub
+Private Sub Bom1_2_To_CSV()
+On Error Resume Next
+
+Dim strMy As String
+Dim strMyTmp As String
+Dim strFenPei() As String
+Dim strFenPei_2() As String
+Dim strFileName_1 As String
+Dim strFileName_2 As String
+Dim bBom_1 As Boolean
+Dim bBom_2 As Boolean
+Dim strBom1 As String
+Dim strBom2 As String
+Dim strTmp As String
+Dim strOutputStr As String
+strFileName_1 = l1.Caption
+strFileName_2 = l2.Caption
+If strFileName_1 = "" Then strFileName_1 = "Bom1"
+If strFileName_2 = "" Then strFileName_2 = "Bom2"
+MkDir PrmPath & "BomCompare\CvsBom1"
+'MkDir PrmPath & "BomCompare\CvsBom2"
+  Open PrmPath & "BomCompare\CvsBom1\tmpReadAll.dll" For Output As #3
+  Open PrmPath & "BomCompare\Bom1_and_Bom2_Compare.txt" For Input As #2
+    Do Until EOF(2)
+       Line Input #2, strMy
+          strMy = Replace(strMy, Chr(9), " ")
+          strMyTmp = strMy
+          strMy = UCase(Trim(strMy))
+          
+          If strMy <> "" Then
+             If Left(strMy, 10) = "!=#BOM_1#=" Then
+                bBom_1 = True
+                bBom_2 = False
+                
+             End If
+             If Left(strMy, 10) = "!=#BOM_2#=" Then
+                bBom_2 = True
+                bBom_1 = False
+             End If
+             
+             
+             strMyTmp = DelSpace(strMyTmp)
+             strFenPei = Split(strMyTmp, " ")
+             If bBom_1 = True And Left(strMy, 10) <> "!=#BOM_1#=" Then
+                If Dir(PrmPath & "BomCompare\CvsBom1\" & Trim(strFenPei(UBound(strFenPei)))) = "" Then
+                      Open PrmPath & "BomCompare\CvsBom1\" & Trim(strFenPei(UBound(strFenPei))) For Output As #4
+                      Print #3, Trim(strFenPei(UBound(strFenPei)))
+                    Else
+                      Open PrmPath & "BomCompare\CvsBom1\" & Trim(strFenPei(UBound(strFenPei))) For Append As #4
+                End If
+                 '  strOutputStr = Replace(strMyTmp, strFenPei(0), "")
+                   strOutputStr = Replace(strMy, strFenPei(UBound(strFenPei)), "")
+                   strOutputStr = Trim(strOutputStr)
+                   Print #4, "#Bom_1#," & strOutputStr
+                Close #4
+                
+             End If
+             
+             If bBom_2 = True And Left(strMy, 10) <> "!=#BOM_2#=" Then
+                If Dir(PrmPath & "BomCompare\CvsBom1\" & Trim(strFenPei(UBound(strFenPei)))) = "" Then
+                      Open PrmPath & "BomCompare\CvsBom1\" & Trim(strFenPei(UBound(strFenPei))) For Output As #4
+                       Print #3, Trim(strFenPei(UBound(strFenPei)))
+                    Else
+                      Open PrmPath & "BomCompare\CvsBom1\" & Trim(strFenPei(UBound(strFenPei))) For Append As #4
+                End If
+                 '  strOutputStr = Replace(strMyTmp, strFenPei(0), "")
+                   strOutputStr = Replace(strMy, strFenPei(UBound(strFenPei)), "")
+                   strOutputStr = Trim(strOutputStr)
+                   Print #4, "#Bom_2#," & strOutputStr
+                Close #4
+             End If
+             
+          End If
+          DoEvents
+          Erase strFenPei
+          strOutputStr = ""
+          strMy = ""
+          strMyTmp = ""
+    Loop
+  Close #2
+  Close #3
+  Open PrmPath & "BomCompare\Bom1_and_Bom2_Compare.csv" For Output As #3
+    Print #3, "DeviceName," & strFileName_2 & "__PartNumber," & strFileName_1 & "__PartNumber"
+  Open PrmPath & "BomCompare\CvsBom1\tmpReadAll.dll" For Input As #2
+    Do Until EOF(2)
+       Line Input #2, strMy
+          strMy = UCase(Trim(strMy))
+          If strMy <> "" Then
+             Open PrmPath & "BomCompare\CvsBom1\" & strMy For Input As #4
+                Do Until EOF(4)
+                    Line Input #4, strTmp
+                    strFenPei_2 = Split(strTmp, ",")
+                    If strFenPei_2(0) = "#Bom_1#" Then
+                       strBom1 = strFenPei_2(1)
+                    End If
+                     If strFenPei_2(0) = "#Bom_2#" Then
+                       strBom2 = strFenPei_2(1)
+                    End If
+               Loop
+             Close #4
+            If Trim(strBom1) = "" Then strBom1 = "N/A"
+            If Trim(strBom2) = "" Then strBom2 = "N/A"
+            Print #3, strMy & "," & strBom1 & "," & strBom2
+            strBom1 = ""
+            strBom2 = ""
+            strTmp = ""
+          End If
+    Loop
+  Close #2
+  Close #3
+  Kill PrmPath & "BomCompare\CvsBom1\*.*"
+  RmDir PrmPath & "BomCompare\CvsBom1"
+End Sub
+Private Function DelSpace(strL As String)
+        
+        Do
+            strlB = Replace(strL, "  ", " ")
+            If strL = strlB Then Exit Do
+            strL = strlB
+        Loop
+        DelSpace = strL
+End Function
+

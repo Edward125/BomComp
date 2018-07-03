@@ -74,8 +74,9 @@ Dim strTestplanPath As String
 Dim bRunTestplan As Boolean
 
 Private Sub cmdCancel_Click()
-frmMain.Show
 Unload Me
+frmMain.Show
+
 End Sub
 
 Private Sub comGo_Click()
@@ -165,25 +166,34 @@ Msg1(0).Caption = "Reading testplan file..."
                   End If
                     tmptext = Replace(LCase(Mystr), " ", "")
                         If InStr(tmptext, "onboardsboardset_boards_") <> 0 And InStr(Mystr, "test ") <> 0 And bSubAnalog = True And InStr(Mystr, strAnalog_) <> 0 Then
-                           'BoardsNumber = Right(Trim(Replace(tmptext, "(*)", "")), 1)
+                            
                            tmptext = Right(tmptext, (Len(tmptext) - InStr(tmptext, "onboardsboardset_boards_")) + 1)
                            tmptext = Replace(LCase(tmptext), "onboardsboardset_boards_", "")
+                           BoardNumber2 = Trim(Replace(LCase(tmptext), "(*)", ""))
+                            Dim strFenPei() As String
+                            strFenPei = Split(BoardNumber2, "_to_")
+                            BoardNumber2 = strFenPei(UBound(strFenPei))
                            tmptext = Replace(LCase(tmptext), "to_", "")
                            tmptext = Left(tmptext, InStr(tmptext, "_"))
-                           BoardsNumber = Trim(Replace(LCase(tmptext), "_", ""))
-                                              
+                            BoardsNumber = Trim(Replace(LCase(tmptext), "_", ""))
+                            
                                 If BoardsNumber <> "" Then
                                       If Left(Mystr, 1) = "!" And InStr(Replace(Mystr, " ", ""), "testcommentedintestorder") <> 0 Then
                                          
                                          Mystr = Replace(Mystr, " ", "")
                                          Mystr = Replace(Mystr, "testcommentedintestorder", "")
-                                         Mystr = Replace(Mystr, "onboardsboardset_boards_" & BoardsNumber & "_to_" & BoardsNumber & "(*)", "")
+                                       '  Mystr = Replace(Mystr, "onboardsboardset_boards_" & BoardsNumber & "_to_" & BoardsNumber & "(*)", "")
+                                       ' !tmp add great====================================
+                                        '  For uuu = 1 To 100
+                                            Mystr = Replace(Mystr, "onboardsboardset_boards_" & BoardsNumber & "_to_" & BoardNumber2 & "(*)", "")
+                                        '  Next
+                                       '============================================================
                                          Mystr = Replace(Mystr, "!", "")
                                          Mystr = Replace(Mystr, "test", "test ")
                                          Mystr = "!   " & Mystr & "  ! test commented in testorder"
                                            If Dir(PrmPath & "BomCompare\Panel_boards_testplan\Testplan_Board_Number_" & BoardsNumber & ".vb_Create") = "" Then
                                               Open PrmPath & "BomCompare\Panel_boards_testplan\Testplan_Board_Number_" & BoardsNumber & ".vb_Create" For Output As #3
-                                                 Print #3, "sub Analog_Tests" & ",on boards BoardSet_boards_" & BoardsNumber & "_to_" & BoardsNumber & "(*)"
+                                                 Print #3, "sub Analog_Tests" & ",on boards BoardSet_boards_" & BoardsNumber & "_to_" & BoardNumber2 & "(*)"
                                                  Print #3, "     " & Mystr
                                               Close #3
                                              Else
@@ -197,11 +207,17 @@ Msg1(0).Caption = "Reading testplan file..."
                                
                            If BoardsNumber <> "" Then
                                     Mystr = Replace(Mystr, " ", "")
-                                    Mystr = Replace(Mystr, "onboardsboardset_boards_" & BoardsNumber & "_to_" & BoardsNumber & "(*)", "")
+                                   ' Mystr = Replace(Mystr, "onboardsboardset_boards_" & BoardsNumber & "_to_" & BoardsNumber & "(*)", "")
+                                       ' !tmp add great====================================
+                                        '  For uuu = 1 To 100
+                                            Mystr = Replace(Mystr, "onboardsboardset_boards_" & BoardsNumber & "_to_" & BoardNumber2 & "(*)", "")
+                                        '  Next
+                                       '============================================================
+                                    
                                     Mystr = Replace(Mystr, "test", "test ")
                                     If Dir(PrmPath & "BomCompare\Panel_boards_testplan\Testplan_Board_Number_" & BoardsNumber & ".vb_Create") = "" Then
                                          Open PrmPath & "BomCompare\Panel_boards_testplan\Testplan_Board_Number_" & BoardsNumber & ".vb_Create" For Output As #3
-                                            Print #3, "sub Analog_Tests " & ",on boards BoardSet_boards_" & BoardsNumber & "_to_" & BoardsNumber & "(*)"
+                                            Print #3, "sub Analog_Tests " & ",on boards BoardSet_boards_" & BoardsNumber & "_to_" & BoardNumber2 & "(*)"
                                             Print #3, "     " & Mystr
                                          Close #3
                                         Else
