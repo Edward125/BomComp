@@ -1,17 +1,17 @@
 VERSION 5.00
-Object = "{F9043C88-F6F2-101A-A3C9-08002B2F49FB}#1.2#0"; "comdlg32.ocx"
+Object = "{F9043C88-F6F2-101A-A3C9-08002B2F49FB}#1.2#0"; "COMDLG32.OCX"
 Begin VB.Form frmBomValue 
    Caption         =   "Read BOM device value to 3070board format..1.0"
-   ClientHeight    =   4275
+   ClientHeight    =   3450
    ClientLeft      =   60
    ClientTop       =   345
    ClientWidth     =   8145
+   Icon            =   "frmMain.frx":0000
    LinkTopic       =   "Form1"
-   LockControls    =   -1  'True
    MaxButton       =   0   'False
-   ScaleHeight     =   4275
+   ScaleHeight     =   3450
    ScaleWidth      =   8145
-   StartUpPosition =   2  'ÆÁÄ»ÖÐÐÄ
+   StartUpPosition =   2  'CenterScreen
    Begin VB.Frame Frame1 
       Height          =   855
       Left            =   120
@@ -110,36 +110,11 @@ Begin VB.Form frmBomValue
       _Version        =   393216
    End
    Begin VB.Frame Frame2 
-      Height          =   2655
+      Height          =   1815
       Left            =   120
       TabIndex        =   9
       Top             =   1560
       Width           =   7935
-      Begin MSComDlg.CommonDialog CommonDialog2 
-         Left            =   6840
-         Top             =   2160
-         _ExtentX        =   847
-         _ExtentY        =   847
-         _Version        =   393216
-      End
-      Begin VB.CheckBox Check1 
-         Caption         =   "Output Agilent 3070 Version Board Format File."
-         BeginProperty Font 
-            Name            =   "MS Sans Serif"
-            Size            =   13.5
-            Charset         =   0
-            Weight          =   400
-            Underline       =   0   'False
-            Italic          =   0   'False
-            Strikethrough   =   0   'False
-         EndProperty
-         ForeColor       =   &H00C00000&
-         Height          =   495
-         Left            =   240
-         TabIndex        =   29
-         Top             =   1680
-         Width           =   6375
-      End
       Begin VB.CommandButton Command1 
          Caption         =   "x"
          BeginProperty Font 
@@ -445,6 +420,10 @@ Dim strRL As String
 Dim strDH As String
 Dim strDL As String
 
+Private Sub Check1_Click()
+    
+End Sub
+
 Private Sub CheckJumper_Click()
 If CheckJumper.Value = 1 Then
   txtJumper.Enabled = True
@@ -468,7 +447,7 @@ End Sub
 
 Private Sub Command1_Click()
 Unload Me
- 
+End
 End Sub
 
 Private Sub Form_Load()
@@ -496,7 +475,6 @@ Dim strCAP() As String
 Dim strRES() As String
 Dim strReadText As String
 Dim LowToJumper
-Dim strDeviceNomber As String
 Dim bListPinLib As Boolean
 strCH = txtCH.Text
 strCL = txtCL.Text
@@ -538,28 +516,28 @@ On Error GoTo EX
   '   Print #7, Now
    '   Print #7,
    Open PrmPath & "ReadBomValue\Jumper.txt" For Output As #6
-    ' Print #6, Now
+     Print #6, Now
       Print #6,
    If bListCatacitor = True Then
-      Open PrmPath & "ReadBomValue\Capacitor.txt" For Output As #2
-      'Print #2, Now
+      Open PrmPath & "ReadBomValue\Catacitor.txt" For Output As #2
+      Print #2, Now
       Print #2,
    End If
    If bListResistor = True Then
       Open PrmPath & "ReadBomValue\Resistor.txt" For Output As #4
-     ' Print #4, Now
+      Print #4, Now
       Print #4,
    End If
    If bListDiode = True Then
       Open PrmPath & "ReadBomValue\Diode.txt" For Output As #8
-    '  Print #8, Now
+      Print #8, Now
       Print #8,
    
    End If
    
  If bListPinLib = True Then
-      Open PrmPath & "ReadBomValue\Pin Library.txt" For Output As #9
-   '   Print #9, Now
+      Open PrmPath & "ReadBomValue\Pin Linrary.txt" For Output As #9
+      Print #9, Now
       Print #9,
    
    End If
@@ -567,7 +545,7 @@ On Error GoTo EX
    
    
       Open PrmPath & "ReadBomValue\Unknow.txt" For Output As #5
-      '   Print #5, Now
+         Print #5, Now
          Print #5,
       Close #5
    Open Trim(txtBomPath.Text) For Input As #1
@@ -576,10 +554,9 @@ On Error GoTo EX
          strReadText = Mystr
            Mystr = Trim(UCase(Mystr))
            
-             If Mystr <> "" And Left(Mystr, 1) <> "!" Then
+             If Mystr <> "" Then
                 If Left(Mystr, 1) <> "-" Then
                   TmpStr = Split(Mystr, " ")
-                  strDeviceNomber = Trim(TmpStr(0))
                   strDeviceName = TmpStr(UBound(TmpStr))
                   tmpSTR1 = Trim(tmpSTR1)
                   tmpSTR1 = Trim(Replace(Mystr, TmpStr(0), ""))
@@ -594,7 +571,7 @@ On Error GoTo EX
                      Case "BOSS"
                      Case "2HIP"
                                 If CheckIND.Value = 1 Then
-                                   Print #6, strDeviceName; Tab(25); "CLOSED;" '; Tab(35); "PN""" & strDeviceName & """  ;"
+                                   Print #6, strDeviceName; Tab(25); "CLOSED"; Tab(35); "PN""" & strDeviceName & """  ;"
                                    strReadText = "OK"
                                 End If
                      
@@ -665,7 +642,7 @@ On Error GoTo EX
                                            
                                            LowToJumper = Val(txtJumper.Text)
                                         If RValue1 < LowToJumper Then
-                                           Print #6, strDeviceName; Tab(25); "CLOSED;" '; Tab(35); ' "PN""" & strDeviceName & """  ;      !BOM Value: " & RValue
+                                           Print #6, strDeviceName; Tab(25); "CLOSED"; Tab(35); "PN""" & strDeviceName & """  ;      !BOM Value: " & RValue
                                            strReadText = "OK"
                                            Else
                                              Print #4, strDeviceName; Tab(25); RValue; Tab(35); strRH; Tab(40); strRL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
@@ -682,36 +659,36 @@ On Error GoTo EX
                                  End If
                                Case "LED"
                                    If bListPinLib = True Then
-                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceName & """  ;"
                                        strReadText = "OK"
                                    End If
                                   
                                   
                                Case "FUS"
                                 If CheckIND.Value = 1 Then
-                                   Print #6, strDeviceName; Tab(25); "CLOSED;" '; Tab(35); "PN""" & strDeviceName & """  ;"
+                                   Print #6, strDeviceName; Tab(25); "CLOSED"; Tab(35); "PN""" & strDeviceName & """  ;"
                                    strReadText = "OK"
                                 End If
                                Case "NTW"
                                    If bListPinLib = True Then
-                                        Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                        Print #9, strDeviceName; Tab(25); "PN""" & strDeviceName & """  ;"
                                       strReadText = "OK"
                                    End If
                                Case "BEA"
                                    If CheckIND.Value = 1 Then
-                                       Print #6, strDeviceName; Tab(25); "CLOSED;" ' ;Tab(35); "PN""" & strDeviceName & """  ;"
+                                       Print #6, strDeviceName; Tab(25); "CLOSED"; Tab(35); "PN""" & strDeviceName & """  ;"
                                        strReadText = "OK"
                                     End If
                                
                                Case "CHO"
                                    If CheckIND.Value = 1 Then
-                                       Print #6, strDeviceName; Tab(25); "CLOSED;" '; Tab(35); "PN""" & strDeviceName & """  ;"
+                                       Print #6, strDeviceName; Tab(25); "CLOSED"; Tab(35); "PN""" & strDeviceName & """  ;"
                                        strReadText = "OK"
                                     End If
                                
                                Case "IND"
                                 If CheckIND.Value = 1 Then
-                                   Print #6, strDeviceName; Tab(25); "CLOSED;" '; Tab(35); "PN""" & strDeviceName & """  ;"
+                                   Print #6, strDeviceName; Tab(25); "CLOSED"; Tab(35); "PN""" & strDeviceName & """  ;"
                                    strReadText = "OK"
                                 End If
                                 
@@ -816,12 +793,12 @@ On Error GoTo EX
                           End If 'Len(DeviceType_A) > 1
                      Case "IC"
                                    If bListPinLib = True Then
-                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceName & """  ;"
                                        strReadText = "OK"
                                    End If
                      Case "XFORM"
                                    If bListPinLib = True Then
-                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceName & """  ;"
                                        strReadText = "OK"
                                    End If
                      
@@ -842,7 +819,7 @@ On Error GoTo EX
                                            
                                            LowToJumper = Val(txtJumper.Text)
                                         If RValue1 < LowToJumper Then
-                                           Print #6, strDeviceName; Tab(25); "CLOSED;" '; Tab(35); "PN""" & strDeviceName & """  ;      !BOM Value: " & RValue
+                                           Print #6, strDeviceName; Tab(25); "CLOSED"; Tab(35); "PN""" & strDeviceName & """  ;      !BOM Value: " & RValue
                                            strReadText = "OK"
                                            Else
                                              Print #4, strDeviceName; Tab(25); RValue; Tab(35); strRH; Tab(40); strRL; Tab(45); Tab(50); "f    PN""" & strDeviceName & """    ;"
@@ -867,19 +844,19 @@ On Error GoTo EX
                      Case "IR"
                        
                                    If bListPinLib = True Then
-                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceName & """  ;"
                                       strReadText = "OK"
                                    End If
                      Case "RESO"
                                    If bListPinLib = True Then
-                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceName & """  ;"
                                        strReadText = "OK"
                                    End If
                        
                      Case "XTAL"
                      
                                    If bListPinLib = True Then
-                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceName & """  ;"
                                       strReadText = "OK"
                                    End If
                      
@@ -897,30 +874,30 @@ On Error GoTo EX
                      
                      Case "LED"
                                    If bListPinLib = True Then
-                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceName & """  ;"
                                        strReadText = "OK"
                                    End If
                      
                      
                      Case "XTOR"
                                    If bListPinLib = True Then
-                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                                       Print #9, strDeviceName; Tab(25); "PN""" & strDeviceName & """  ;"
                                    
                                       strReadText = "OK"
                                    
                                    End If
                      Case "FET"
                       If bListPinLib = True Then
-                           Print #9, strDeviceName; Tab(25); "PN""" & strDeviceNomber & """  ;"
+                           Print #9, strDeviceName; Tab(25); "PN""" & strDeviceName & """  ;"
                            strReadText = "OK"
                       
                       End If
                      Case "STANDOFF"
 
-'                                If CheckIND.Value = 1 Then
-'                                   Print #6, strDeviceName; Tab(25); "OPEN"; Tab(35); "PN""" & strDeviceName & """  ;"
-'                                   strReadText = "OK"
-'                                End If
+                                If CheckIND.Value = 1 Then
+                                   Print #6, strDeviceName; Tab(25); "CLOSED"; Tab(35); "PN""" & strDeviceName & """  ;"
+                                   strReadText = "OK"
+                                End If
                      
                   End Select
 
@@ -942,7 +919,6 @@ On Error GoTo EX
             CValue = ""
             RValue = ""
              RValue1 = ""
-             strDeviceNomber = ""
       Loop
    Close #1
    If bListCatacitor = True Then
@@ -968,11 +944,6 @@ On Error GoTo EX
 Exit Sub
 EX:
 MsgBox Err.Description, vbCritical
-
-End Sub
-
-Private Sub Form_Unload(Cancel As Integer)
-Unload Me
 
 End Sub
 

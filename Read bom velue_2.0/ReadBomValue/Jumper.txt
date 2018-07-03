@@ -1,0 +1,67 @@
+2009/11/23 ¤W¤È 01:13:29 
+
+H20                     CLOSED    PN"H20"  ;
+R27                     CLOSED    PN"R27"  ;      !BOM Value: 0
+R258                    CLOSED    PN"R258"  ;      !BOM Value: 0
+R14                     CLOSED    PN"R14"  ;      !BOM Value: 0
+R4                      CLOSED    PN"R4"  ;      !BOM Value: 10
+R18                     CLOSED    PN"R18"  ;      !BOM Value: 10
+R13                     CLOSED    PN"R13"  ;      !BOM Value: 10
+R514                    CLOSED    PN"R514"  ;      !BOM Value: 10
+R346                    CLOSED    PN"R346"  ;      !BOM Value: 10
+R214                    CLOSED    PN"R214"  ;      !BOM Value: 10
+R199                    CLOSED    PN"R199"  ;      !BOM Value: 10
+R19                     CLOSED    PN"R19"  ;      !BOM Value: 3.3
+R133                    CLOSED    PN"R133"  ;      !BOM Value: 3.3
+R123                    CLOSED    PN"R123"  ;      !BOM Value: 3.3
+R481                    CLOSED    PN"R481"  ;      !BOM Value: 5.1
+R528                    CLOSED    PN"R528"  ;      !BOM Value: 0
+R490                    CLOSED    PN"R490"  ;      !BOM Value: 0
+R450                    CLOSED    PN"R450"  ;      !BOM Value: 0
+R433                    CLOSED    PN"R433"  ;      !BOM Value: 0
+R292                    CLOSED    PN"R292"  ;      !BOM Value: 0
+R194                    CLOSED    PN"R194"  ;      !BOM Value: 0
+R129                    CLOSED    PN"R129"  ;      !BOM Value: 0
+R254                    CLOSED    PN"R254"  ;      !BOM Value: 0
+R392                    CLOSED    PN"R392"  ;      !BOM Value: 0
+R445                    CLOSED    PN"R445"  ;      !BOM Value: 0
+R489                    CLOSED    PN"R489"  ;      !BOM Value: 0
+R513                    CLOSED    PN"R513"  ;      !BOM Value: 0
+R33                     CLOSED    PN"R33"  ;      !BOM Value: 1
+R256                    CLOSED    PN"R256"  ;      !BOM Value: 1
+R32                     CLOSED    PN"R32"  ;      !BOM Value: 1
+R52                     CLOSED    PN"R52"  ;      !BOM Value: 0.01
+R16                     CLOSED    PN"R16"  ;      !BOM Value: 0.01
+R503                    CLOSED    PN"R503"  ;
+L42                     CLOSED    PN"L42"  ;
+L40                     CLOSED    PN"L40"  ;
+L41                     CLOSED    PN"L41"  ;
+L43                     CLOSED    PN"L43"  ;
+R501                    CLOSED    PN"R501"  ;
+L4                      CLOSED    PN"L4"  ;
+L2                      CLOSED    PN"L2"  ;
+L1                      CLOSED    PN"L1"  ;
+L7                      CLOSED    PN"L7"  ;
+L26                     CLOSED    PN"L26"  ;
+L24                     CLOSED    PN"L24"  ;
+L11                     CLOSED    PN"L11"  ;
+L10                     CLOSED    PN"L10"  ;
+L23                     CLOSED    PN"L23"  ;
+L25                     CLOSED    PN"L25"  ;
+L33                     CLOSED    PN"L33"  ;
+L6                      CLOSED    PN"L6"  ;
+L34                     CLOSED    PN"L34"  ;
+L9                      CLOSED    PN"L9"  ;
+L8                      CLOSED    PN"L8"  ;
+L36                     CLOSED    PN"L36"  ;
+L12                     CLOSED    PN"L12"  ;
+L27                     CLOSED    PN"L27"  ;
+L14                     CLOSED    PN"L14"  ;
+L37                     CLOSED    PN"L37"  ;
+L39                     CLOSED    PN"L39"  ;
+L38                     CLOSED    PN"L38"  ;
+L20                     CLOSED    PN"L20"  ;
+L22                     CLOSED    PN"L22"  ;
+L19                     CLOSED    PN"L19"  ;
+L21                     CLOSED    PN"L21"  ;
+F2                      CLOSED    PN"F2"  ;
