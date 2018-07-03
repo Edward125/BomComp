@@ -1,0 +1,59 @@
+2010/1/26 ¤U¤È 06:15:53 
+
+PR5003                  CLOSED    PN"PR5003"  ;      !BOM Value: 0
+PR4755                  CLOSED    PN"PR4755"  ;      !BOM Value: 0
+PR5306                  CLOSED    PN"PR5306"  ;      !BOM Value: 10
+R6901                   CLOSED    PN"R6901"  ;      !BOM Value: 10
+R3913                   CLOSED    PN"R3913"  ;      !BOM Value: 10
+R2220                   CLOSED    PN"R2220"  ;      !BOM Value: 10
+PR5315                  CLOSED    PN"PR5315"  ;      !BOM Value: 1
+PR4901                  CLOSED    PN"PR4901"  ;      !BOM Value: 2.2
+PR4812                  CLOSED    PN"PR4812"  ;      !BOM Value: 2.2
+PR4767                  CLOSED    PN"PR4767"  ;      !BOM Value: 2.2
+PR4735                  CLOSED    PN"PR4735"  ;      !BOM Value: 2.2
+PR5006                  CLOSED    PN"PR5006"  ;      !BOM Value: 5.1
+R3747                   CLOSED    PN"R3747"  ;      !BOM Value: 0
+R926                    CLOSED    PN"R926"  ;      !BOM Value: 0
+R924                    CLOSED    PN"R924"  ;      !BOM Value: 0
+R921                    CLOSED    PN"R921"  ;      !BOM Value: 0
+R909                    CLOSED    PN"R909"  ;      !BOM Value: 0
+R7420                   CLOSED    PN"R7420"  ;      !BOM Value: 0
+R7419                   CLOSED    PN"R7419"  ;      !BOM Value: 0
+R7418                   CLOSED    PN"R7418"  ;      !BOM Value: 0
+R7417                   CLOSED    PN"R7417"  ;      !BOM Value: 0
+R5596                   CLOSED    PN"R5596"  ;      !BOM Value: 0
+R5595                   CLOSED    PN"R5595"  ;      !BOM Value: 0
+R5594                   CLOSED    PN"R5594"  ;      !BOM Value: 0
+R5593                   CLOSED    PN"R5593"  ;      !BOM Value: 0
+R5592                   CLOSED    PN"R5592"  ;      !BOM Value: 0
+R5423                   CLOSED    PN"R5423"  ;      !BOM Value: 0
+R5422                   CLOSED    PN"R5422"  ;      !BOM Value: 0
+R5421                   CLOSED    PN"R5421"  ;      !BOM Value: 0
+R5420                   CLOSED    PN"R5420"  ;      !BOM Value: 0
+R3912                   CLOSED    PN"R3912"  ;      !BOM Value: 0
+R3751                   CLOSED    PN"R3751"  ;      !BOM Value: 0
+R3730                   CLOSED    PN"R3730"  ;      !BOM Value: 0
+R3703                   CLOSED    PN"R3703"  ;      !BOM Value: 0
+PR4809                  CLOSED    PN"PR4809"  ;      !BOM Value: 1
+PR4803                  CLOSED    PN"PR4803"  ;      !BOM Value: 1
+PR4769                  CLOSED    PN"PR4769"  ;      !BOM Value: 1
+PR4760                  CLOSED    PN"PR4760"  ;      !BOM Value: 1
+PR4607                  CLOSED    PN"PR4607"  ;      !BOM Value: 2.2
+PR4605                  CLOSED    PN"PR4605"  ;      !BOM Value: 4.7
+PR4604                  CLOSED    PN"PR4604"  ;      !BOM Value: 4.7
+L3701                   CLOSED    PN"L3701"  ;
+L5503                   CLOSED    PN"L5503"  ;
+L5502                   CLOSED    PN"L5502"  ;
+L5501                   CLOSED    PN"L5501"  ;
+L7702                   CLOSED    PN"L7702"  ;
+TR6305                  CLOSED    PN"TR6305"  ;
+TR6304                  CLOSED    PN"TR6304"  ;
+TR6301                  CLOSED    PN"TR6301"  ;
+L7301                   CLOSED    PN"L7301"  ;
+L2603                   CLOSED    PN"L2603"  ;
+L2703                   CLOSED    PN"L2703"  ;
+L2702                   CLOSED    PN"L2702"  ;
+PL5001                  CLOSED    PN"PL5001"  ;
+PL4602                  CLOSED    PN"PL4602"  ;
+PL4601                  CLOSED    PN"PL4601"  ;
+L2604                   CLOSED    PN"L2604"  ;
