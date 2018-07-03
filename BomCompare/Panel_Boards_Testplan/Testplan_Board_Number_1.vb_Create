@@ -1,0 +1,9 @@
+sub Analog_Tests ,on boards BoardSet_boards_1_to_1(*)
+      !   test "analog/hdmi1%r1"  ! test commented in testorder
+     !   test "analog/hdmi1%r2"  ! test commented in testorder
+     !test "analog/d19%cr1" ! test commented in testorder
+     !test "analog/d19%cr2" ! test commented in testorder
+    ! test "analog/d20%cr1" ! test commented in testorder
+    ! test "analog/d22%cr1" ! test commented in testorder
+   !  test "analog/d22%cr2" ! test commented in testorder
+ 

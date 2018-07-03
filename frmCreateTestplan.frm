@@ -80,6 +80,8 @@ End Sub
 
 Private Sub comGo_Click()
  On Error Resume Next
+  Kill PrmPath & "BomCompare\Panel_Boards_Testplan\*.*"
+ 
  If bRunTestplan = True Then
      comGo.Enabled = False
 
@@ -106,7 +108,7 @@ On Error Resume Next
 PrmPath = App.Path
 If Right(PrmPath, 1) <> "\" Then PrmPath = PrmPath & "\"
 MkDir PrmPath & "BomCompare"
-MkDir PrmPath & "BomCompare\Boards_Testplan"
+MkDir PrmPath & "BomCompare\Panel_Boards_Testplan"
 
 
 
@@ -122,7 +124,7 @@ Dim i 'As Integer
 Dim t 'As Integer
 Dim BoardsNumber
 On Error Resume Next
-Kill PrmPath & "BomCompare\Boards_Testplan\*.*"
+Kill PrmPath & "BomCompare\Panel_boards_testplan\*.*"
 
 strTestplanPath = Trim(txtTestplan.Text)
 If Dir(strTestplanPath) = "" Then
@@ -148,10 +150,17 @@ msg1(0).Caption = "Reading testplan file..."
        Line Input #1, Mystr
          Mystr = LCase(Trim(Mystr))
          If Mystr <> "" Then
+         
                   If InStr(Replace(LCase(Mystr), " ", ""), "subanalog_tests(") <> 0 Then
                      bSubAnalog = True
                   End If
-                  If InStr(Replace(LCase(Mystr), " ", ""), "subend(") <> 0 Then
+                   If LCase(Trim(Mystr)) = "subend" And bSubAnalog = True Then
+                       Exit Do
+                   End If
+                   If Left(LCase(Trim(Mystr)), 6) = "subend" And bSubAnalog = True Then
+                       Exit Do
+                   End If
+                  If InStr(Replace(LCase(Mystr), " ", ""), "subend(") <> 0 And bSubAnalog = True Then
                       Exit Do
                   End If
                     tmptext = Replace(LCase(Mystr), " ", "")
@@ -172,13 +181,13 @@ msg1(0).Caption = "Reading testplan file..."
                                          Mystr = Replace(Mystr, "!", "")
                                          Mystr = Replace(Mystr, "test", "test ")
                                          Mystr = "!   " & Mystr & "  ! test commented in testorder"
-                                           If Dir(PrmPath & "BomCompare\Boards_Testplan\Testplan_Board_Number_" & BoardsNumber & ".vb_Create") = "" Then
-                                              Open PrmPath & "BomCompare\Boards_Testplan\Testplan_Board_Number_" & BoardsNumber & ".vb_Create" For Output As #3
+                                           If Dir(PrmPath & "BomCompare\Panel_boards_testplan\Testplan_Board_Number_" & BoardsNumber & ".vb_Create") = "" Then
+                                              Open PrmPath & "BomCompare\Panel_boards_testplan\Testplan_Board_Number_" & BoardsNumber & ".vb_Create" For Output As #3
                                                  Print #3, "sub Analog_Tests" & ",on boards BoardSet_boards_" & BoardsNumber & "_to_" & BoardsNumber & "(*)"
                                                  Print #3, "     " & Mystr
                                               Close #3
                                              Else
-                                              Open PrmPath & "BomCompare\Boards_Testplan\Testplan_Board_Number_" & BoardsNumber & ".vb_Create" For Append As #3
+                                              Open PrmPath & "BomCompare\Panel_boards_testplan\Testplan_Board_Number_" & BoardsNumber & ".vb_Create" For Append As #3
                                                  Print #3, "     " & Mystr
                                               Close #3
                                            End If
@@ -190,13 +199,13 @@ msg1(0).Caption = "Reading testplan file..."
                                     Mystr = Replace(Mystr, " ", "")
                                     Mystr = Replace(Mystr, "onboardsboardset_boards_" & BoardsNumber & "_to_" & BoardsNumber & "(*)", "")
                                     Mystr = Replace(Mystr, "test", "test ")
-                                    If Dir(PrmPath & "BomCompare\Boards_Testplan\Testplan_Board_Number_" & BoardsNumber & ".vb_Create") = "" Then
-                                         Open PrmPath & "BomCompare\Boards_Testplan\Testplan_Board_Number_" & BoardsNumber & ".vb_Create" For Output As #3
+                                    If Dir(PrmPath & "BomCompare\Panel_boards_testplan\Testplan_Board_Number_" & BoardsNumber & ".vb_Create") = "" Then
+                                         Open PrmPath & "BomCompare\Panel_boards_testplan\Testplan_Board_Number_" & BoardsNumber & ".vb_Create" For Output As #3
                                             Print #3, "sub Analog_Tests " & ",on boards BoardSet_boards_" & BoardsNumber & "_to_" & BoardsNumber & "(*)"
                                             Print #3, "     " & Mystr
                                          Close #3
                                         Else
-                                         Open PrmPath & "BomCompare\Boards_Testplan\Testplan_Board_Number_" & BoardsNumber & ".vb_Create" For Append As #3
+                                         Open PrmPath & "BomCompare\Panel_boards_testplan\Testplan_Board_Number_" & BoardsNumber & ".vb_Create" For Append As #3
                                             Print #3, "     " & Mystr
                                          Close #3
                                     End If
@@ -225,7 +234,7 @@ msg1(0).Caption = "Reading testplan file..."
     msg1(0).Caption = "Testplan closed! & boards testplan create ok!"
     
    bSubAnalog = False
-   MsgBox "Boards testplan create ok! In " & PrmPath & "BomCompare\Boards_Testplan\", vbInformation
+   MsgBox "Boards testplan create ok! In " & PrmPath & "BomCompare\Panel_boards_testplan\", vbInformation
 End Sub
 
 

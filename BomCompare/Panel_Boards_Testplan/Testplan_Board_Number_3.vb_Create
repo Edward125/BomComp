@@ -1,0 +1,26 @@
+sub Analog_Tests,on boards BoardSet_boards_3_to_3(*)
+     !   test "analog/c1"  ! test commented in testorder
+     !   test "analog/c4"  ! test commented in testorder
+     !   test "analog/c7"  ! test commented in testorder
+     test "analog/c3"
+     test "analog/tc1"
+     test "analog/c14"
+     test "analog/c13"
+     test "analog/c15"
+     test "analog/c16"
+     test "analog/r1"
+     test "analog/r2"
+     test "analog/r3"
+     !   test "analog/r9"  ! test commented in testorder
+     test "analog/r8"
+     test "analog/d1%cr1"
+     test "analog/d1%cr2"
+     test "analog/d2%cr1"
+     test "analog/d2%cr2"
+     test "analog/d3%cr1"
+     test "analog/d3%cr2"
+     test "analog/u1%cr1"
+     test "analog/u1%cr2"
+     test "analog/u2%cr2"
+     test "analog/u3%cr1"
+     test "analog/u4%cr2"

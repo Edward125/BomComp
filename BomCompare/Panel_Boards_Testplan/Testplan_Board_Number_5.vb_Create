@@ -1,0 +1,8 @@
+sub Analog_Tests ,on boards BoardSet_boards_5_to_5(*)
+     test "analog/c1"
+     test "analog/c2"
+     test "analog/r1"
+     test "analog/r2"
+     test "analog/r3"
+     test "analog/r4"
+     test "analog/r5"

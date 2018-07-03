@@ -1,0 +1,13 @@
+sub Analog_Tests ,on boards BoardSet_boards_6_to_6(*)
+     test "analog/tc1"
+     !   test "analog/r5"  ! test commented in testorder
+     test "analog/d2"
+     test "analog/u1%cr1"
+     test "analog/u1%cr2"
+     test "analog/u1%cr3"
+     test "analog/u1%cr4"
+     test "analog/u1%cr5"
+     test "analog/u1%cr6"
+     test "analog/u1%cr7"
+     test "analog/u1%cr8"
+     test "analog/u1%cr9"
