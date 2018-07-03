@@ -1,7 +1,7 @@
 VERSION 5.00
 Object = "{F9043C88-F6F2-101A-A3C9-08002B2F49FB}#1.2#0"; "comdlg32.ocx"
 Begin VB.Form frmMain 
-   Caption         =   "Testplan and bom version compare (soft version 5.5 great_guo)"
+   Caption         =   "Testplan and bom version compare"
    ClientHeight    =   5760
    ClientLeft      =   165
    ClientTop       =   165
@@ -90,7 +90,7 @@ Begin VB.Form frmMain
          Width           =   2295
       End
       Begin VB.CommandButton cmdBom8Ge 
-         Caption         =   "Bom 1------8 Comp  &GO>>>"
+         Caption         =   "Bom 1------8 Comp"
          Height          =   375
          Left            =   120
          TabIndex        =   34
@@ -552,9 +552,7 @@ Dim a
 
 
  If bAllVer = True Then
-           Option1.Enabled = False
-     Option2.Enabled = False
-     Option3.Enabled = False
+
      txtBom1.Enabled = False
      txtBom2.Enabled = False
      txtBom3.Enabled = False
@@ -693,9 +691,6 @@ Msg4.Caption = "Please wait..."
  
 Msg4.Caption = "Compare file end!"
        cmdBom8Ge.Enabled = True
-      Option1.Enabled = True
-     Option2.Enabled = True
-     Option3.Enabled = True
 
      txtBom1.Enabled = True
      txtBom2.Enabled = True
@@ -734,9 +729,6 @@ End If
 
 Start:
 Frame3.Enabled = False
-     Option1.Enabled = False
-     Option2.Enabled = False
-     Option3.Enabled = False
 If bTwoBom = True Then
     Open PrmPath & "BomCompare\Bom1_and_Bom2_Compare.txt" For Output As #54
     Close #54
@@ -752,9 +744,7 @@ If bTwoBom = True Then
       Frame3.Enabled = True
         Call Kill_File
     MsgBox l1.Caption & " and " & l2.Caption & " compare ok!", vbInformation
-     Option1.Enabled = True
-     Option2.Enabled = True
-     Option3.Enabled = True
+
 End If
 
 End Sub
@@ -791,15 +781,7 @@ End If
                Mystr = LCase(Trim(strBom2_DeviceName))
                If Mystr <> "" Then
                   If Left(Mystr, 1) <> "-" Then
-                 '   strTmp = Split(Mystr, " ")
-                    
-                    
- '!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    strTmp = Split(Replace(Mystr, Chr(9), ""), " ")
-  '!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    
-                    
-                    
+                    strTmp = Split(Mystr, " ")
                       If Trim(strTmp(UBound(strTmp))) <> "" Then
                              'create bom1 analog file
                              If Dir(PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) & ".sh") = "" Then
@@ -872,12 +854,7 @@ End If
                Mystr = LCase(Trim(strBom1_DeviceName))
                If Mystr <> "" Then
                   If Left(Mystr, 1) <> "-" Then
-                  
- '!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    strTmp = Split(Replace(Mystr, Chr(9), ""), " ")
-  '!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    
-                    
+                    strTmp = Split(Mystr, " ")
                       If Trim(strTmp(UBound(strTmp))) <> "" Then
                              'create bom1 analog file
                               Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) & ".sh" For Output As #22
@@ -999,15 +976,10 @@ End If
 Start:
  
  If bRunTestplan = True And bAllVer = True Then
-     cmdOk.Enabled = False
+     comOK.Enabled = False
      cmdBoards.Enabled = False
-     cmdOk.Enabled = False
-     Check3.Enabled = False
      Check1.Enabled = False
      Check2.Enabled = False
-     Option1.Enabled = False
-     Option2.Enabled = False
-     Option3.Enabled = False
      txtBom1.Enabled = False
      txtBom2.Enabled = False
      txtBom3.Enabled = False
@@ -1036,8 +1008,7 @@ Start:
  If bRunTestplan = False Then
      Call Kill_File
      Call Kill_Device
-      Check3.Enabled = True
-     cmdOk.Enabled = True
+     comOK.Enabled = True
      txtBom1.Enabled = True
      txtBom2.Enabled = True
      txtBom3.Enabled = True
@@ -1049,9 +1020,7 @@ Start:
      cmdBoards.Enabled = True
      Check1.Enabled = True
      txtTestplan.Enabled = True
-    Option1.Enabled = True
-     Option2.Enabled = True
-     Option3.Enabled = True
+     
  End If
  
 If bRunBom1 = True And bRunTestplan = True Then
@@ -1134,12 +1103,8 @@ Call Kill_File
  
 Msg4.Caption = "Compare analog file end!"
 
-     cmdOk.Enabled = True
-     Check3.Enabled = True
+     comOK.Enabled = True
      cmdBoards.Enabled = True
-  Option1.Enabled = True
-     Option2.Enabled = True
-     Option3.Enabled = True
      txtBom1.Enabled = True
      txtBom2.Enabled = True
      txtBom3.Enabled = True
@@ -1721,24 +1686,26 @@ Close #7
                             
                             
                         End If
-'
-'
-'                     Else
-'                                Open PrmPath & "BomCompare\Comm_Device_Exist.txt" For Append As #5
-'                                  If Boards = True Then
-'                                   'strBoardsNumber
-'                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
-'                                    Else
-'                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & "  ! test commented in testorder"
-'                                  End If
-'                                Close #5
+        
+                           
+                     Else
+                                Open PrmPath & "BomCompare\Comm_Device_Exist.txt" For Append As #5
+                                  If Boards = True Then
+                                   'strBoardsNumber
+                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
+                                    Else
+                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & "  ! test commented in testorder"
+                                  End If
+                                Close #5
                 End If
                 
              End If
              
              If (bBom1OK And bBom2OK And bBom3OK And bBom4OK And bBom5OK And bBom6OK And bBom7OK And bBom8OK) = False Then
-                If bTestorder <> True Then
+                If bTestorder = True Then
 
+                         
+                     
                          If Not_initializel_testplan = True Then
                             If bUnString = True Then
                                 Open PrmPath & "BomCompare\NotTest_in_Curr_Ver.txt" For Append As #5
@@ -2538,15 +2505,7 @@ End Sub
 Private Sub Form_Load()
 On Error Resume Next
  
-  
-   If App.PrevInstance Then
-     MsgBox "The application is already open", vbInformation, "Error"
-
-   End
-   Exit Sub
-   
-  End If
-
+ 
 PrmPath = App.Path
 If Right(PrmPath, 1) <> "\" Then PrmPath = PrmPath & "\"
 MkDir PrmPath & "BomCompare"
@@ -4511,15 +4470,26 @@ Dim i As Integer
 i = 0
 Open PrmPath & "BomCompare\Comm.txt" For Output As #61
 Close #61
-
-
-
+ Open PrmPath & "BomCompare\Bom1.txt" For Output As #57
+ Close #57
+  Open PrmPath & "BomCompare\Bom2.txt" For Output As #57
+ Close #57
+  Open PrmPath & "BomCompare\Bom3.txt" For Output As #57
+ Close #57
+  Open PrmPath & "BomCompare\Bom4.txt" For Output As #57
+ Close #57
+  Open PrmPath & "BomCompare\Bom5.txt" For Output As #57
+ Close #57
+  Open PrmPath & "BomCompare\Bom6.txt" For Output As #57
+ Close #57
+  Open PrmPath & "BomCompare\Bom7.txt" For Output As #57
+ Close #57
+  Open PrmPath & "BomCompare\Bom8.txt" For Output As #57
+ Close #57
  
  Open PrmPath & "BomCompare\Comm.txt" For Append As #61
   
      If bRunBom1 = True Then
-       Open PrmPath & "BomCompare\Bom1.txt" For Output As #57
-        Close #57
        Open PrmPath & "BomCompare\Bom1.txt" For Append As #57
           Print #57, l1.Caption
          inBom1 = True
@@ -4671,10 +4641,6 @@ Close #61
   End If '1
   
        If bRunBom2 = True Then
-              Open PrmPath & "BomCompare\Bom2.txt" For Output As #57
-             Close #57
-       
-       
          Open PrmPath & "BomCompare\Bom2.txt" For Append As #57
           Print #57, l2.Caption
          inBom2 = True
@@ -4820,9 +4786,7 @@ Close #61
   
   
         If bRunBom3 = True Then
-                 Open PrmPath & "BomCompare\Bom3.txt" For Output As #57
-                  Close #57
-
+         
          Open PrmPath & "BomCompare\Bom3.txt" For Append As #57
          Print #57, l3.Caption
          
@@ -4966,9 +4930,6 @@ Close #61
   End If '3
  
          If bRunBom4 = True Then
-                Open PrmPath & "BomCompare\Bom4.txt" For Output As #57
-                Close #57
-         
          Open PrmPath & "BomCompare\Bom4.txt" For Append As #57
           Print #57, l4.Caption
          inBom4 = True
@@ -5114,12 +5075,6 @@ Close #61
   End If '4
 
         If bRunBom5 = True Then
-                  Open PrmPath & "BomCompare\Bom5.txt" For Output As #57
-            Close #57
-
-        
-        
-        
          Open PrmPath & "BomCompare\Bom5.txt" For Append As #57
          Print #57, l5.Caption
          inBom5 = True
@@ -5263,10 +5218,6 @@ Close #61
   End If '5
          If bRunBom6 = True Then
           
-            Open PrmPath & "BomCompare\Bom6.txt" For Output As #57
-            Close #57
-
-          
          Open PrmPath & "BomCompare\Bom6.txt" For Append As #57
           Print #57, l6.Caption
          inBom6 = True
@@ -5408,9 +5359,6 @@ Close #61
 
   End If '6
      If bRunBom7 = True Then
-         Open PrmPath & "BomCompare\Bom7.txt" For Output As #57
-          Close #57
-
          Open PrmPath & "BomCompare\Bom7.txt" For Append As #57
          Print #57, l7.Caption
          inBom7 = True
@@ -5552,10 +5500,6 @@ Close #61
 
   End If '7
     If bRunBom8 = True Then
-      Open PrmPath & "BomCompare\Bom8.txt" For Output As #57
-      Close #57
-    
-    
          Open PrmPath & "BomCompare\Bom8.txt" For Append As #57
          Print #57, l8.Caption
          inBom8 = True
@@ -5702,7 +5646,7 @@ Private Sub FileHeBin()
 Dim MyStr1 As String
 Open PrmPath & "BomCompare\BomDiff.txt" For Output As #57
     If bRunBom1 = True Then
-      Print #57, "!$$$$$#BOM1#$$$$$!!!!!!! bom1 " & l1.Caption
+      Print #57, "!!!!!!!!!!!Only bom1 " & l1.Caption
          If Dir(PrmPath & "BomCompare\Bom1.txt") <> "" Then
              Open PrmPath & "BomCompare\Bom1.txt" For Input As #58
                  Do Until EOF(58)
@@ -5714,17 +5658,16 @@ Open PrmPath & "BomCompare\BomDiff.txt" For Output As #57
                  DoEvents
                  
              Close #58
-                Kill PrmPath & "BomCompare\Bom1.txt"
+               ' Kill PrmPath & "BomCompare\Bom1.txt"
                 MyStr1 = ""
             Else
               MsgBox "Are you delete file " & PrmPath & "BomCompare\Bom1.txt" & "?", vbCritical
           End If
       
-      Print #57, "!$$$$$#BOM1#$$$$$!!!!!!! bom1 End!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-      Print #57,
+      Print #57, "!!!!!!!!!!!Onlay bom1 End!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     End If
     If bRunBom2 = True Then
-      Print #57, "!$$$$$#BOM2#$$$$$!!!!!!! bom2 " & l2.Caption
+      Print #57, "!!!!!!!!!!!Only bom2 " & l2.Caption
          If Dir(PrmPath & "BomCompare\Bom2.txt") <> "" Then
              Open PrmPath & "BomCompare\Bom2.txt" For Input As #58
                  Do Until EOF(58)
@@ -5736,17 +5679,16 @@ Open PrmPath & "BomCompare\BomDiff.txt" For Output As #57
                  DoEvents
                  
              Close #58
-                Kill PrmPath & "BomCompare\Bom2.txt"
+               ' Kill PrmPath & "BomCompare\Bom2.txt"
                 MyStr1 = ""
             Else
               MsgBox "Are you delete file " & PrmPath & "BomCompare\Bom2.txt" & "?", vbCritical
           End If
       
-      Print #57, "!$$$$$#BOM2#$$$$$!!!!!!! bom2 End!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-      Print #57,
+      Print #57, "!!!!!!!!!!!Onlay bom2 End!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     End If
       If bRunBom3 = True Then
-      Print #57, "!$$$$$#BOM3#$$$$$!!!!!!! bom3 " & l3.Caption
+      Print #57, "!!!!!!!!!!!Only bom3 " & l3.Caption
          If Dir(PrmPath & "BomCompare\Bom3.txt") <> "" Then
              Open PrmPath & "BomCompare\Bom3.txt" For Input As #58
                  Do Until EOF(58)
@@ -5758,18 +5700,16 @@ Open PrmPath & "BomCompare\BomDiff.txt" For Output As #57
                  DoEvents
                  
              Close #58
-                Kill PrmPath & "BomCompare\Bom3.txt"
+               ' Kill PrmPath & "BomCompare\Bom3.txt"
                 MyStr1 = ""
             Else
               MsgBox "Are you delete file " & PrmPath & "BomCompare\Bom3.txt" & "?", vbCritical
           End If
       
-      Print #57, "!$$$$$#BOM3#$$$$$!!!!!!! bom3 End!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-      Print #57,
-    
+      Print #57, "!!!!!!!!!!!Onlay bom3 End!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     End If
     If bRunBom4 = True Then
-      Print #57, "!$$$$$#BOM4#$$$$$!!!!!!! bom4 " & l4.Caption
+      Print #57, "!!!!!!!!!!!Only bom4 " & l4.Caption
          If Dir(PrmPath & "BomCompare\Bom4.txt") <> "" Then
              Open PrmPath & "BomCompare\Bom4.txt" For Input As #58
                  Do Until EOF(58)
@@ -5781,18 +5721,16 @@ Open PrmPath & "BomCompare\BomDiff.txt" For Output As #57
                  DoEvents
                  
              Close #58
-                Kill PrmPath & "BomCompare\Bom4.txt"
+               ' Kill PrmPath & "BomCompare\Bom4.txt"
                 MyStr1 = ""
             Else
               MsgBox "Are you delete file " & PrmPath & "BomCompare\Bom4.txt" & "?", vbCritical
           End If
       
-      Print #57, "!$$$$$#BOM4#$$$$$!!!!!!! bom4 End!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-      Print #57,
-    
+      Print #57, "!!!!!!!!!!!Onlay bom4 End!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     End If
      If bRunBom5 = True Then
-      Print #57, "!$$$$$#BOM5#$$$$$!!!!!!! bom5 " & l5.Caption
+      Print #57, "!!!!!!!!!!!Only bom5 " & l5.Caption
          If Dir(PrmPath & "BomCompare\Bom5.txt") <> "" Then
              Open PrmPath & "BomCompare\Bom5.txt" For Input As #58
                  Do Until EOF(58)
@@ -5804,18 +5742,16 @@ Open PrmPath & "BomCompare\BomDiff.txt" For Output As #57
                  DoEvents
                  
              Close #58
-                Kill PrmPath & "BomCompare\Bom5.txt"
+               ' Kill PrmPath & "BomCompare\Bom5.txt"
                 MyStr1 = ""
             Else
               MsgBox "Are you delete file " & PrmPath & "BomCompare\Bom5.txt" & "?", vbCritical
           End If
       
-      Print #57, "!$$$$$#BOM5#$$$$$!!!!!!! bom5 End!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-      Print #57,
-    
+      Print #57, "!!!!!!!!!!!Onlay bom5 End!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     End If
      If bRunBom6 = True Then
-      Print #57, "!$$$$$#BOM6#$$$$$!!!!!!! bom6 " & l6.Caption
+      Print #57, "!!!!!!!!!!!Only bom6 " & l6.Caption
          If Dir(PrmPath & "BomCompare\Bom6.txt") <> "" Then
              Open PrmPath & "BomCompare\Bom6.txt" For Input As #58
                  Do Until EOF(58)
@@ -5827,17 +5763,16 @@ Open PrmPath & "BomCompare\BomDiff.txt" For Output As #57
                  DoEvents
                  
              Close #58
-                Kill PrmPath & "BomCompare\Bom6.txt"
+                'Kill PrmPath & "BomCompare\Bom6.txt"
                 MyStr1 = ""
             Else
               MsgBox "Are you delete file " & PrmPath & "BomCompare\Bom6.txt" & "?", vbCritical
           End If
       
-      Print #57, "!$$$$$#BOM6#$$$$$!!!!!!! bom6 End!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-     Print #57,
+      Print #57, "!!!!!!!!!!!Onlay bom6 End!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     End If
     If bRunBom7 = True Then
-      Print #57, "!$$$$$#BOM7#$$$$$!!!!!!! bom7 " & l7.Caption
+      Print #57, "!!!!!!!!!!!Only bom7 " & l7.Caption
          If Dir(PrmPath & "BomCompare\Bom7.txt") <> "" Then
              Open PrmPath & "BomCompare\Bom7.txt" For Input As #58
                  Do Until EOF(58)
@@ -5849,17 +5784,16 @@ Open PrmPath & "BomCompare\BomDiff.txt" For Output As #57
                  DoEvents
                  
              Close #58
-                Kill PrmPath & "BomCompare\Bom7.txt"
+               ' Kill PrmPath & "BomCompare\Bom7.txt"
                 MyStr1 = ""
             Else
               MsgBox "Are you delete file " & PrmPath & "BomCompare\Bom7.txt" & "?", vbCritical
           End If
       
-      Print #57, "!$$$$$#BOM7#$$$$$!!!!!!! bom7 End!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-     Print #57,
+      Print #57, "!!!!!!!!!!!Onlay bom7 End!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     End If
     If bRunBom8 = True Then
-      Print #57, "!$$$$$#BOM8#$$$$$!!!!!!! bom8 " & l8.Caption
+      Print #57, "!!!!!!!!!!!Only bom8 " & l8.Caption
          If Dir(PrmPath & "BomCompare\Bom8.txt") <> "" Then
              Open PrmPath & "BomCompare\Bom8.txt" For Input As #58
                  Do Until EOF(58)
@@ -5871,16 +5805,15 @@ Open PrmPath & "BomCompare\BomDiff.txt" For Output As #57
                  DoEvents
                  
              Close #58
-                Kill PrmPath & "BomCompare\Bom8.txt"
+               ' Kill PrmPath & "BomCompare\Bom8.txt"
                 MyStr1 = ""
             Else
               MsgBox "Are you delete file " & PrmPath & "BomCompare\Bom8.txt" & "?", vbCritical
           End If
       
-      Print #57, "!$$$$$#BOM8#$$$$$!!!!!!! bom8 End!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-     Print #57,
+      Print #57, "!!!!!!!!!!!Onlay bom8 End!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     End If
-       Print #57, "!$$$$$#END_DIFF#$$$$$!!!!!!!"
+        
       Print #57, "!!!!!!!!!!!Comm Device "
          If Dir(PrmPath & "BomCompare\Comm.txt") <> "" Then
              Open PrmPath & "BomCompare\Comm.txt" For Input As #58
@@ -5893,7 +5826,7 @@ Open PrmPath & "BomCompare\BomDiff.txt" For Output As #57
                  DoEvents
                  
              Close #58
-                Kill PrmPath & "BomCompare\Bom8.txt"
+               ' Kill PrmPath & "BomCompare\Bom8.txt"
                 MyStr1 = ""
             Else
               MsgBox "Are you delete file " & PrmPath & "BomCompare\Comm.txt" & "?", vbCritical
