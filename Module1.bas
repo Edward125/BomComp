@@ -21,7 +21,7 @@ Public strFileNameOpen As String
 Private Function checkTime() As Boolean
   Dim d As Date
   Dim e As Date
-  d = "2012/10/23" '''important
+  d = "2014/05/23" '''important
   e = "2010/12/20"
   
    checkTime = False

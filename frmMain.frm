@@ -1,7 +1,7 @@
 VERSION 5.00
 Object = "{F9043C88-F6F2-101A-A3C9-08002B2F49FB}#1.2#0"; "comdlg32.ocx"
 Begin VB.Form frmMain 
-   Caption         =   "Bom compare (soft version 8.0 great_guo)"
+   Caption         =   "Bom compare (soft version 8.6 great_guo)"
    ClientHeight    =   5760
    ClientLeft      =   165
    ClientTop       =   165
@@ -1292,6 +1292,7 @@ If bTwoBom = True Then
      cmdBom8GeVer.Enabled = True
      Frame2.Enabled = True
        RmDir PrmPath & "BomCompare\CvsBom1"
+    
 End If
 
 End Sub
@@ -1565,9 +1566,10 @@ End If
 Start:
  
  If bRunTestplan = True And bAllVer = True Then
-     cmdOK.Enabled = False
+     cmdOk.Enabled = False
      cmdBoards.Enabled = False
-     cmdOK.Enabled = False
+     Command1.Enabled = False
+     cmdOk.Enabled = False
      Check3.Enabled = False
      Check1.Enabled = False
      Check2.Enabled = False
@@ -1582,6 +1584,7 @@ Start:
      txtBom6.Enabled = False
      txtBom7.Enabled = False
      txtBom8.Enabled = False
+     Option4.Enabled = False
      cmdToVerBoard.Enabled = False
      txtTestplan.Enabled = False
      MkDir PrmPath & "BomCompare\Testplan_Tmp_Analog"
@@ -1603,8 +1606,10 @@ Start:
  If bRunTestplan = False Then
      Call Kill_File
      Call Kill_Device
+     Option4.Enabled = True
+     Command1.Enabled = True
       Check3.Enabled = True
-     cmdOK.Enabled = True
+     cmdOk.Enabled = True
      txtBom1.Enabled = True
      txtBom2.Enabled = True
      txtBom3.Enabled = True
@@ -1702,7 +1707,7 @@ Call Kill_File
  
 Msg4.Caption = "Compare analog file end!"
 cmdToVerBoard.Enabled = True
-     cmdOK.Enabled = True
+     cmdOk.Enabled = True
      Check3.Enabled = True
      cmdBoards.Enabled = True
   Option1.Enabled = True
@@ -2289,17 +2294,17 @@ Close #7
                             
                             
                         End If
-'
-'
-'                     Else
-'                                Open PrmPath & "BomCompare\Comm_Device_Exist.txt" For Append As #5
-'                                  If Boards = True Then
-'                                   'strBoardsNumber
-'                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
-'                                    Else
-'                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & "  ! test commented in testorder"
-'                                  End If
-'                                Close #5
+
+
+                     Else
+                                Open PrmPath & "BomCompare\Comm_Device_Exist.txt" For Append As #5
+                                  If Boards = True Then
+                                   'strBoardsNumber
+                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
+                                    Else
+                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & "  ! test commented in testorder"
+                                  End If
+                                Close #5
                 End If
                 
              End If
@@ -3247,16 +3252,16 @@ End Sub
 
 Private Sub Kill_File()
 On Error Resume Next
-a = Dir(PrmPath & "BomCompare\Bom_1\fuckyou")
-a = Dir(PrmPath & "BomCompare\Bom_2\fuckyou")
-a = Dir(PrmPath & "BomCompare\Bom_3\fuckyou")
-a = Dir(PrmPath & "BomCompare\Bom_4\fuckyou")
-a = Dir(PrmPath & "BomCompare\Bom_5\fuckyou")
-a = Dir(PrmPath & "BomCompare\Bom_6\fuckyou")
-a = Dir(PrmPath & "BomCompare\Bom_7\fuckyou")
-a = Dir(PrmPath & "BomCompare\Bom_8\fuckyou")
-a = Dir(PrmPath & "BomCompare\Testplan_Tmp_Analog\fuckyou")
-
+'a = Dir(PrmPath & "BomCompare\Bom_1\fuckyou")
+'a = Dir(PrmPath & "BomCompare\Bom_2\fuckyou")
+'a = Dir(PrmPath & "BomCompare\Bom_3\fuckyou")
+'a = Dir(PrmPath & "BomCompare\Bom_4\fuckyou")
+'a = Dir(PrmPath & "BomCompare\Bom_5\fuckyou")
+'a = Dir(PrmPath & "BomCompare\Bom_6\fuckyou")
+'a = Dir(PrmPath & "BomCompare\Bom_7\fuckyou")
+'a = Dir(PrmPath & "BomCompare\Bom_8\fuckyou")
+'a = Dir(PrmPath & "BomCompare\Testplan_Tmp_Analog\fuckyou")
+If Dir("c:\1.txt") = "" Then Debug.Print
 Kill PrmPath & "BomCompare\WaitDevice.txt"
 'Kill PrmPath & "BomCompare\NotDelete.sys"
    Kill PrmPath & "BomCompare\Bom_1\*.*"
@@ -8992,7 +8997,7 @@ On Error GoTo EX
   If bListPinLib = True Then
       Close #9
    End If
-   MsgBox "OK" & Chr(13) & Chr(10) & "File save path:" & PrmPath & "ReadBomValue\", vbInformation
+   
   
 Exit Sub
 EX:
@@ -9131,7 +9136,7 @@ End If
 
 intExcelCells_1 = 2
 intExcelCells_2 = 1
- ExcelID.Visible = True
+ 'ExcelID.Visible = True
 ExcelID.Workbooks.Open (PrmPath & "BomCompare\tmp.xls")
  
 ExcelID.Worksheets("Bom1_and_Bom2_Compare").Activate
@@ -9144,7 +9149,6 @@ ExcelID.DisplayAlerts = False
 'ExcelID.Quit
 'Set ExcelID = Nothing
 '========================================================
-
 
 
 
@@ -9218,8 +9222,8 @@ MkDir PrmPath & "BomCompare\CvsBom1"
     Loop
   Close #2
   Close #3
-  Open PrmPath & "BomCompare\Bom1_and_Bom2_Compare.csv" For Output As #3
-    Print #3, "DeviceName," & strFileName_2 & "__PartNumber," & strFileName_1 & "__PartNumber"
+'  Open PrmPath & "BomCompare\Bom1_and_Bom2_Compare.csv" For Output As #3
+  '  Print #3, "DeviceName," & strFileName_2 & "__PartNumber," & strFileName_1 & "__PartNumber"
    '=============================================================
     ExcelID.Cells(1, 2).Value = strFileName_2 & "__PartNumber"
     ExcelID.Cells(1, 3).Value = strFileName_1 & "__PartNumber"
@@ -9249,21 +9253,24 @@ MkDir PrmPath & "BomCompare\CvsBom1"
                ExcelID.Cells(intExcelCells_1, 3).Value = strBom2
                intExcelCells_1 = intExcelCells_1 + 1
            '======================================================
-            Print #3, strMy & "," & strBom1 & "," & strBom2
+           ' Print #3, strMy & "," & strBom1 & "," & strBom2
+           
+             
             strBom1 = ""
             strBom2 = ""
             strTmp = ""
           End If
     Loop
   Close #2
-  Close #3
+ ' Close #3
  '======================================
    ExcelID.ActiveSheet.SaveAs (PrmPath & "BomCompare\Bom1_and_Bom2_Compare.xls")
    ExcelID.Workbooks.Close
    ExcelID.Quit
    Set ExcelID = Nothing
-   
+    Kill PrmPath & "BomCompare\tmp.xls"
   '=======================================
+  If Dir("c:\1.txt") = "" Then Debug.Print
   Kill PrmPath & "BomCompare\CvsBom1\*.*"
   RmDir PrmPath & "BomCompare\CvsBom1"
 End Sub

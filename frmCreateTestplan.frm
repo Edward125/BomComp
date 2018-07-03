@@ -172,7 +172,11 @@ Msg1(0).Caption = "Reading testplan file..."
                            BoardNumber2 = Trim(Replace(LCase(tmptext), "(*)", ""))
                             Dim strFenPei() As String
                             strFenPei = Split(BoardNumber2, "_to_")
+                            Dim strFenPei_number() As String
                             BoardNumber2 = strFenPei(UBound(strFenPei))
+                            strFenPei_number = Split(BoardNumber2, "!")
+                            BoardNumber2 = strFenPei_number(0)
+                            Erase strFenPei_number
                            tmptext = Replace(LCase(tmptext), "to_", "")
                            tmptext = Left(tmptext, InStr(tmptext, "_"))
                             BoardsNumber = Trim(Replace(LCase(tmptext), "_", ""))
