@@ -1559,9 +1559,9 @@ End If
 Start:
  
  If bRunTestplan = True And bAllVer = True Then
-     cmdOK.Enabled = False
+     cmdOk.Enabled = False
      cmdBoards.Enabled = False
-     cmdOK.Enabled = False
+     cmdOk.Enabled = False
      Check3.Enabled = False
      Check1.Enabled = False
      Check2.Enabled = False
@@ -1598,7 +1598,7 @@ Start:
      Call Kill_File
      Call Kill_Device
       Check3.Enabled = True
-     cmdOK.Enabled = True
+     cmdOk.Enabled = True
      txtBom1.Enabled = True
      txtBom2.Enabled = True
      txtBom3.Enabled = True
@@ -1696,7 +1696,7 @@ Call Kill_File
  
 Msg4.Caption = "Compare analog file end!"
 cmdToVerBoard.Enabled = True
-     cmdOK.Enabled = True
+     cmdOk.Enabled = True
      Check3.Enabled = True
      cmdBoards.Enabled = True
   Option1.Enabled = True
@@ -7205,6 +7205,8 @@ Private Sub ReadBom1_Ver_Out_Dir()
  Dim intFile_Line As Integer
  Dim Mystr As String
  Dim strTmp() As String
+  Dim strTmp1() As String
+   Dim strTmp2() As String
  Dim strBoardver() As String
  
  On Error Resume Next
@@ -7228,6 +7230,7 @@ End If
 
    Open strBom1Path For Input As #50
    Open PrmPath & "BomCompare\Basic.txt" For Output As #59
+   Open PrmPath & "BomCompare\Basic_Space_String.txt" For Output As #61
    Open PrmPath & "BomCompare\Bom8GeVer_Comp.txt" For Output As #58
            Do Until EOF(50)
              Line Input #50, strBom1_DeviceName
@@ -7257,7 +7260,27 @@ End If
                             '  Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) For Output As #22
                                    'Print #22, strBom1_DeviceName
                                    tmptmpStr = Replace(Mystr, strTmp(0), "")
-                                   tmptmpStr = Trim(Replace(tmptmpStr, strTmp(UBound(strTmp)), ""))
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   strTmp1 = Split(tmptmpStr, " ")
+                                   tmptmpStr = ""
+                                   For y = 0 To UBound(strTmp1) - 1
+                                       
+                                       tmptmpStr = tmptmpStr & " " & strTmp1(y)
+                                       
+                                   Next
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   strTmp1 = Split(tmptmpStr, " ")
+                                   tmptmpStr = ""
+                                   For y = 0 To UBound(strTmp1)
+                                     If y = UBound(strTmp1) Then
+                                         tmptmpStr = tmptmpStr & "," & strTmp1(UBound(strTmp1))
+                                       Else
+                                       tmptmpStr = tmptmpStr & " " & strTmp1(y)
+                                     End If
+                                   Next
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   Erase strTmp1
+                                   'tmptmpStr = Trim(Replace(tmptmpStr, strTmp(UBound(strTmp)), ""))
                                    Print #22, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
                               Close #22
                                   'Print #58, strTmp(UBound(strTmp)) & "." & strTmp(0)
@@ -7265,12 +7288,13 @@ End If
                                    
                                   ' Print #58, strTmp(UBound(strTmp))
                                Print #59, strTmp(0) & "," & tmptmpStr & "," & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
+                               Print #61, strTmp(0) & "    " & Replace(tmptmpStr, ",", " ") & "  " & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
                                Print #58, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
                              intDevice_Ge = intDevice_Ge + 1
                              Msg3.Caption = Trim(strTmp(UBound(strTmp)))
                              Msg4.Caption = "Device:" & intDevice_Ge
                            '  Debug.Print strTmp(UBound(strTmp))
-                         
+                           tmptmpStr = ""
                       End If
                   End If '<>-
                   
@@ -7284,6 +7308,7 @@ End If
  Close #50
  Close #59
  Close #58
+ Close #61
         Msg1.Caption = l1.Caption & " file closed!"
         If intDevice_Ge = 0 Then
           MsgBox "Shit ,the bom1 file is null!", vbCritical
@@ -7302,7 +7327,7 @@ Private Sub ReadBom2_Ver_Out_Dir()
  Dim Mystr As String
  Dim strTmp() As String
  Dim strBoardver() As String
- 
+ Dim strTmp1() As String
  On Error Resume Next
  strBoardver = Split(l2.Caption, ".")
  MkDir PrmPath & "BomCompare\Bom_1"
@@ -7323,6 +7348,7 @@ End If
 
    Open strBom2Path For Input As #50
     Open PrmPath & "BomCompare\Basic.txt" For Append As #59
+    Open PrmPath & "BomCompare\Basic_Space_String.txt" For Append As #61
    Open PrmPath & "BomCompare\Bom8GeVer_Comp.txt" For Append As #58
            Do Until EOF(50)
              Line Input #50, strBom1_DeviceName
@@ -7342,26 +7368,49 @@ End If
                              
                              
                               strTmp(UBound(strTmp)) = Trim(strTmp(UBound(strTmp)))
+                                   tmptmpStr = Replace(Mystr, strTmp(0), "")
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   strTmp1 = Split(tmptmpStr, " ")
+                                   tmptmpStr = ""
+                                   For y = 0 To UBound(strTmp1) - 1
+                                       
+                                       tmptmpStr = tmptmpStr & " " & strTmp1(y)
+                                       
+                                   Next
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   strTmp1 = Split(tmptmpStr, " ")
+                                   tmptmpStr = ""
+                                   For y = 0 To UBound(strTmp1)
+                                     If y = UBound(strTmp1) Then
+                                         tmptmpStr = tmptmpStr & "," & strTmp1(UBound(strTmp1))
+                                       Else
+                                       tmptmpStr = tmptmpStr & " " & strTmp1(y)
+                                     End If
+                                   Next
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   Erase strTmp1
+                              
+                              
+                              
                               If Dir(PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp))) = "" Then
                                    Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Output As #22
                                    Print #58, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
                                    
                                    Print #59, strTmp(0) & "," & tmptmpStr & "," & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
-                                   
+                               Print #61, strTmp(0) & "    " & Replace(tmptmpStr, ",", " ") & "  " & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
                               Else
                               
                                   Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Append As #22
                               End If
                             '  Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) For Output As #22
                                    'Print #22, strBom1_DeviceName
-                                   tmptmpStr = Replace(Mystr, strTmp(0), "")
-                                   tmptmpStr = Trim(Replace(tmptmpStr, strTmp(UBound(strTmp)), ""))
+
                                    Print #22, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
                               Close #22
                                   'Print #58, strTmp(UBound(strTmp)) & "." & strTmp(0)
                                    
                                   
-                                  
+                                tmptmpStr = ""
                              intDevice_Ge = intDevice_Ge + 1
                              Msg3.Caption = Trim(strTmp(UBound(strTmp)))
                              Msg4.Caption = "Device:" & intDevice_Ge
@@ -7380,6 +7429,7 @@ End If
  Close #50
  Close #58
  Close #59
+ Close #61
         Msg1.Caption = l2.Caption & " file closed!"
         If intDevice_Ge = 0 Then
           MsgBox "Shit ,the bom2 file is null!", vbCritical
@@ -7399,7 +7449,7 @@ Private Sub ReadBom3_Ver_Out_Dir()
  Dim Mystr As String
  Dim strTmp() As String
  Dim strBoardver() As String
- 
+  Dim strTmp1() As String
  On Error Resume Next
  strBoardver = Split(l3.Caption, ".")
  MkDir PrmPath & "BomCompare\Bom_1"
@@ -7420,6 +7470,7 @@ End If
 
    Open strBom3Path For Input As #50
     Open PrmPath & "BomCompare\Basic.txt" For Append As #59
+       Open PrmPath & "BomCompare\Basic_Space_String.txt" For Append As #61
    Open PrmPath & "BomCompare\Bom8GeVer_Comp.txt" For Append As #58
            Do Until EOF(50)
              Line Input #50, strBom1_DeviceName
@@ -7439,23 +7490,51 @@ End If
                              
                              
                               strTmp(UBound(strTmp)) = Trim(strTmp(UBound(strTmp)))
+                                    tmptmpStr = Replace(Mystr, strTmp(0), "")
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   strTmp1 = Split(tmptmpStr, " ")
+                                   tmptmpStr = ""
+                                   For y = 0 To UBound(strTmp1) - 1
+                                       
+                                       tmptmpStr = tmptmpStr & " " & strTmp1(y)
+                                       
+                                   Next
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   strTmp1 = Split(tmptmpStr, " ")
+                                   tmptmpStr = ""
+                                   For y = 0 To UBound(strTmp1)
+                                     If y = UBound(strTmp1) Then
+                                         tmptmpStr = tmptmpStr & "," & strTmp1(UBound(strTmp1))
+                                       Else
+                                       tmptmpStr = tmptmpStr & " " & strTmp1(y)
+                                     End If
+                                   Next
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   Erase strTmp1
+                             
+                              
+                              
+                              
+                              
                               If Dir(PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp))) = "" Then
                                    Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Output As #22
                                    
                                    Print #59, strTmp(0) & "," & tmptmpStr & "," & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
+                               Print #61, strTmp(0) & "    " & Replace(tmptmpStr, ",", " ") & "  " & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
+                              
+                              
                               Else
                               
                                   Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Append As #22
                               End If
                             '  Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) For Output As #22
                                    'Print #22, strBom1_DeviceName
-                                   tmptmpStr = Replace(Mystr, strTmp(0), "")
-                                   tmptmpStr = Trim(Replace(tmptmpStr, strTmp(UBound(strTmp)), ""))
+ 
                                    Print #22, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
                               Close #22
                                   'Print #58, strTmp(UBound(strTmp)) & "." & strTmp(0)
                                    
-                                  
+                                 tmptmpStr = ""
                                   
                              intDevice_Ge = intDevice_Ge + 1
                              Msg3.Caption = Trim(strTmp(UBound(strTmp)))
@@ -7475,6 +7554,7 @@ End If
  Close #50
  Close #58
  Close #59
+ Close #61
         Msg1.Caption = l3.Caption & " file closed!"
         If intDevice_Ge = 0 Then
           MsgBox "Shit ,the bom3 file is null!", vbCritical
@@ -7492,6 +7572,7 @@ Private Sub ReadBom4_Ver_Out_Dir()
  Dim intFile_Line As Integer
  Dim Mystr As String
  Dim strTmp() As String
+  Dim strTmp1() As String
  Dim strBoardver() As String
  
  On Error Resume Next
@@ -7514,6 +7595,7 @@ End If
 
    Open strBom4Path For Input As #50
     Open PrmPath & "BomCompare\Basic.txt" For Append As #59
+    Open PrmPath & "BomCompare\Basic_Space_String.txt" For Append As #61
    Open PrmPath & "BomCompare\Bom8GeVer_Comp.txt" For Append As #58
            Do Until EOF(50)
              Line Input #50, strBom1_DeviceName
@@ -7533,11 +7615,34 @@ End If
                              
                              
                               strTmp(UBound(strTmp)) = Trim(strTmp(UBound(strTmp)))
+                                    tmptmpStr = Replace(Mystr, strTmp(0), "")
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   strTmp1 = Split(tmptmpStr, " ")
+                                   tmptmpStr = ""
+                                   For y = 0 To UBound(strTmp1) - 1
+                                       
+                                       tmptmpStr = tmptmpStr & " " & strTmp1(y)
+                                       
+                                   Next
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   strTmp1 = Split(tmptmpStr, " ")
+                                   tmptmpStr = ""
+                                   For y = 0 To UBound(strTmp1)
+                                     If y = UBound(strTmp1) Then
+                                         tmptmpStr = tmptmpStr & "," & strTmp1(UBound(strTmp1))
+                                       Else
+                                       tmptmpStr = tmptmpStr & " " & strTmp1(y)
+                                     End If
+                                   Next
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   Erase strTmp1
+
                               If Dir(PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp))) = "" Then
                                    Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Output As #22
                                    Print #58, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
                                    
                                    Print #59, strTmp(0) & "," & tmptmpStr & "," & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
+                               Print #61, strTmp(0) & "    " & Replace(tmptmpStr, ",", " ") & "  " & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
                                    
                               Else
                               
@@ -7545,13 +7650,12 @@ End If
                               End If
                             '  Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) For Output As #22
                                    'Print #22, strBom1_DeviceName
-                                   tmptmpStr = Replace(Mystr, strTmp(0), "")
-                                   tmptmpStr = Trim(Replace(tmptmpStr, strTmp(UBound(strTmp)), ""))
+ 
                                    Print #22, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
                               Close #22
                                   'Print #58, strTmp(UBound(strTmp)) & "." & strTmp(0)
                                    
-                                  
+                               tmptmpStr = ""
                                   
                              intDevice_Ge = intDevice_Ge + 1
                              Msg3.Caption = Trim(strTmp(UBound(strTmp)))
@@ -7571,6 +7675,7 @@ End If
  Close #50
  Close #58
  Close #59
+ Close #61
         Msg1.Caption = l4.Caption & " file closed!"
         If intDevice_Ge = 0 Then
           MsgBox "Shit ,the bom4 file is null!", vbCritical
@@ -7587,6 +7692,7 @@ Private Sub ReadBom5_Ver_Out_Dir()
  Dim intFile_Line As Integer
  Dim Mystr As String
  Dim strTmp() As String
+  Dim strTmp1() As String
  Dim strBoardver() As String
  
  On Error Resume Next
@@ -7609,6 +7715,7 @@ End If
 
    Open strBom5Path For Input As #50
     Open PrmPath & "BomCompare\Basic.txt" For Append As #59
+    Open PrmPath & "BomCompare\Basic_Space_String.txt" For Append As #61
    Open PrmPath & "BomCompare\Bom8GeVer_Comp.txt" For Append As #58
            Do Until EOF(50)
              Line Input #50, strBom1_DeviceName
@@ -7628,25 +7735,45 @@ End If
                              
                              
                               strTmp(UBound(strTmp)) = Trim(strTmp(UBound(strTmp)))
+                                    tmptmpStr = Replace(Mystr, strTmp(0), "")
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   strTmp1 = Split(tmptmpStr, " ")
+                                   tmptmpStr = ""
+                                   For y = 0 To UBound(strTmp1) - 1
+                                       
+                                       tmptmpStr = tmptmpStr & " " & strTmp1(y)
+                                       
+                                   Next
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   strTmp1 = Split(tmptmpStr, " ")
+                                   tmptmpStr = ""
+                                   For y = 0 To UBound(strTmp1)
+                                     If y = UBound(strTmp1) Then
+                                         tmptmpStr = tmptmpStr & "," & strTmp1(UBound(strTmp1))
+                                       Else
+                                       tmptmpStr = tmptmpStr & " " & strTmp1(y)
+                                     End If
+                                   Next
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   Erase strTmp1
                               If Dir(PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp))) = "" Then
                                    Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Output As #22
                                    Print #58, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
                                    
                                    Print #59, strTmp(0) & "," & tmptmpStr & "," & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
-                                   
+                               Print #61, strTmp(0) & "    " & Replace(tmptmpStr, ",", " ") & "  " & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
                               Else
                               
                                   Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Append As #22
                               End If
                             '  Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) For Output As #22
                                    'Print #22, strBom1_DeviceName
-                                   tmptmpStr = Replace(Mystr, strTmp(0), "")
-                                   tmptmpStr = Trim(Replace(tmptmpStr, strTmp(UBound(strTmp)), ""))
+ 
                                    Print #22, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
                               Close #22
                                   'Print #58, strTmp(UBound(strTmp)) & "." & strTmp(0)
                                    
-                                  
+                                 tmptmpStr = ""
                                   
                              intDevice_Ge = intDevice_Ge + 1
                              Msg3.Caption = Trim(strTmp(UBound(strTmp)))
@@ -7666,6 +7793,7 @@ End If
  Close #50
  Close #58
  Close #59
+ Close #61
         Msg1.Caption = l5.Caption & " file closed!"
         If intDevice_Ge = 0 Then
           MsgBox "Shit ,the bom5 file is null!", vbCritical
@@ -7682,6 +7810,7 @@ Private Sub ReadBom6_Ver_Out_Dir()
  Dim intFile_Line As Integer
  Dim Mystr As String
  Dim strTmp() As String
+  Dim strTmp1() As String
  Dim strBoardver() As String
  
  On Error Resume Next
@@ -7704,6 +7833,7 @@ End If
 
    Open strBom6Path For Input As #50
     Open PrmPath & "BomCompare\Basic.txt" For Append As #59
+    Open PrmPath & "BomCompare\Basic_Space_String.txt" For Append As #61
    Open PrmPath & "BomCompare\Bom8GeVer_Comp.txt" For Append As #58
            Do Until EOF(50)
              Line Input #50, strBom1_DeviceName
@@ -7721,12 +7851,33 @@ End If
                                 strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), "?", "$$$$$$$$$$")
                               '  strTmp(UBound(strTmp)) = Replace(strTmp(UBound(strTmp)), ".", "$$$$$$$$$$")
                              
-                             
                               strTmp(UBound(strTmp)) = Trim(strTmp(UBound(strTmp)))
+                                    tmptmpStr = Replace(Mystr, strTmp(0), "")
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   strTmp1 = Split(tmptmpStr, " ")
+                                   tmptmpStr = ""
+                                   For y = 0 To UBound(strTmp1) - 1
+                                       
+                                       tmptmpStr = tmptmpStr & " " & strTmp1(y)
+                                       
+                                   Next
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   strTmp1 = Split(tmptmpStr, " ")
+                                   tmptmpStr = ""
+                                   For y = 0 To UBound(strTmp1)
+                                     If y = UBound(strTmp1) Then
+                                         tmptmpStr = tmptmpStr & "," & strTmp1(UBound(strTmp1))
+                                       Else
+                                       tmptmpStr = tmptmpStr & " " & strTmp1(y)
+                                     End If
+                                   Next
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   Erase strTmp1
+
                               If Dir(PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp))) = "" Then
                                    Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Output As #22
                                    Print #58, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
-                                   
+                                   Print #61, strTmp(0) & "    " & Replace(tmptmpStr, ",", " ") & "  " & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
                                    Print #59, strTmp(0) & "," & tmptmpStr & "," & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
                                    
                               Else
@@ -7735,14 +7886,13 @@ End If
                               End If
                             '  Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) For Output As #22
                                    'Print #22, strBom1_DeviceName
-                                   tmptmpStr = Replace(Mystr, strTmp(0), "")
-                                   tmptmpStr = Trim(Replace(tmptmpStr, strTmp(UBound(strTmp)), ""))
+ 
                                    Print #22, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
                               Close #22
                                   'Print #58, strTmp(UBound(strTmp)) & "." & strTmp(0)
                                    
                                   
-                                  
+                               mptmpStr = ""
                              intDevice_Ge = intDevice_Ge + 1
                              Msg3.Caption = Trim(strTmp(UBound(strTmp)))
                              Msg4.Caption = "Device:" & intDevice_Ge
@@ -7761,6 +7911,7 @@ End If
  Close #50
  Close #58
  Close #59
+  Close #61
         Msg1.Caption = l6.Caption & " file closed!"
         If intDevice_Ge = 0 Then
           MsgBox "Shit ,the bom6 file is null!", vbCritical
@@ -7777,6 +7928,7 @@ Private Sub ReadBom7_Ver_Out_Dir()
  Dim intFile_Line As Integer
  Dim Mystr As String
  Dim strTmp() As String
+ Dim strTmp1() As String
  Dim strBoardver() As String
  
  On Error Resume Next
@@ -7799,6 +7951,7 @@ End If
 
    Open strBom7Path For Input As #50
     Open PrmPath & "BomCompare\Basic.txt" For Append As #59
+   Open PrmPath & "BomCompare\Basic_Space_String.txt" For Append As #61
    Open PrmPath & "BomCompare\Bom8GeVer_Comp.txt" For Append As #58
            Do Until EOF(50)
              Line Input #50, strBom1_DeviceName
@@ -7818,26 +7971,47 @@ End If
                              
                              
                               strTmp(UBound(strTmp)) = Trim(strTmp(UBound(strTmp)))
+                                    tmptmpStr = Replace(Mystr, strTmp(0), "")
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   strTmp1 = Split(tmptmpStr, " ")
+                                   tmptmpStr = ""
+                                   For y = 0 To UBound(strTmp1) - 1
+                                       
+                                       tmptmpStr = tmptmpStr & " " & strTmp1(y)
+                                       
+                                   Next
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   strTmp1 = Split(tmptmpStr, " ")
+                                   tmptmpStr = ""
+                                   For y = 0 To UBound(strTmp1)
+                                     If y = UBound(strTmp1) Then
+                                         tmptmpStr = tmptmpStr & "," & strTmp1(UBound(strTmp1))
+                                       Else
+                                       tmptmpStr = tmptmpStr & " " & strTmp1(y)
+                                     End If
+                                   Next
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   Erase strTmp1
+
                               If Dir(PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp))) = "" Then
                                    Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Output As #22
                                    Print #58, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
                                    
-                                   Print #59, strTmp(0) & "," & tmptmpStr & "," & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
-                                   
+                                  Print #61, strTmp(0) & "    " & Replace(tmptmpStr, ",", " ") & "  " & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
+                                   Print #61, strTmp(0) & Chr(9) & Replace(tmptmpStr, ",", Chr(9)) & Chr(9) & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
                               Else
                               
                                   Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Append As #22
                               End If
                             '  Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) For Output As #22
                                    'Print #22, strBom1_DeviceName
-                                   tmptmpStr = Replace(Mystr, strTmp(0), "")
-                                   tmptmpStr = Trim(Replace(tmptmpStr, strTmp(UBound(strTmp)), ""))
+ 
                                    Print #22, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
                               Close #22
                                   'Print #58, strTmp(UBound(strTmp)) & "." & strTmp(0)
                                    
                                   
-                                  
+                                mptmpStr = ""
                              intDevice_Ge = intDevice_Ge + 1
                              Msg3.Caption = Trim(strTmp(UBound(strTmp)))
                              Msg4.Caption = "Device:" & intDevice_Ge
@@ -7856,6 +8030,7 @@ End If
  Close #50
  Close #58
  Close #59
+ Close #61
         Msg1.Caption = l7.Caption & " file closed!"
         If intDevice_Ge = 0 Then
           MsgBox "Shit ,the bom7 file is null!", vbCritical
@@ -7873,6 +8048,7 @@ Private Sub ReadBom8_Ver_Out_Dir()
  Dim intFile_Line As Integer
  Dim Mystr As String
  Dim strTmp() As String
+  Dim strTmp1() As String
  Dim strBoardver() As String
  
  On Error Resume Next
@@ -7895,6 +8071,7 @@ End If
 
    Open strBom8Path For Input As #50
     Open PrmPath & "BomCompare\Basic.txt" For Append As #59
+ Open PrmPath & "BomCompare\Basic_Space_String.txt" For Append As #61
    Open PrmPath & "BomCompare\Bom8GeVer_Comp.txt" For Append As #58
            Do Until EOF(50)
              Line Input #50, strBom1_DeviceName
@@ -7914,9 +8091,32 @@ End If
                              
                              
                               strTmp(UBound(strTmp)) = Trim(strTmp(UBound(strTmp)))
+                                    tmptmpStr = Replace(Mystr, strTmp(0), "")
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   strTmp1 = Split(tmptmpStr, " ")
+                                   tmptmpStr = ""
+                                   For y = 0 To UBound(strTmp1) - 1
+                                       
+                                       tmptmpStr = tmptmpStr & " " & strTmp1(y)
+                                       
+                                   Next
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   strTmp1 = Split(tmptmpStr, " ")
+                                   tmptmpStr = ""
+                                   For y = 0 To UBound(strTmp1)
+                                     If y = UBound(strTmp1) Then
+                                         tmptmpStr = tmptmpStr & "," & strTmp1(UBound(strTmp1))
+                                       Else
+                                       tmptmpStr = tmptmpStr & " " & strTmp1(y)
+                                     End If
+                                   Next
+                                   tmptmpStr = Trim(tmptmpStr)
+                                   Erase strTmp1
+
                               If Dir(PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp))) = "" Then
                                    Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) For Output As #22
                                    Print #58, strTmp(UBound(strTmp)) & "," & strTmp(0) & "," & tmptmpStr & "," & strBoardver(0)
+                                   Print #61, strTmp(0) & "    " & Replace(tmptmpStr, ",", " ") & "  " & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
                                    
                                    Print #59, strTmp(0) & "," & tmptmpStr & "," & strTmp(UBound(strTmp)) ' & "," & strBoardver(0)
                                    
@@ -7933,7 +8133,7 @@ End If
                                   'Print #58, strTmp(UBound(strTmp)) & "." & strTmp(0)
                                    
                                   
-                                  
+                                  mptmpStr = ""
                              intDevice_Ge = intDevice_Ge + 1
                              Msg3.Caption = Trim(strTmp(UBound(strTmp)))
                              Msg4.Caption = "Device:" & intDevice_Ge
@@ -7952,6 +8152,7 @@ End If
  Close #50
  Close #58
  Close #59
+ Close #61
         Msg1.Caption = l8.Caption & " file closed!"
         If intDevice_Ge = 0 Then
           MsgBox "Shit ,the bom8 file is null!", vbCritical
