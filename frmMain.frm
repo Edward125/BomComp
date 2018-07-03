@@ -1,50 +1,111 @@
 VERSION 5.00
-Object = "{F9043C88-F6F2-101A-A3C9-08002B2F49FB}#1.2#0"; "COMDLG32.OCX"
+Object = "{F9043C88-F6F2-101A-A3C9-08002B2F49FB}#1.2#0"; "comdlg32.ocx"
 Begin VB.Form frmMain 
    Caption         =   "Testplan and bom version compare"
-   ClientHeight    =   5490
+   ClientHeight    =   5760
    ClientLeft      =   165
    ClientTop       =   165
-   ClientWidth     =   7545
+   ClientWidth     =   10275
    Icon            =   "frmMain.frx":0000
    LockControls    =   -1  'True
    MaxButton       =   0   'False
-   ScaleHeight     =   5490
-   ScaleWidth      =   7545
+   ScaleHeight     =   5760
+   ScaleWidth      =   10275
    StartUpPosition =   1  'CenterOwner
-   Begin VB.CommandButton cmdHelp 
-      Caption         =   "&Help"
-      BeginProperty Font 
-         Name            =   "MS Sans Serif"
-         Size            =   12
-         Charset         =   0
-         Weight          =   400
-         Underline       =   0   'False
-         Italic          =   0   'False
-         Strikethrough   =   0   'False
-      EndProperty
-      Height          =   375
-      Left            =   5280
+   Begin VB.Frame Frame4 
+      Caption         =   "And testplan compare"
+      Height          =   1815
+      Left            =   4800
       TabIndex        =   27
-      Top             =   4920
-      Width           =   735
+      Top             =   3840
+      Width           =   2775
+      Begin VB.CheckBox Check2 
+         Caption         =   "Not initializel testplan"
+         ForeColor       =   &H00000000&
+         Height          =   495
+         Left            =   120
+         TabIndex        =   32
+         Top             =   1200
+         Value           =   1  'Checked
+         Width           =   1335
+      End
+      Begin VB.CheckBox Check1 
+         Caption         =   "Panel Boards"
+         ForeColor       =   &H00FF0000&
+         Height          =   375
+         Left            =   120
+         TabIndex        =   31
+         Top             =   240
+         Value           =   1  'Checked
+         Width           =   1335
+      End
+      Begin VB.CommandButton cmdBoards 
+         Caption         =   "&CreateTestplan"
+         Height          =   375
+         Left            =   1440
+         TabIndex        =   30
+         Top             =   240
+         Width           =   1215
+      End
+      Begin VB.CommandButton cmdOk 
+         Caption         =   "&Go>>"
+         BeginProperty Font 
+            Name            =   "MS Sans Serif"
+            Size            =   12
+            Charset         =   0
+            Weight          =   400
+            Underline       =   0   'False
+            Italic          =   0   'False
+            Strikethrough   =   0   'False
+         EndProperty
+         Height          =   375
+         Left            =   1440
+         TabIndex        =   29
+         Top             =   1320
+         Width           =   1215
+      End
+      Begin VB.CheckBox Check3 
+         Caption         =   """analog\"" is null in testplan file"
+         ForeColor       =   &H000000FF&
+         Height          =   735
+         Left            =   120
+         TabIndex        =   28
+         Top             =   600
+         Width           =   2415
+      End
    End
-   Begin VB.CommandButton cmdOk 
-      Caption         =   "&Go"
-      BeginProperty Font 
-         Name            =   "MS Sans Serif"
-         Size            =   12
-         Charset         =   0
-         Weight          =   400
-         Underline       =   0   'False
-         Italic          =   0   'False
-         Strikethrough   =   0   'False
-      EndProperty
-      Height          =   375
-      Left            =   6240
-      TabIndex        =   25
-      Top             =   4440
-      Width           =   1215
+   Begin VB.Frame Frame3 
+      Height          =   5175
+      Left            =   7680
+      TabIndex        =   24
+      Top             =   0
+      Width           =   2535
+      Begin VB.CommandButton cmdBomAndBom 
+         Caption         =   "Bom 1 and Bom 2       &GO>>"
+         Enabled         =   0   'False
+         Height          =   375
+         Left            =   120
+         TabIndex        =   33
+         Top             =   1320
+         Width           =   2295
+      End
+      Begin VB.OptionButton Option2 
+         Caption         =   "Bom and bom compare (only two bom file)"
+         Height          =   495
+         Left            =   120
+         TabIndex        =   26
+         Top             =   720
+         Width           =   2295
+      End
+      Begin VB.OptionButton Option1 
+         Caption         =   "Bom and testplan compare"
+         Height          =   375
+         Left            =   120
+         TabIndex        =   25
+         Top             =   240
+         Value           =   -1  'True
+         Width           =   2295
+      End
    End
    Begin VB.CommandButton cmdExit 
       Caption         =   "&Exit"
@@ -58,17 +119,17 @@ Begin VB.Form frmMain
          Strikethrough   =   0   'False
       EndProperty
       Height          =   375
-      Left            =   6240
-      TabIndex        =   10
-      Top             =   4920
-      Width           =   1215
+      Left            =   7680
+      TabIndex        =   9
+      Top             =   5280
+      Width           =   2535
    End
    Begin VB.Frame Frame2 
       Height          =   3735
       Left            =   120
-      TabIndex        =   16
+      TabIndex        =   15
       Top             =   0
-      Width           =   7335
+      Width           =   7455
       Begin VB.TextBox txtBom5 
          BackColor       =   &H0080FF80&
          Height          =   375
@@ -156,7 +217,7 @@ Begin VB.Form frmMain
          TabIndex        =   0
          Text            =   "Please open testplan file!(DblClick me open file!"")"
          Top             =   240
-         Width           =   7095
+         Width           =   7215
       End
       Begin MSComDlg.CommonDialog CommonDialog1 
          Left            =   2040
@@ -178,9 +239,9 @@ Begin VB.Form frmMain
          ForeColor       =   &H00FF0000&
          Height          =   255
          Left            =   4680
-         TabIndex        =   24
+         TabIndex        =   23
          Top             =   2280
-         Width           =   2535
+         Width           =   2655
       End
       Begin VB.Label l6 
          BeginProperty Font 
@@ -195,9 +256,9 @@ Begin VB.Form frmMain
          ForeColor       =   &H00FF0000&
          Height          =   255
          Left            =   4680
-         TabIndex        =   23
+         TabIndex        =   22
          Top             =   2640
-         Width           =   2535
+         Width           =   2655
       End
       Begin VB.Label l7 
          BeginProperty Font 
@@ -212,9 +273,9 @@ Begin VB.Form frmMain
          ForeColor       =   &H00FF0000&
          Height          =   255
          Left            =   4680
-         TabIndex        =   22
+         TabIndex        =   21
          Top             =   3000
-         Width           =   2535
+         Width           =   2655
       End
       Begin VB.Label l8 
          BeginProperty Font 
@@ -229,9 +290,9 @@ Begin VB.Form frmMain
          ForeColor       =   &H00FF0000&
          Height          =   255
          Left            =   4680
-         TabIndex        =   21
+         TabIndex        =   20
          Top             =   3360
-         Width           =   2535
+         Width           =   2655
       End
       Begin VB.Label l1 
          BeginProperty Font 
@@ -246,9 +307,9 @@ Begin VB.Form frmMain
          ForeColor       =   &H00FF0000&
          Height          =   255
          Left            =   4680
-         TabIndex        =   20
+         TabIndex        =   19
          Top             =   840
-         Width           =   2535
+         Width           =   2655
       End
       Begin VB.Label l2 
          BeginProperty Font 
@@ -263,9 +324,9 @@ Begin VB.Form frmMain
          ForeColor       =   &H00FF0000&
          Height          =   255
          Left            =   4680
-         TabIndex        =   19
+         TabIndex        =   18
          Top             =   1200
-         Width           =   2535
+         Width           =   2655
       End
       Begin VB.Label l3 
          BeginProperty Font 
@@ -280,9 +341,9 @@ Begin VB.Form frmMain
          ForeColor       =   &H00FF0000&
          Height          =   255
          Left            =   4680
-         TabIndex        =   18
+         TabIndex        =   17
          Top             =   1560
-         Width           =   2535
+         Width           =   2655
       End
       Begin VB.Label l4 
          BeginProperty Font 
@@ -297,17 +358,17 @@ Begin VB.Form frmMain
          ForeColor       =   &H00FF0000&
          Height          =   255
          Left            =   4680
-         TabIndex        =   17
+         TabIndex        =   16
          Top             =   1920
-         Width           =   2535
+         Width           =   2655
       End
    End
    Begin VB.Frame Frame1 
-      Height          =   1695
+      Height          =   1935
       Left            =   120
-      TabIndex        =   11
+      TabIndex        =   10
       Top             =   3720
-      Width           =   5055
+      Width           =   4575
       Begin VB.Label Msg4 
          BeginProperty Font 
             Name            =   "MS Sans Serif"
@@ -320,9 +381,9 @@ Begin VB.Form frmMain
          EndProperty
          Height          =   255
          Left            =   120
-         TabIndex        =   15
-         Top             =   1320
-         Width           =   4815
+         TabIndex        =   14
+         Top             =   1440
+         Width           =   4335
       End
       Begin VB.Label Msg3 
          BeginProperty Font 
@@ -337,9 +398,9 @@ Begin VB.Form frmMain
          ForeColor       =   &H00FF0000&
          Height          =   255
          Left            =   120
-         TabIndex        =   14
-         Top             =   960
-         Width           =   4815
+         TabIndex        =   13
+         Top             =   1080
+         Width           =   4335
       End
       Begin VB.Label Msg2 
          BeginProperty Font 
@@ -353,9 +414,9 @@ Begin VB.Form frmMain
          EndProperty
          Height          =   255
          Left            =   120
-         TabIndex        =   13
-         Top             =   600
-         Width           =   4815
+         TabIndex        =   12
+         Top             =   720
+         Width           =   4335
       End
       Begin VB.Label Msg1 
          BeginProperty Font 
@@ -370,38 +431,10 @@ Begin VB.Form frmMain
          ForeColor       =   &H00FF0000&
          Height          =   255
          Left            =   120
-         TabIndex        =   12
-         Top             =   240
-         Width           =   4815
+         TabIndex        =   11
+         Top             =   360
+         Width           =   4335
       End
-   End
-   Begin VB.CommandButton cmdBoards 
-      Caption         =   "&CreateTestplan"
-      Enabled         =   0   'False
-      Height          =   375
-      Left            =   6240
-      TabIndex        =   9
-      Top             =   3960
-      Width           =   1215
-   End
-   Begin VB.CheckBox Check1 
-      Caption         =   "Panel Boards"
-      ForeColor       =   &H00FF0000&
-      Height          =   495
-      Left            =   5280
-      TabIndex        =   26
-      Top             =   3840
-      Width           =   975
-   End
-   Begin VB.CheckBox Check2 
-      Caption         =   "Not initializel testplan"
-      ForeColor       =   &H00000000&
-      Height          =   615
-      Left            =   5280
-      TabIndex        =   28
-      Top             =   4320
-      Value           =   1  'Checked
-      Width           =   975
    End
    Begin VB.Menu File_ 
       Caption         =   "File"
@@ -455,13 +488,244 @@ If Check2.Value = 1 Then
 End If
 End Sub
 
+Private Sub Check3_Click()
+If Check3.Value = 1 Then
+     
+     strAnalog_ = ""
+   Else
+    
+    strAnalog_ = "analog/"
+    
+End If
+End Sub
+
 Private Sub cmdBoards_Click()
+If Check3.Value = 1 Then
+     
+     strAnalog_ = ""
+   Else
+    
+    strAnalog_ = "analog/"
+    
+End If
 frmCreateTestplan.Show
 End Sub
 
+Private Sub cmdBomAndBom_Click()
+On Error Resume Next
+Dim bTwoBom As Boolean
+bTwoBom = bRunBom2 Or bRunBom1
+If bRunBom1 = False Then
+    MsgBox "Please open bom1 file!", vbCritical
+    Exit Sub
+End If
+If bRunBom2 = False Then
+    MsgBox "Please open bom2 file!", vbCritical
+    Exit Sub
+End If
+
+strMsg = MsgBox(l1.Caption & " file and " & l2.Caption & " file compare,Do you want to continue ?", 52, "Warning!")
+If strMsg = vbYes Then
+      GoTo Start
+   ElseIf strMsg = vbNo Then
+    Exit Sub
+End If
+
+Start:
+Frame3.Enabled = False
+If bTwoBom = True Then
+    Open PrmPath & "BomCompare\Bom1_and_Bom2_Compare.txt" For Output As #54
+    Close #54
+    Call BomAndBomComp_Bom1
+    Call BomAndBomComp_Bom2
+
+   
+    Call Bom1AndBom2_Dir_Bom2
+      msg1.Caption = l1.Caption & "_"
+      Msg2.Caption = "_ and _"
+      Msg3.Caption = "_" & l2.Caption
+      Msg4.Caption = "_ compare ok!"
+      Frame3.Enabled = True
+        Call Kill_File
+    MsgBox l1.Caption & " and " & l2.Caption & " compare ok!", vbInformation
+
+End If
+
+End Sub
+Private Sub BomAndBomComp_Bom2()
+ Dim strBom2_DeviceName As String
+ Dim intDevice_Ge As Integer
+ Dim strDevice_LiaoHao As String
+ Dim strDevice_Text As String
+ Dim intFile_Line As Integer
+ Dim Mystr As String
+ Dim strTmp() As String
+ On Error Resume Next
+ MkDir PrmPath & "BomCompare\Bom_2"
+intFile_Line = 0
+intDevice_Ge = 0
+strBom2Path = Trim(txtBom2.Text)
+If Dir(strBom2Path) = "" Then
+   txtBom2.Text = " Please open bom2 file!(DblClick me open file!)"
+   bRunBom2 = False
+   txtBom2.SetFocus
+   strBom2Path = ""
+   MsgBox "Bom2 not find!,please check path!", vbCritical
+   Exit Sub
+End If
+
+'open bom1 file
+   Kill PrmPath & "BomCompare\Bom_2\*.*"
+      Open PrmPath & "BomCompare\Bom1_and_Bom2_Compare.txt" For Output As #54
+        Print #54, "!============================" & l1.Caption & " file  =True ," & l2.Caption & " file not find devices============================="
+   Open strBom2Path For Input As #52
+           Do Until EOF(52)
+             Line Input #52, strBom2_DeviceName
+               msg1.Caption = "Reading bom2 file..."
+               Mystr = LCase(Trim(strBom2_DeviceName))
+               If Mystr <> "" Then
+                  If Left(Mystr, 1) <> "-" Then
+                    strTmp = Split(Mystr, " ")
+                      If Trim(strTmp(UBound(strTmp))) <> "" Then
+                             'create bom1 analog file
+                             If Dir(PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) & ".shit") = "" Then
+                                Print #54, strBom2_DeviceName
+                             End If
+                             
+                              Open PrmPath & "BomCompare\Bom_2\" & strTmp(UBound(strTmp)) & "." & strTmp(0) & ".shit" For Output As #22
+                                   Print #22, strBom2_DeviceName
+                              Close #22
+                             intDevice_Ge = intDevice_Ge + 1
+                             Msg3.Caption = Trim(strTmp(UBound(strTmp)))
+                             Msg4.Caption = "AnalogDevice:" & intDevice_Ge
+                           '  Debug.Print strTmp(UBound(strTmp))
+                         
+                         
+        
+                         
+                      End If
+                  End If '<>-
+                  
+               End If '<>""
+                intFile_Line = intFile_Line + 1
+               Msg2.Caption = "Read & l2.Caption & file line: " & intFile_Line
+               DoEvents
+               
+              
+           Loop
+ Close #52
+        Print #54, "!============================" & l2.Caption & " file  =True ," & l1.Caption & " file not find devices============================="
+ Close #54
+        msg1.Caption = l2.Caption & " file closed!"
+        If intDevice_Ge = 0 Then
+          MsgBox "Shit ,the bom2 file is null!", vbCritical
+          Exit Sub
+        End If
+   
+ 
+End Sub
+
+Private Sub BomAndBomComp_Bom1()
+ Dim strBom1_DeviceName As String
+ Dim intDevice_Ge As Integer
+ Dim strDevice_LiaoHao As String
+ Dim strDevice_Text As String
+ Dim intFile_Line As Integer
+ Dim Mystr As String
+ Dim strTmp() As String
+ On Error Resume Next
+ MkDir PrmPath & "BomCompare\Bom_1"
+intFile_Line = 0
+intDevice_Ge = 0
+strBom1Path = Trim(txtBom1.Text)
+If Dir(strBom1Path) = "" Then
+   txtBom1.Text = " Please open bom1 file!(DblClick me open file!)"
+   bRunBom1 = False
+   txtBom1.SetFocus
+   strBom1Path = ""
+   MsgBox "Bom1 not find!,please check path!", vbCritical
+   Exit Sub
+End If
+
+'open bom1 file
+   Kill PrmPath & "BomCompare\Bom_1\*.*"
+
+   Open strBom1Path For Input As #50
+   Open PrmPath & "BomCompare\Bom_1\tmpCompare.dll" For Output As #58
+           Do Until EOF(50)
+             Line Input #50, strBom1_DeviceName
+               msg1.Caption = "Reading bom1 file..."
+               Mystr = LCase(Trim(strBom1_DeviceName))
+               If Mystr <> "" Then
+                  If Left(Mystr, 1) <> "-" Then
+                    strTmp = Split(Mystr, " ")
+                      If Trim(strTmp(UBound(strTmp))) <> "" Then
+                             'create bom1 analog file
+                              Open PrmPath & "BomCompare\Bom_1\" & strTmp(UBound(strTmp)) & "." & strTmp(0) & ".shit" For Output As #22
+                                   Print #22, strBom1_DeviceName
+                              Close #22
+                                   Print #58, strTmp(UBound(strTmp)) & "." & strTmp(0) & ".shit"
+                             intDevice_Ge = intDevice_Ge + 1
+                             Msg3.Caption = Trim(strTmp(UBound(strTmp)))
+                             Msg4.Caption = "AnalogDevice:" & intDevice_Ge
+                           '  Debug.Print strTmp(UBound(strTmp))
+                         
+                         
+        
+                         
+                      End If
+                  End If '<>-
+                  
+               End If '<>""
+                intFile_Line = intFile_Line + 1
+               Msg2.Caption = "Read & l1.Caption & file line: " & intFile_Line
+               DoEvents
+               
+              
+           Loop
+ Close #50
+ Close #58
+        msg1.Caption = l1.Caption & " file closed!"
+        If intDevice_Ge = 0 Then
+          MsgBox "Shit ,the bom1 file is null!", vbCritical
+          Exit Sub
+        End If
+   
+ 
+End Sub
+Private Sub Bom1AndBom2_Dir_Bom2()
+Dim MyStr1 As String
+    Open PrmPath & "BomCompare\Bom1_and_Bom2_Compare.txt" For Append As #54
+ 
+ Open PrmPath & "BomCompare\Bom_1\tmpCompare.dll" For Input As #59
+            Do Until EOF(59)
+             Line Input #59, MyStr1
+              If MyStr1 <> "" Then
+               If Dir(PrmPath & "BomCompare\Bom_2\" & MyStr1) = "" Then
+                  Open PrmPath & "BomCompare\Bom_1\" & MyStr1 For Input As #60
+                     Line Input #60, TempShit
+                  Close #60
+                  Print #54, TempShit
+               End If
+              End If
+              DoEvents
+            Loop
+ 
+ 
+ 
+       Msg2.Caption = "file compare runing..."
+       Msg3.Caption = "please wait..."
+      Msg4.Caption = l1.Caption & " and " & l2.Caption & " compare ok!"
+      
+ Close #59
+Close #54
+End Sub
+
+
 Private Sub cmdExit_Click()
 
-Unload frmHelp
+
+'Unload frmHelp
 Unload frmCreateTestplan
 Unload Me
 End
@@ -471,7 +735,7 @@ End Sub
  
 
 Private Sub cmdHelp_Click()
-frmHelp.Show
+
 End Sub
 
 Private Sub cmdOK_Click()
@@ -499,6 +763,13 @@ Dim a
     Else
      a = False
   End If
+  If Check1.Value = 1 Then
+   cmdBoards.Enabled = True
+   Boards = True
+   Else
+   cmdBoards.Enabled = False
+   Boards = False
+End If
   strMsg = MsgBox("Panel Boards=" & a & " ,Do you want to continue ?", 52, "Warning!")
 If strMsg = vbYes Then
       GoTo Start
@@ -877,12 +1148,12 @@ Close #7
                               Else
                            
                                 Open PrmPath & "BomCompare\Bom_1_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & "analog/" & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
                                 Close #5
                             End If
                           Else
                                 Open PrmPath & "BomCompare\Bom_1_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & "analog/" & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
                                 Close #5
                             
                         End If
@@ -892,9 +1163,9 @@ Close #7
                                 Open PrmPath & "BomCompare\Bom_1_Exist.txt" For Append As #5
                                   If Boards = True Then
                                    'strBoardsNumber
-                                     Print #5, "   ! test " & """" & "analog/" & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
                                     Else
-                                     Print #5, "   ! test " & """" & "analog/" & Mystr & """" & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & "  ! test commented in testorder"
                                   End If
                                 Close #5
                  End If
@@ -917,13 +1188,13 @@ Close #7
                               Else
                            
                                 Open PrmPath & "BomCompare\Bom_2_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & "analog/" & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
                                 Close #5
                             End If
                             
                           Else
                                 Open PrmPath & "BomCompare\Bom_2_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & "analog/" & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
                                 Close #5
                         End If
         
@@ -932,9 +1203,9 @@ Close #7
                                 Open PrmPath & "BomCompare\Bom_2_Exist.txt" For Append As #5
                                   If Boards = True Then
                                    'strBoardsNumber
-                                     Print #5, "   ! test " & """" & "analog/" & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
                                     Else
-                                     Print #5, "   ! test " & """" & "analog/" & Mystr & """" & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & "  ! test commented in testorder"
                                   End If
                                 Close #5
                  End If
@@ -957,12 +1228,12 @@ Close #7
                               Else
                            
                                 Open PrmPath & "BomCompare\Bom_3_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & "analog/" & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
                                 Close #5
                             End If
                           Else
                                 Open PrmPath & "BomCompare\Bom_3_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & "analog/" & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
                                 Close #5
                           
                         End If
@@ -972,9 +1243,9 @@ Close #7
                                 Open PrmPath & "BomCompare\Bom_3_Exist.txt" For Append As #5
                                   If Boards = True Then
                                    'strBoardsNumber
-                                     Print #5, "   ! test " & """" & "analog/" & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
                                     Else
-                                     Print #5, "   ! test " & """" & "analog/" & Mystr & """" & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & "  ! test commented in testorder"
                                   End If
                                 Close #5
 
@@ -998,12 +1269,12 @@ Close #7
                               Else
                            
                                 Open PrmPath & "BomCompare\Bom_4_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & "analog/" & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
                                 Close #5
                             End If
                          Else
                                 Open PrmPath & "BomCompare\Bom_4_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & "analog/" & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
                                 Close #5
                             
                             
@@ -1015,9 +1286,9 @@ Close #7
                                 Open PrmPath & "BomCompare\Bom_4_Exist.txt" For Append As #5
                                   If Boards = True Then
                                    'strBoardsNumber
-                                     Print #5, "   ! test " & """" & "analog/" & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
                                     Else
-                                     Print #5, "   ! test " & """" & "analog/" & Mystr & """" & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & "  ! test commented in testorder"
                                   End If
                                 Close #5
 
@@ -1040,12 +1311,12 @@ Close #7
                               Else
                            
                                 Open PrmPath & "BomCompare\Bom_5_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & "analog/" & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
                                 Close #5
                             End If
                            Else
                                 Open PrmPath & "BomCompare\Bom_5_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & "analog/" & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
                                 Close #5
                             
                         End If
@@ -1055,9 +1326,9 @@ Close #7
                                 Open PrmPath & "BomCompare\Bom_5_Exist.txt" For Append As #5
                                   If Boards = True Then
                                    'strBoardsNumber
-                                     Print #5, "   ! test " & """" & "analog/" & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
                                     Else
-                                     Print #5, "   ! test " & """" & "analog/" & Mystr & """" & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & "  ! test commented in testorder"
                                   End If
                                 Close #5
 
@@ -1083,14 +1354,14 @@ Close #7
                               Else
                            
                                 Open PrmPath & "BomCompare\Bom_6_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & "analog/" & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
                                 Close #5
                                 
                                 
                             End If
                           Else
                                 Open PrmPath & "BomCompare\Bom_6_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & "analog/" & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
                                 Close #5
                             
                         End If
@@ -1100,9 +1371,9 @@ Close #7
                                 Open PrmPath & "BomCompare\Bom_6_Exist.txt" For Append As #5
                                   If Boards = True Then
                                    'strBoardsNumber
-                                     Print #5, "   ! test " & """" & "analog/" & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
                                     Else
-                                     Print #5, "   ! test " & """" & "analog/" & Mystr & """" & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & "  ! test commented in testorder"
                                   End If
                                 Close #5
 
@@ -1125,13 +1396,13 @@ Close #7
                               Else
                            
                                 Open PrmPath & "BomCompare\Bom_7_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & "analog/" & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
                                 Close #5
                             End If
                             
                            Else
                                 Open PrmPath & "BomCompare\Bom_7_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & "analog/" & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
                                 Close #5
                             
                         End If
@@ -1141,9 +1412,9 @@ Close #7
                                 Open PrmPath & "BomCompare\Bom_7_Exist.txt" For Append As #5
                                   If Boards = True Then
                                    'strBoardsNumber
-                                     Print #5, "   ! test " & """" & "analog/" & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
                                     Else
-                                     Print #5, "   ! test " & """" & "analog/" & Mystr & """" & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & "  ! test commented in testorder"
                                   End If
                                 Close #5
 
@@ -1166,12 +1437,12 @@ Close #7
                               Else
                            
                                 Open PrmPath & "BomCompare\Bom_8_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & "analog/" & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
                                 Close #5
                             End If
                           Else
                                 Open PrmPath & "BomCompare\Bom_8_Exist.txt" For Append As #5
-                                  Print #5, "    test " & """" & "analog/" & Mystr & """"
+                                  Print #5, "    test " & """" & strAnalog_ & Mystr & """"
                                 Close #5
                         End If
         
@@ -1180,9 +1451,9 @@ Close #7
                                 Open PrmPath & "BomCompare\Bom_8_Exist.txt" For Append As #5
                                   If Boards = True Then
                                    'strBoardsNumber
-                                     Print #5, "   ! test " & """" & "analog/" & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
                                     Else
-                                     Print #5, "   ! test " & """" & "analog/" & Mystr & """" & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & "  ! test commented in testorder"
                                   End If
                                 Close #5
                  End If
@@ -1209,12 +1480,12 @@ Close #7
                                Else
                             
                                  Open PrmPath & "BomCompare\Comm_Device_Exist.txt" For Append As #5
-                                   Print #5, "    test " & """" & "analog/" & Mystr & """"
+                                   Print #5, "    test " & """" & strAnalog_ & Mystr & """"
                                  Close #5
                              End If
                            Else
                                  Open PrmPath & "BomCompare\Comm_Device_Exist.txt" For Append As #5
-                                   Print #5, "    test " & """" & "analog/" & Mystr & """"
+                                   Print #5, "    test " & """" & strAnalog_ & Mystr & """"
                                  Close #5
                             
                             
@@ -1225,9 +1496,9 @@ Close #7
                                 Open PrmPath & "BomCompare\Comm_Device_Exist.txt" For Append As #5
                                   If Boards = True Then
                                    'strBoardsNumber
-                                     Print #5, "   ! test " & """" & "analog/" & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
                                     Else
-                                     Print #5, "   ! test " & """" & "analog/" & Mystr & """" & "  ! test commented in testorder"
+                                     Print #5, "   ! test " & """" & strAnalog_ & Mystr & """" & "  ! test commented in testorder"
                                   End If
                                 Close #5
                 End If
@@ -1235,8 +1506,9 @@ Close #7
              End If
              
              If (bBom1OK And bBom2OK And bBom3OK And bBom4OK And bBom5OK And bBom6OK And bBom7OK And bBom8OK) = False Then
-                If bTestorder <> True Then
-            
+                If bTestorder = True Then
+
+                         
                      
                          If Not_initializel_testplan = True Then
                             If bUnString = True Then
@@ -1253,12 +1525,12 @@ Close #7
                               Else
                            
                                 Open PrmPath & "BomCompare\NotTest_in_Curr_Ver.txt" For Append As #5
-                                 Print #5, "    !N test " & """" & "analog/" & Mystr & """"
+                                 Print #5, "    !N test " & """" & strAnalog_ & Mystr & """"
                                 Close #5
                             End If
                            Else
                                 Open PrmPath & "BomCompare\NotTest_in_Curr_Ver.txt" For Append As #5
-                                 Print #5, "    !N test " & """" & "analog/" & Mystr & """"
+                                 Print #5, "    !N test " & """" & strAnalog_ & Mystr & """"
                                 Close #5
                             
                         End If
@@ -1268,12 +1540,12 @@ Close #7
                                 Open PrmPath & "BomCompare\NotTest_in_Curr_Ver.txt" For Append As #5
                                   If Boards = True Then
                                    'strBoardsNumber
-                                     Print #5, "   !N test " & """" & "analog/" & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
+                                     Print #5, "   !N test " & """" & strAnalog_ & Mystr & """" & " " & strBoardsNumber & "  ! test commented in testorder"
                                     Else
-                                     Print #5, "   !N test " & """" & "analog/" & Mystr & """" & "  ! test commented in testorder"
+                                     Print #5, "   !N test " & """" & strAnalog_ & Mystr & """" & "  ! test commented in testorder"
                                   End If
                                 Close #5
-                  End If
+                  End If 'testorder
              End If
              
              
@@ -1385,7 +1657,7 @@ strBoardsNumber = ""
                            End If 'strBoardsNumber = ""
                      End If 'InStr(Replace(LCase(Mystr), " ", ""), "subanalog_tests") <> 0
                  End If 'Boards = True
-                 If Left(Mystr, 1) = "!" And InStr(Mystr, "test ") <> 0 And bSubAnalog = True And InStr(Mystr, "analog/") <> 0 And InStr(Replace(Mystr, " ", ""), "testcommentedintestorder") <> 0 Then
+                 If Left(Mystr, 1) = "!" And InStr(Mystr, "test ") <> 0 And bSubAnalog = True And InStr(Mystr, strAnalog_) <> 0 And InStr(Replace(Mystr, " ", ""), "testcommentedintestorder") <> 0 Then
             '                    Open PrmPath & "BomCompare\TestorderClose.txt" For Append As #23
             '                       Print #23, Mystr
             '                    Close #23
@@ -1395,7 +1667,7 @@ strBoardsNumber = ""
                             strAnalogName = Replace(strAnalogName, Left(strAnalogName, (InStr(strAnalogName, "test") - 1)), "")
                             strAnalogName = Trim(Replace(strAnalogName, "test", ""))
                             strAnalogName = Right(strAnalogName, Len(strAnalogName) - 1)
-                            strAnalogName = Trim(Replace(strAnalogName, "analog/", ""))
+                            strAnalogName = Trim(Replace(strAnalogName, strAnalog_, ""))
                             strAnalogName = Left(strAnalogName, InStr(strAnalogName, """"))
                             strAnalogName = Trim(LCase(Trim(Replace(strAnalogName, """", ""))))
                             'baobei weiwei3007
@@ -1424,14 +1696,14 @@ strBoardsNumber = ""
                          strAnalogName = ""
                          
                        Else
-                          If Not_initializel_testplan = False And Left(Mystr, 1) = "!" And bSubAnalog = True And InStr(Mystr, "analog/") <> 0 Then
+                          If Not_initializel_testplan = False And Left(Mystr, 1) = "!" And bSubAnalog = True And InStr(Mystr, strAnalog_) <> 0 Then
              
                                     Open PrmPath & "BomCompare\UnsettledDevice.txt" For Append As #23
                                               Print #23, Mystr
                                      Close #23
                        
                           End If
-                         If Left(Mystr, 1) = "!" And bSubAnalog = True And InStr(Mystr, "analog/") <> 0 Then
+                         If Left(Mystr, 1) = "!" And bSubAnalog = True And InStr(Mystr, strAnalog_) <> 0 Then
                                  
                                  
                             If Not_initializel_testplan = True Then
@@ -1439,7 +1711,7 @@ strBoardsNumber = ""
                                  strAnalogName = Replace(strAnalogName, Left(strAnalogName, (InStr(strAnalogName, "test") - 1)), "")
                                  strAnalogName = Trim(Replace(strAnalogName, "test", ""))
                                  strAnalogName = Right(strAnalogName, Len(strAnalogName) - 1)
-                                 strAnalogName = Trim(Replace(strAnalogName, "analog/", ""))
+                                 strAnalogName = Trim(Replace(strAnalogName, strAnalog_, ""))
                                  strAnalogName = Trim(Left(strAnalogName, InStr(strAnalogName, """")))
                                  strAnalogName = Trim(LCase(Trim(Replace(strAnalogName, """", ""))))
                                   strAnalogName = LCase(Trim(Replace(strAnalogName, "%", "")))
@@ -1465,16 +1737,16 @@ strBoardsNumber = ""
 
                            End If 'Not_initializel_testplan = True
                         Else
-                          If Left(Mystr, 1) = "!" And Not_initializel_testplan = True And bSubAnalog = True And InStr(Mystr, "analog/") <> 0 Then
+                          If Left(Mystr, 1) = "!" And Not_initializel_testplan = True And bSubAnalog = True And InStr(Mystr, strAnalog_) <> 0 Then
                             Open PrmPath & "BomCompare\UnsettledDevice.txt" For Append As #23
                                       Print #23, Mystr
                              Close #23
                           End If
                            
-                     End If 'Left(Mystr, 1) = "!" And bSubAnalog = True And InStr(Mystr, "analog/") <> 0
+                     End If 'Left(Mystr, 1) = "!" And bSubAnalog = True And InStr(Mystr, strAnalog_) <> 0
                   End If
                   If Left(Mystr, 1) <> "!" Then
-                        If InStr(Replace(LCase(Mystr), " ", ""), "subanalog_tests(") <> 0 Then
+                        If InStr(Replace(LCase(Mystr), " ", ""), "subanalog_tests") <> 0 Then
                            bSubAnalog = True
                         End If
                         If bSubAnalog = True Then
@@ -1488,16 +1760,16 @@ strBoardsNumber = ""
                                     Exit Do
                                  End If
                                 Msg3.Caption = "sub Analog_Tests find ok!"
-                               If Left(LCase(Mystr), 5) = "test " And InStr(LCase(Mystr), """analog/") <> 0 Then
+                               If Left(LCase(Mystr), 5) = "test " And InStr(LCase(Mystr), strAnalog_) <> 0 Then
                                     ' strAnalogName = Replace(MyStr, " ", "")
                                         strAnalogName = ""
                                         strAnalogName = Replace(Mystr, " ", "")
                                         strAnalogName = Trim(Replace(strAnalogName, "test", ""))
                                         strAnalogName = Right(strAnalogName, Len(strAnalogName) - 1)
-                                        strAnalogName = Trim(Replace(strAnalogName, "analog/", ""))
+                                        strAnalogName = Trim(Replace(strAnalogName, strAnalog_, ""))
                                         strAnalogName = Left(strAnalogName, InStr(strAnalogName, """"))
                                         strAnalogName = Trim(LCase(Trim(Replace(strAnalogName, """", ""))))
-                                       'strAnalogName = Mid(MyStr, InStr(MyStr, """analog/") + 8, InStr(InStr(MyStr, """analog/"), MyStr, """"))
+                                       'strAnalogName = Mid(MyStr, InStr(MyStr, strAnalog_) + 8, InStr(InStr(MyStr, ""strAnalog_), MyStr, """"))
                                      If strAnalogName <> "" Then
                                               If InStr(strAnalogName, "%") <> 0 Then
                                                           Open PrmPath & "BomCompare\Testplan_Tmp_Analog\" & strAnalogName & ".%" For Output As #4
@@ -1541,7 +1813,7 @@ strBoardsNumber = ""
 '                                                    Print #23, Mystr
 '                                            Close #23
                                     End If ' strAnalogName <> ""
-                                End If 'Left(LCase(Mystr), 5) = "test " And InStr(LCase(Mystr), """analog/")
+                                End If 'Left(LCase(Mystr), 5) = "test " And InStr(LCase(Mystr), ""strAnalog_)
                          End If  ' bRunTestplan
                 
                  
@@ -2043,14 +2315,25 @@ If Right(PrmPath, 1) <> "\" Then PrmPath = PrmPath & "\"
 MkDir PrmPath & "BomCompare"
 
 
-
+If Option1.Value = True Then
+   Frame4.Enabled = True
+   Else
+   Frame4.Enabled = False
+End If
 Open PrmPath & "BomCompare\NotDelete.sys" For Output As #77
 If Check2.Value = 1 Then
   Not_initializel_testplan = True
   Else
   Not_initializel_testplan = False
 End If
-
+If Check3.Value = 1 Then
+     
+     strAnalog_ = ""
+   Else
+    
+    strAnalog_ = "analog/"
+    
+End If
 
 End Sub
 
@@ -2185,6 +2468,64 @@ RmDir PrmPath & "BomCompare\Bom_8"
  
  
  
+End Sub
+
+Private Sub Option1_Click()
+If Option1.Value = True Then
+   Frame4.Enabled = True
+   Else
+   Frame4.Enabled = False
+End If
+If Option2.Value = True Then
+   txtBom3.Enabled = False
+   txtBom4.Enabled = False
+   txtBom5.Enabled = False
+   txtBom6.Enabled = False
+   txtBom7.Enabled = False
+   txtBom8.Enabled = False
+   txtTestplan.Enabled = False
+   cmdBomAndBom.Enabled = True
+   Else
+   txtBom2.Enabled = True
+   txtBom3.Enabled = True
+   txtBom4.Enabled = True
+   txtBom5.Enabled = True
+   txtBom6.Enabled = True
+   txtBom7.Enabled = True
+   txtBom8.Enabled = True
+   txtTestplan.Enabled = True
+   cmdBomAndBom.Enabled = False
+ 
+End If
+End Sub
+
+Private Sub Option2_Click()
+If Option1.Value = True Then
+   Frame4.Enabled = True
+   Else
+   Frame4.Enabled = False
+End If
+If Option2.Value = True Then
+   txtBom3.Enabled = False
+   txtBom4.Enabled = False
+   txtBom5.Enabled = False
+   txtBom6.Enabled = False
+   txtBom7.Enabled = False
+   txtBom8.Enabled = False
+   txtTestplan.Enabled = False
+   cmdBomAndBom.Enabled = True
+   Else
+   txtBom2.Enabled = True
+   txtBom3.Enabled = True
+   txtBom4.Enabled = True
+   txtBom5.Enabled = True
+   txtBom6.Enabled = True
+   txtBom7.Enabled = True
+   txtBom8.Enabled = True
+   txtTestplan.Enabled = True
+   cmdBomAndBom.Enabled = False
+ 
+End If
 End Sub
 
 Private Sub txtBom1_DblClick()

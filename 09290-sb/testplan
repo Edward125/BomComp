@@ -1,0 +1,4897 @@
+!!!!    4    0    1 1257592293   0000                                         
+! Testplan for 09290-sb  Tue Nov  3 09:23:22 2009
+
+
+! 09290-SB
+dim BoardSet_boards_1_to_1(1:1)
+dim BoardSet_boards_3_to_3(3:3)
+dim BoardSet_boards_2_to_2(2:2)
+!+++++++++++++++++++++++++++++++++++
+!1%r3729 1%r7523 1%r7526 wait debug
+!
+!
+!+++++++++++++++++++++++++++++++++++++
+!   AGILENT ICT STANDARD TESTMAIN      Revision: "Agilent i3070 07.20p 0808 WN"
+!   PANELIZATION VERSION
+!##############################################################################
+!   This "main" program sequences execution of testplan subroutines and
+!   assumes that the current working directory is already set to the
+!   appropriate board directory.
+!   This testmain has included the code to support the following optional
+!   features:
+!        Data Logging for PushButton QSTATS, QSTATS-II and ART
+!        Chek-Point (pin tests)
+!        Boundary Scan: Interconnect Plus & ScanWorks
+!        Panelized Boards
+!        Agilent Intelligent Yield Enhancement Test (IYET)
+!        Agilent Worst Probe Report (WPR)
+!        Agilent First Pass Yield (FPY)
+!   Once the testplan is working, you may selectively enable
+!   any combination of the features by changing the 'flag' variables
+!   in the subroutine "Set_Custom_Options".  Use the following command:
+!         find  "!   Other"&" parameters"  ! takes you to option settings
+!
+!   Turn learn on and run the testplan on a known good board.  After the
+!   learning run is successfully completed, the testplan is ready for
+!   customization, debug and production testing.
+!   Analog limits are logged by standard testmain if and only if the
+!   learn flag is on.  Limits must be logged once each time they change
+!   in order for PushButton Q-STATS or Q-STATS II to produce histograms.
+!
+!   If flash is to be programmed on this board, the testplan needs to have the
+!   locations marked !flash! modified or reviewed.  Please review the flash
+!   manual for full explanation. Key elements include:
+!
+!   full disabling of buses and upstream control lines is required for safety
+!   use ID check for digital test subroutine to ensure proper part placement
+!   Cycle power if required to three-state upstream devices
+
+dim InvOn$[28], InvOff$[11], O$[128], Retry_PinTest$[168]
+dim Cycle_Vacuum$[128], Recycle_Vacuum$[128]
+dim Testmain_Revision$[70]
+dim Batch$[12], Oper$[25], Testplan$[14], Testrev$[4], Status(0:256)
+dim Board$(0:256)[14], Board_Rev$(0:256)[14], Known_Good$[1], Serial$(0:256)
+dim Proc_Step$[5], Log_Path$[80], BoardSet(0:256), Log_File$(0:256)
+dim BoardSet_flash(0:256)
+! The following is used in the power-supply setup routine for parallel
+! power supplies.  It holds masks for comparison.
+dim Psgroup(1:16)
+option bit 32     ! Prevents range error when comparing Psgroup with MSB set
+! IYET
+dim IYET_Failing_Tests$(0:2047)[40]
+dim IYET_Retest_Failing_Devices$(0:8191)[40]
+dim IYET_Top_Retests$(0:8191,2)[40]
+
+!       INITIALIZE BREAK AND ERROR TRAPPING
+
+!new=====
+dim MES_path$[100]
+dim BACKUP_path$[100]
+BACKUP_path$ = "Z:\ATE\FS7"
+MES_path$ ="C:\ATE\backup"
+FixtureID$ = "09290-HP-1"
+Run_counter=1
+FaonOneBoard=0
+
+
+on break recover Break_Trap
+on error recover Error_Trap
+
+!       INITIALIZE VARIABLES
+
+call Initializations
+
+!       SET UP FAILURE ACKNOWLEDGMENT
+acknowledge all failures
+
+!       MAIN LOOP FOR REPEATEDLY TESTING A BOARD
+!          (executed only once if "learning")
+
+Wait_For_Start:
+
+Dateandtime$ = datetime$
+Pass_Fail_Reported = False
+Logging_Started = False
+Tests_On_This_Panel = 0
+print | print Place_Board_Prompt$
+!wait for start
+
+!########################
+   BoardSet(1) = 1
+   BoardSet(2) = 1
+   BoardSet(3) = 1
+   BoardSet(4) = 1
+   BoardSet(5) = 1
+   BoardSet(6) = 1
+!########################
+
+
+if Serializing then
+  print using "@"
+  Panel_Serial$ = fn Get_Serial_Num$(Serial_Prompt$)
+
+ !new=====
+
+  Panel_Serial$=upc$(Panel_Serial$)
+ ! call Send_RRR                !000000
+
+!   call InputMac                !000000
+   print using "@,/"
+
+print Panel_Serial$
+  print Panel_Rev$
+! stop
+  if Panel_Serial$[1;10]<>Panel_Rev$[1;10] then
+      print "Please check panel version !"
+       goto Wait_For_Start
+   end if
+
+
+  Known_Good$ = "n"
+  if Panel_Serial$ = Known_Good_Board$ then Known_Good$ = "y"
+  call Map_Panel_to_Boards   ! Map panel serial number to indiv. boards
+end if
+if Using_Multiple_Versions and Version_Prompting = Per_Board then
+  call Get_Version_Label
+  if nrun = 1 or Version_Inits_Needed then
+    call Do_Version_Inits
+  end if
+end if
+
+! Get xout info for the panel.  If learning, all boards on the panel
+! will be enabled.
+
+! if not learning then select boards on panel BoardSet(*)
+
+!       RE-TEST AFTER PIN-TEST FAILURE
+
+ChekPoint_Retry:
+
+print using "@,/"
+if Serializing then print Put$; Panel_Serial$
+Tests_On_This_Panel = Tests_On_This_Panel + 1
+if Tests_On_This_Panel > 1 then
+  print Rep_Test$
+  Count = 0
+  for I = 1 to Number_Boards_On_Panel
+    if BoardSet(I) then
+      if Count mod 16 = 0 and Count <> 0 then print
+      print using "4d,#"; I
+      Count = Count + 1
+    end if
+  next I
+  print
+end if
+
+!       START LOGGING FOR THIS PANEL, AND EACH BOARD
+
+report is Report_Printer$
+if Logging then call Start_Logging
+Logging_Started = True  ! Also used as reporting flag
+
+! Initialize Status array and panel flags
+
+if Tests_On_This_Panel = 1 then
+  All_Boards_Xed_Out = True
+end if
+for I = 1 to Number_Boards_On_Panel
+  if BoardSet(I) then
+    Status(I) = Passed
+    if Tests_On_This_Panel = 1 then
+      All_Boards_Xed_Out = False
+    end if
+  else
+    if Tests_On_This_Panel = 1 then Status(I) = Xed_Out
+  end if
+next I
+if All_Boards_Xed_Out then goto Cleanup
+
+  print "Press START to " & InvOn$&  "Continue"  &InvOff$
+   wait for start
+
+!       ACTIVATE VACUUM IN PREPARATION FOR TEST
+
+ FaonOneBoard=0
+
+if Tests_On_This_Panel = 1 then faon 1.0
+FaonOneBoard=1+FaonOneBoard
+
+! Warning: Reducing the value for 'faon' from the default value of 1.5
+! can potentially cause testhead damage.
+
+!       CHECK FIXTURE CONTACT, THEN
+!       LEARN OR TEST (OR RE-TEST) BOARD
+
+unpowered
+
+! If doing Pin Test pre-test and it fails, mark those boards
+! as not to be tested.
+
+All_Failed = False
+if (not learning) and Chek_Point_Mode = Pretest then
+  if not fn Chek_Point_OK then
+    call Update_Status (Failed_Pin_Test, All_Failed)
+  end if
+end if
+
+ print "cycletime:";(msec-Ttest)/1000
+ Ttest=msec
+
+  AllTime=msec
+
+if not All_Failed then call Test_Sections
+
+  print tab(5);"AllTestTime:";(msec-AllTime)/1000
+
+
+!       IF ANY BOARD FAILED TEST, TRY TO FIX IT BY RUNNING PIN TEST
+
+Cleanup:
+
+Enable_Retest = False
+for I = 1 to Number_Boards_On_Panel
+  board number is I
+  BoardSet(I) = False              ! Don't retest passing boards
+  if boardfailed and Status(I) <> Failed_In_Preshorts then
+    if Tests_On_This_Panel = 1 and Chek_Point_Mode = Failures then
+      Enable_Retest = True
+      BoardSet(I) = True
+    end if
+  end if
+next I
+if Enable_Retest then
+  unpowered
+  if fn Chek_Point_OK then goto ChekPoint_Retry
+end if
+
+!       REMOVE BOARD FROM TESTHEAD AND GENERATE PASS/FAIL MESSAGE
+!       THEN TERMINATE LOGGING (IF ENABLED) AND REPORTING
+
+faoff
+if All_Boards_Xed_Out then
+  print All_Xout$
+  for I = 1 to Number_Boards_On_Panel
+    board number is I
+    fail device
+    if Using_Graphics then
+      board graphics highlight fail board I, Err
+    else
+      Err = True
+    end if
+    if Err then print "Board "; I; " failed"
+    report All_Xout$
+  next I
+end if
+if panelfailed then
+  print "     **  ";Fail_Msg$;"  **"
+  if not Using_Graphics then copy Fail_File$ over "/dev/tty"
+else
+  print "     **  ";Pass_Msg$;"  **"
+  if not Using_Graphics then copy Pass_File$ over "/dev/tty"
+end if
+Pass_Fail_Reported = True
+for I = 1 to Number_Boards_On_Panel
+  board number is I
+  if Status(I) <> Xed_Out then
+    if boardfailed then
+      if not Using_BtBasic then first pass yield 0, 1 !FPY not Passed and Tested
+      if Using_Graphics then
+        board graphics highlight fail board I, Err
+      else
+        Err = True
+      end if
+      if Err then print "Board "; I; " failed"
+      if Status(I) = Failed_Pin_Test then
+        print But$, I, " ** ";Pin_Msg$;" **"
+      end if
+      if learning then Status(I) = Failed_In_Learn
+      if Serializing then report Serial_Nr$ & Serial$(I)
+    else
+      if not Using_BtBasic then first pass yield 1, 1 !FPY Passed and Tested
+      if Using_Graphics then
+        board graphics highlight pass board I, Err
+      end if
+    end if
+  end if
+  if Logging and Logging_Started then
+    ! Do 'log board end' on panel later
+    if Status(I) <> Xed_Out then
+      log board end Status(I)
+      log out Log_File$(I)&val$(I)&"-"&Dateandtime$&System$&th$; append
+    end if
+    log clear
+  end if
+
+  ! Log a test record into the panel log buffer showing which board failed
+  ! (for PushButton QSTATS).
+  if Logging and boardfailed and Status(I) <> Xed_Out then
+    board number is Panel_Itself
+    log "{@D-T|1||||Board_" & val$(I) & "}"
+  end if
+next I
+
+! Now finish the log buffer for the panel
+if Logging and not All_Boards_Xed_Out then
+  board number is Panel_Itself
+  if panelfailed then
+    log board end Failed
+  else
+    log board end Passed
+  end if
+  log out Log_File$(0) & Dateandtime$ & System$ & th$; append
+  log clear
+end if
+
+Eject_Ticket: image 13/
+
+if panelfailed then
+  if Using_Buffered_Reporting then
+    for I = 1 to Number_Boards_On_Panel-1
+      board number is I
+      if boardfailed then report out
+    next I
+    board number is Number_Boards_On_Panel
+    report using Eject_Ticket
+    report out
+  else
+    report using Eject_Ticket
+  end if
+end if
+
+report is *
+
+  !new=====
+!--- MES:  Write Out to file -----------------
+
+      if panelfailed=False then
+         print "send pass"
+         call Send_BBB(I,"0000",FixtureID$)            !000000
+      end if
+
+for I = Panel_Itself to Number_Boards_On_Panel
+  board number is I
+  !new=====
+!--- MES:  Write Out to file -----------------
+if Serializing then         ! Use Serialize flag to activate
+   if boardfailed then
+
+!    Dbug_mode$ = "YES"
+! if Dbug_mode$ = "YES"  then
+      !@  if Upload then
+      ! Proceed with record file generation
+
+      !Status, Failed_In_Preshorts, Failed_In_Shorts, Failed_In_Functional
+      !Failed_In_Digital, Failed_In_Power_Supplies, Failed_In_Analog
+
+      if boardfailed then
+         if Status(I) = Failed_In_Shorts then
+            Failure$ = "SHORTS"
+         else
+            if Status(I) = Failed_In_Analog then
+               Failure$ = "ANALOG"
+            else
+               if Status(I) = Failed_In_TestJet then
+                  Failure$ = "TESTJET"
+               else
+                 if Status(I) = Failed_In_Analog_Cluster then
+                     Failure$ = "Analog_Cluster"
+                  else
+                  if Status(I) = Failed_In_Power_Supplies then
+                     Failure$ = "Power_Supplies"
+                  else
+                     if Status(I) = Failed_In_Digital then
+                        Failure$ = "DIGITAL"
+                     else
+                        if Status(I) = Failed_In_Functional then
+                           Failure$ = "FUNCTIONAL"
+                        end if
+                        end if
+                     end if
+                  end if
+               end if
+            end if
+         end if
+         if Failure$ = "SHORTS" then
+            Failure_Code$ = "AT01"
+          else
+            if Failure$ = "ANALOG" or Failure$ = "TESTJET" or Failure$ = "Analo_Cluster" or Failure$ = "DIGITAL" or Failure$ = "FUNCTIONAL" then
+               Failure_Code$ = "AT03"
+            end if
+          end if
+
+          call Send_BBB(I,Failure_Code$,FixtureID$)            !000000
+
+      end if
+
+!  end if  !@ end if upload
+   else
+
+
+   end if
+end if
+!----------- End MES ---------------------
+
+  report clear
+  clear failures
+next I
+Logging_Started = False
+
+!       END PROGRAM IF LEARNING. OTHERWISE RETURN TO MAIN LOOP
+
+if learning then
+   learn off
+   print | print Learning_Off_Msg$ | print Stop_Msg$
+   beep
+   stop
+end if
+goto Wait_For_Start
+
+!       END OF MAIN LOOP
+!       INTERRUPT HANDLING
+! This is the normal entry for Break/Stop detection
+
+Break_Trap:
+off break
+off error
+print "     ";Break_Msg$
+unpowered,Err
+if Err then print errmlong$
+if Logging and Logging_Started then
+  for I = Panel_Itself to Number_Boards_On_Panel
+    board number is I
+    log board end Break_Code
+    log out Log_File$(I) & val$(I) & "-" & Dateandtime$ & System$ & th$; append
+    log clear
+  next I
+end if
+faoff, Err
+if Err then print errmlong$
+goto Abort
+
+! This is the normal entry for errors occurring in Basic statements
+
+Error_Trap:
+off error
+print errmlong$
+beep
+SaveErrn = errn
+unpowered,Err
+if Err then print errmlong$
+
+!       IF A BOARD IS PRESENT, FAIL IT
+!       THEN TERMINATE LOGGING (IF ENABLED) AND REPORTING
+
+if Logging_Started and not Pass_Fail_Reported then
+  print "     **  ";Fail_Msg$;"  **"
+  if not Using_Graphics then copy Fail_File$ over "/dev/tty"
+  for I = 1 to Number_Boards_On_Panel
+    board number is I
+    if Status(I) <> Xed_Out then
+      fail device
+      report Board_Not_Tested$
+      if Using_Graphics then
+        board graphics highlight fail board I, Err
+      else
+        Err = True
+      end if
+      if Err then print "Board "; I; " failed"
+      if Status(I) = Failed_Pin_Test then
+        print But$, I, " ** ";Pin_Msg$;" **"
+      end if
+      if learning then Status(I) = Failed_In_Learn
+      if Serializing then report Serial_Nr$ & Serial$(I)
+    end if
+  next I
+  if Using_Buffered_Reporting then
+    for I = 1 to Number_Boards_On_Panel-1
+      board number is I
+      if boardfailed then report out
+    next I
+    board number is Number_Boards_On_Panel
+    report using Eject_Ticket
+    report out
+  else
+    report using Eject_Ticket
+  end if
+  report is *, Err
+  for I = 1 to Number_Boards_On_Panel
+    board number is I
+    report clear
+  next I
+end if
+if Logging_Started and Logging then
+  for I = Panel_Itself to Number_Boards_On_Panel
+    board number is I
+    log using """{@RPT~80|"",80a,""}""" ; errm$(SaveErrn)
+    log board end Error_Code, SaveErrn
+    log out Log_File$(I) & val$(I) & "-" & Dateandtime$ & System$ & th$; append
+    log clear
+  next I
+end if
+
+!       REMOVE THE BOARD FROM THE TESTHEAD
+
+faoff, Err
+if Err then print errmlong$
+if learning or Err then goto Abort
+on error recover Error_Trap
+goto Wait_For_Start
+
+!       ABORT PROGRAM: UNRECOVERABLE ERROR, LEARN ERROR OR STOP KEY
+
+Abort:
+off break
+off error
+probe report off
+report is *, Err
+log is *, Err
+
+beep
+if (nrun=1) and not Did_First_Run_Inits then
+  print No_Init_Warning$
+  clear nrun
+else
+  if Version_Inits_Needed then
+    print No_Version_Init_Warning$
+    clear nrun
+  end if
+end if
+print "     ";Stop_Msg$
+beep
+stop
+end
+
+!       END OF ERROR TRAPS
+
+!       Test/Learn Sections (Subroutine)
+!         [ Assumes unpowered mode. ]
+! Note concerning LEARN MODE:  some sections are not truly "learned" but are
+! run in learn mode for other reasons.  For example, analog tests may be run
+! in learn mode in order to log limits information used by Pushbutton QSTATS,
+! and preshorts/shorts are run "just in case" -- to avoid bad learns & damage.
+! To keep a section from being run in learn mode, place 'if not learning then'
+! just before that section and place 'end if' just after it.
+!##############################################################################
+sub Test_Sections
+global PreshortsMsg$, ShortsMsg$, PowerMsg$, DigitalMsg$, AnalogMsg$
+global DigitalFuncMsg$, AnalogPoweredMsg$, BScanIncktMsg$, BScanIntconMsg$
+global Status(*), Failed_In_Preshorts, Failed_In_Shorts, Failed_In_Functional
+global Failed_In_Digital, Failed_In_Power_Supplies, Failed_In_Analog
+global Logging, Number_Boards_On_Panel, True, False, BoardSet(*)
+global Mode$, Failed_In_BScan, Xed_Out
+global VectorlessTestMsg$, Failed_In_VectorlessTest
+global PolarityMsg$, Failed_In_Polarity_Check
+global BScanPShortsMsg$
+global ConnectCheckMsg$, Failed_In_ConnectCheck
+global VerifyGroundsMsg$, Failed_In_Verify_Grounds
+global Failed_In_Flash, FlashProgMsg$, Programming
+global AnalogClusterMsg$, Failed_In_Analog_Cluster
+global BScanSiNailsMsg$, Failed_In_BScan_SiNails
+global CoverExtendMsg$, Failed_In_Cover_Extend
+global SW_ScanPathVerifyMsg$, Failed_In_SW_Testing
+global SW_DrVerifyMsg$, SW_IrVerifyMsg$
+global SW_InterconnectMsg$, SW_MemInterconnectMsg$
+global SW_ClusterMsg$, SW_MemBistMsg$
+global SW_ProgrammingMsg$, Failed_In_SW_Programming
+global SW_FlashMsg$, Failed_In_SW_Flash
+global PrePoweredMsg$, Failed_In_Pre_Powered
+global All_Failed
+! IYET
+global Using_IYET, Sampling, IYET_Preshorts_Attempts, IYET_Shorts_Attempts
+global IYET_Analog_Tests_Attempts, IYET_VectorlessTest_Attempts
+
+if Using_IYET then
+!@call IYET (PreshortsMsg$, IYET_Preshorts_Attempts)
+else
+!@call Pre_Shorts (Failed_In_Preshorts, Mode$ & PreshortsMsg$)
+end if
+if All_Failed then subexit
+
+if Using_IYET then
+  call IYET (ShortsMsg$, IYET_Shorts_Attempts)
+else
+   call Shorts (Failed_In_Shorts, Mode$ & ShortsMsg$)
+end if
+ if panelfailed then subexit
+!if All_Failed then subexit
+
+if Logging or not learning then
+  if Using_IYET and not learning and not Sampling then
+     call IYET (AnalogMsg$, IYET_Analog_Tests_Attempts)
+  else
+     call Analog_Tests (Failed_In_Analog, Mode$ & AnalogMsg$)
+  end if
+  if panelfailed then subexit
+!  if All_Failed then subexit
+end if
+
+if Using_IYET then
+  call IYET (VectorlessTestMsg$, IYET_VectorlessTest_Attempts)
+else
+  call VectorlessTest (Failed_In_VectorlessTest, Mode$ & VectorlessTestMsg$)
+end if
+ if panelfailed then subexit
+!if All_Failed then subexit
+
+call Polarity_Check (Failed_In_Polarity_Check, Mode$ & PolarityMsg$)
+if All_Failed then subexit
+
+call Connect_Check (Failed_In_ConnectCheck, Mode$ & ConnectCheckMsg$)
+if All_Failed then subexit
+
+!@call Analog_Cluster_Tests (Failed_In_Analog_Cluster, Mode$ & AnalogClusterMsg$)
+if All_Failed then subexit
+
+!@call Pre_Powered_Tests (Failed_In_Pre_Powered, Mode$ & PrePoweredMsg$)
+if All_Failed then subexit
+
+! The subroutine, "Verify_Grounds" must be run prior to the "powered" command.
+! If any board fails, then DO NOT execute the "powered" command.
+call Verify_Grounds (Failed_In_Verify_Grounds, Mode$ & VerifyGroundsMsg$)
+for I = 1 to Number_Boards_On_Panel
+  if Status(I) = Failed_In_Verify_Grounds then subexit
+next I
+
+powered
+
+!@call Setup_Power_Supplies (Failed_In_Power_Supplies, PowerMsg$)
+if All_Failed then subexit
+
+call ScanWorks_Scan_Path_Verify_Tests (Failed_In_SW_Testing, Mode$ & SW_ScanPathVerifyMsg$)
+if All_Failed then subexit
+
+call ScanWorks_Pretest
+if All_Failed then subexit
+
+!@call BScan_Powered_Shorts_Tests (Failed_In_Shorts, Mode$ & BScanPShortsMsg$)
+if All_Failed then subexit
+
+!@call BScan_Interconnect_Tests (Failed_In_BScan, Mode$ & BScanIntconMsg$)
+if All_Failed then subexit
+
+!If you:
+!       * use both ScanWorks and ICT InterconnectPlus chain tests
+! AND   * comment out any ICT interconnect tests (e.g. duplicate coverage)
+! AND   * those commented tests have unnailed nodes (possible undetected shorts)
+!THEN   * Move the following BScan_Incircuit_Tests routine below the ScanWorks
+!               Interconnect_Tests call
+
+!Reason: an interconnect test, which finds shorts, should be run on each chain prior to
+!the BScan_Incircuit_Tests routine.  The connect tests give precise opens diagnostics,
+!but board damage from undetected shorts could occur while they are being run.
+
+!@call BScan_Incircuit_Tests (Failed_In_BScan, Mode$ & BScanIncktMsg$)
+if All_Failed then subexit
+
+!@call ScanWorks_Interconnect_Tests (Failed_In_SW_Testing, Mode$ & SW_InterconnectMsg$)
+if All_Failed then subexit
+
+!@call BScan_Silicon_Nails_Tests (Failed_In_BScan_SiNails, Mode$ & BScanSiNailsMsg$)
+if All_Failed then subexit
+
+!@call Cover_Extend_Tests (Failed_In_Cover_Extend, Mode$ & CoverExtendMsg$)
+if All_Failed then subexit
+
+! If you are using Boundary-Scan and you want to cycle power,
+! then uncomment the following call and the if-then-else statements.
+! call Reset_Board
+! if boardfailed then
+!   call Disconnect_Power_On_Board
+!   subexit
+! end if
+
+!@call Digital_Tests (Failed_In_Digital, Mode$ & DigitalMsg$)
+if All_Failed then subexit
+
+call ScanWorks_Mem_Interconnect_Tests (Failed_In_SW_Testing, Mode$ & SW_MemInterconnectMsg$)
+if All_Failed then subexit
+
+call ScanWorks_Cluster_Tests (Failed_In_SW_Testing, Mode$ & SW_ClusterMsg$)
+if All_Failed then subexit
+
+call ScanWorks_Mem_BIST (Failed_In_SW_Testing, Mode$ & SW_MemBistMsg$)
+if All_Failed then subexit
+
+! If you are using Boundary-Scan and you want to cycle power,
+! then uncomment the following call and the if-then-else statements.
+! call Reset_Board
+! if boardfailed then
+!   call Disconnect_Power_On_Board
+!   subexit
+! end if
+
+!@call Functional_Tests (Failed_In_Functional, Mode$ & DigitalFuncMsg$)
+if All_Failed then subexit
+
+!@call Analog_Functional_Tests (Failed_In_Functional, Mode$ & AnalogPoweredMsg$)
+if All_Failed then subexit
+
+if Programming then
+  if learning then subexit
+
+  !----------------------------------------------------------------------------
+  ! Only add the following powersupply setup if it is necessary to cycle power.
+  ! Perhaps to get FPGAs or other ASICs to a three-state condition.
+  !
+  !    !flash! unpowered  ! Only if volatile logic exists upstream
+  !
+  !    !flash!  put any required gprelays here
+  !
+  !    !flash!  powered    ! if unpowered above, also use the following only if
+  !                        ! digital devices aren't interferring
+  !    ! call Setup_Power_Supplies (Failed_In_Power_Supplies, PowerMsg$)
+  !    ! if All_Failed then subexit
+  !----------------------------------------------------------------------------
+  ! Add the device name to be tested in the call to the Program_Flash
+  ! subroutine. If multiple devices are installed, duplicate the call line for
+  ! each device.  Pass an empty string as the Message$ parameter to supress
+  ! printing messages for devices 2 through N.
+  !----------------------------------------------------------------------------
+
+  ! call Program_Flash ("", Failed_In_Flash, FlashProgMsg$)
+  if All_Failed then subexit
+
+  call ScanWorks_Device_Programming (Failed_In_SW_Programming, SW_ProgrammingMsg$)
+  if All_Failed then subexit
+
+  call ScanWorks_Flash_Programming (Failed_In_SW_Flash, SW_FlashMsg$)
+  if All_Failed then subexit
+
+end if
+subend
+
+!##############################################################################
+sub Update_Status (Failure_Type, All_Failed)
+global True, False, Number_Boards_On_Panel, BoardSet(*), Status(*)
+global Failed_Board$, Xed_Out, Failed_In_BScan, Failed_In_Shorts
+global Failed_In_SW_Testing
+! IYET
+global IYET_Skip_Update_Status
+
+if IYET_Skip_Update_Status then subexit
+
+All_Failed = True
+Fail_Count = 0
+for I = 1 to Number_Boards_On_Panel
+  if BoardSet(I) then
+    board number is I
+    if boardfailed then
+!      call Disconnect_Power_On_Board (I)
+      Status(I) = Failure_Type
+      BoardSet(I) = False
+      if Fail_Count = 0 then
+        print tab(8); Failed_Board$
+      else
+        if Fail_Count mod 16 = 0 then print
+      end if
+      if Fail_Count mod 16 = 0 then print using "6a,#"; "      "
+      print using "4d,#"; I
+      Fail_Count = Fail_Count + 1
+    else
+      if Status(I) <> Xed_Out then All_Failed = False
+    end if
+  end if
+next I
+if Fail_Count <> 0 then print
+subend
+
+!       Pin Test Subroutines
+
+!##############################################################################
+def fn Chek_Point_OK
+! This is the subroutine for forcing the testing of pin contacts.
+! If this routine is called before Test_sections (Chek_Point_Mode = Pretest),
+! then the internal status will be set to Passed or Failed_Pin_Test for each
+! board that is not being skipped.  If this routine is called after test
+! (Chek_Point_Mode = Failures), then the internal status is modified only
+! if failures occur on each board that is not being skipped so as not to change
+! the results of the component tests.
+!
+! The meaning of the function is slightly different when it is called before
+! test versus after test.  If called before test, the function returns True
+! if, no matter how many times it was cycled, pin test did finally pass.
+! If called after test, the function returns True if pin test failed but
+! passed after retry.
+!
+! Note: fn Pinsfailed is external to testmain.
+!
+global Pin_Msg2$, Number_Boards_On_Panel, BoardSet(*), Panel_Itself, Passed
+global Retry_PinTest$, Recycle_Vacuum$, Status(*), True, False
+global Cycle_Vacuum$, Failed_Pin_Test, Max_Times_To_Fix_Contact
+global Logging, Panel_Serial$, Serial$(*), Known_Good$
+global Chek_Point_Mode, Pretest, Failures, Chek_Point_Msg$
+global FaonOneBoard
+
+if learning then return (False)
+Attempts = 0
+loop
+  Contact_Passed = not fn Pinsfailed (Chek_Point_Msg$)
+  Fail_Count = 0
+  if not Contact_Passed then
+    for I = 1 to Number_Boards_On_Panel
+      if BoardSet(I) then
+        board number is I
+        if dutfailed then
+          Status(I) = Failed_Pin_Test
+          if Fail_Count = 0 then
+            print Pin_Msg2$
+          else
+            if Fail_Count mod 16 = 0 then print
+          end if
+          print using "4d,#"; I
+          Fail_Count = Fail_Count + 1
+        else
+          if Chek_Point_Mode = Pretest then Status(I) = Passed
+        end if
+      end if
+    next I
+    if Fail_Count <> 0 then print
+  end if
+  Attempts = Attempts + 1
+  exit if Contact_Passed or (Attempts > Max_Times_To_Fix_Contact)
+!  question Retry_PinTest$, Retry
+!  exit if not Retry
+  if Logging and Chek_Point_Mode = Pretest then
+    for I = 1 to Number_Boards_On_Panel
+      board number is I
+      if Status(I) = Failed_Pin_Test then log board end Failed_Pin_Test
+    next I
+  end if
+!  question Cycle_Vacuum$, Cycle
+!  if Cycle then
+    faoff
+!    question Recycle_Vacuum$
+    faon 1.5
+! Warning: Reducing the value for 'faon' from the default value of 1.5
+! can potentially cause testhead damage.
+    unpowered
+!  end if
+  if Chek_Point_Mode = Pretest then
+    for I = Panel_Itself to Number_Boards_On_Panel
+      board number is I
+      clear failures
+      if Logging and Status(I) = Failed_Pin_Test then
+        log board start Serial$(I), Known_Good$, Panel_Serial$
+      end if
+    next I
+  end if
+end loop
+if Chek_Point_Mode = Failures then
+  Retest = False
+  ! Retest failing boards that pass pin test after having failed
+  for I = Panel_Itself to Number_Boards_On_Panel
+    if BoardSet(I) then
+      board number is I
+      if (not dutfailed) and Status(I) = Failed_Pin_Test then
+        Retest = True
+        if Logging then
+          log clear for retest
+          log board end Failed_Pin_Test
+        end if
+        clear failures
+        report clear
+      else
+        BoardSet(I) = False
+      end if
+    end if
+  next I
+  return (Retest)
+else
+  return (Contact_Passed)
+end if
+fnend
+
+!       Reset_Board Subroutine
+
+!##############################################################################
+sub Reset_Board
+   !---------------------------------------------------------------------------
+   ! This 'pause' section is placed here to remind the test programmer
+   ! that some powered tests may depend upon the TCK/TMS signals of
+   ! boundary scan chains/devices being held in a stable state.
+   ! When the testplan is run, the tests are properly sequenced
+   ! to assure that the disabled state is set; however, board level
+   ! circuitry may interfere with the persistence of the disabled state.
+   ! You may need to take additional measures; for example, you may
+   ! place your own pullup/down resistor in the fixture to assure a
+   ! stable TMS and/or TCK, or utilize a GP relay to disable some TCK
+   ! oscillator, etc.
+   ! For further explanation, see the Boundary-Scan Manual for the
+   ! section titled 'Maintaining Persistence of Boundary-Scan Disables'.
+   !
+   !---------------------------------------------------------------------------
+   ! When Boundary-Scan tests are complete, you may need to produce
+   ! a hard reset on the board-under-test to bring the ICs back into
+   ! operational mode.  One way of doing this is to cycle power to the
+   ! board using the following call:
+
+   call Cycle_Power_On_Board ! Cycle Power to reset digital state of board
+   ! call ScanWorks_Pretest    ! Configure volatile devices, if needed
+
+   ! Power cycling is time consuming and may not be necessary.  Some boards
+   ! may not need any resetting.  Others may have a digital reset node
+   ! you can toggle with a digital test to reset the board.
+   !
+   ! When you have evaluated the needs of this board and modified this
+   ! section, remove the pause and these comments.  You should take care
+   ! to document the action you have taken for future reference.
+   !---------------------------------------------------------------------------
+subend
+
+!##############################################################################
+! This routine maps a panel serial number to the serial numbers of each
+! of the boards.  If not user-modified, it simply concatenates a numeric
+! string to the serial number of the panel.
+!
+sub Map_Panel_to_Boards
+global Panel_Serial$, Serial$(*), Number_Boards_On_Panel, Panel_Itself
+Serial$(Panel_Itself) = Panel_Serial$
+for I = 1 to Number_Boards_On_Panel
+  Serial$(I) = Panel_Serial$ & "-" & val$(I)
+next I
+subend
+
+!       Data Logging Subroutines
+
+!##############################################################################
+sub Start_Logging
+global Analog_Sample_Rate, QSTATS_Mode, Histo, Panel$, Tests_On_This_Panel
+global Sampling, True, False
+global Proc_Step$, Batch$, Oper$, Panel_Rev$, Board_Rev$(*), Testplan$
+global Testrev$, Panel_Serial$, Known_Good$, Number_Boards_On_Panel, Serial$(*)
+global Board$(*), Panel_Itself, Version_Label$
+
+Sampling = False
+if learning then
+  log level is all
+else
+  if rnd < Analog_Sample_Rate * (QSTATS_Mode = Histo) then
+    log level is analog without nhls, pins
+    Sampling = True
+  else
+    log level is indictments without nhls
+  end if
+end if
+print "Log level: ";lli$;";  Report level: ";rli$;";  Panel type: ";Panel$
+PS$ = Proc_Step$ | TR$ = Testrev$ | PR$ = Panel_Rev$ | TP$ = Testplan$
+P$ = Panel$
+if Tests_On_This_Panel = 1 then
+  for I = Panel_Itself to Number_Boards_On_Panel
+    board number is I
+    if I = Panel_Itself then
+      log board Panel$, PS$, Batch$, Oper$, PR$, TP$, TR$, "", "", Version_Label$
+    else
+      log board Board$(I), PS$, Batch$, Oper$, Board_Rev$(I), TP$, TR$, P$, PR$, Version_Label$
+    end if
+  next I
+end if
+for I = Panel_Itself to Number_Boards_On_Panel
+  board number is I
+  if I = Panel_Itself then
+    log board start Panel_Serial$, Known_Good$
+  else
+    log board start Serial$(I), Known_Good$, Panel_Serial$
+  end if
+next I
+print
+subend
+
+!##############################################################################
+def fn Get_Serial_Num$(Prompt$)
+global Bad_Serial_Image$, Default_Serial_Number$
+global Serial_Length, Using_BtBasic
+
+loop
+  Ident$=""
+  if Using_BtBasic then
+    print using """"&Prompt$&""",#"
+    input "",Ident$
+  else
+    input prompt Prompt$; Ident$
+  end if
+
+      Ident$=upc$(Ident$)
+
+  if Ident$ = "" then Ident$ = Default_Serial_Number$
+  exit if Ident$ = Default_Serial_Number$
+  exit if (len(Ident$) = Serial_Length) or not Serial_Length
+  print using Bad_Serial_Image$; len(Ident$), Serial_Length
+end loop
+return (Ident$)
+!return (lwc$(Ident$))
+fnend
+
+!##############################################################################
+!  If the Board name contains any invalid characters, stop processing.
+sub Verify_Board_Names
+global Panel_Itself, Number_Boards_On_Panel
+global Stop_Msg$, Bad_Board_Name$, Board$(*)
+
+Last_Board$ = ""
+Found_Bad = 0
+for I = Panel_Itself to Number_Boards_On_Panel
+  if Board$(I) <> Last_Board$ then
+    if fn IllegalChars_In_Board_Name(Board$(I)) then
+      Found_Bad = 1
+      print Bad_Board_Name$  |   print "    ";Board$(I)
+    end if
+  end if
+  Last_Board$ = Board$(I)
+next I
+if Found_Bad then
+  print | print Stop_Msg$
+  beep
+  stop
+end if
+subend
+
+!##############################################################################
+! Check to see if the Board name contains any invalid characters, now only
+! check spaces.  Return 1 if yes, and 0 if no.
+def fn IllegalChars_In_Board_Name (Board$)
+global True, False
+
+if len (Board$) > 0 and pos (Board$, " ") > 0  then
+  return True
+else
+  return False
+end if
+fnend
+
+!##############################################################################
+sub Create_Log_Queue
+global Log_Path$, Directory_Exists, Queue_Error_Msg$, Stop_Msg$, Board$(*)
+global Log_File$(*), Number_Boards_On_Panel, Panel_Itself
+
+! Create a directory for the panel (Board$(0)) and for each unique board type
+! Note! It is assumed that boards are numbered contiguously within a type
+Last_Path$ = ""
+for I = Panel_Itself to Number_Boards_On_Panel
+  if I > 0 then Last_Path$ = Log_File$(I-1)
+  Log_File$(I) = Log_Path$ & Board$(I) & "/"
+  if nrun = 1 then
+    if Log_File$(I) <> Last_Path$ then
+      create dir Log_File$(I),Err
+      Err = Err and (Err <> Directory_Exists)
+      if Err then
+        print Queue_Error_Msg$  |   print "    ";errm$
+        print | print Stop_Msg$
+        beep
+        stop
+      end if
+    end if
+  end if
+next I
+Log_File$(Panel_Itself) = Log_File$(Panel_Itself) & "P-"
+subend
+
+!##############################################################################
+sub Setup_Logging
+global Panel_Serial$, Default_Serial_Number$, Testplan$, Batch$
+global Known_Good_Board$, Using_ART, Proc_Step$, Oper_Id_Prompt$
+global Panel$, Oper$, Known_Good_Prompt$
+global Serializing, Using_BtBasic
+
+randomize
+Proc_Step$             = "btest"
+Batch$                 = datetime$ ! Set to a unique identifier so that Q-STATS II can
+                                   ! calculate interboard handling and system idle times
+Testplan$              = Panel$
+Default_Serial_Number$ = "default_SN" & th$
+Panel_Serial$          = Default_Serial_Number$
+Known_Good_Board$      = ""
+Oper$                  = ""
+if Using_ART then
+      !new=====
+dim Operator_ID$(9)[8]                         !@change the id number
+assign @Test to "ID.txt"
+I=0
+loop
+enter @Test,,Err;ID$
+   exit if Err = 101007
+   Operator_ID$(I) = ID$
+   print ID$
+   I= I + 1
+end loop
+
+print using """"&Oper_Id_Prompt$&""",#"
+  Reinput:input "Enter Operator ID:",Oper$
+  Oper$=upc$(Oper$)
+  for J=0 to I-1      !@ change the id number
+   if Oper$=upc$(Operator_ID$(J)) then
+    goto Fexit
+     end if
+   next J
+  print "Illegal ID !!"
+  goto Reinput
+Fexit:
+end if
+! if Serializing then Known_Good_Board$ = fn Get_Serial_Num$(Known_Good_Prompt$)
+subend
+
+!       Initialization Subroutines
+
+!##############################################################################
+sub Initializations
+global Logging, Using_Buffered_Reporting, Report_Printer$, Using_ART
+global Serializing, Logging_Started, First_Run$, Testmain_Revision$
+global Did_First_Run_Inits, QSTATS_Mode
+global True, False, Off, No_Histo, Histo, Pretest, Failures
+global Number_Boards_On_Panel, Panel_Itself, Using_Graphics
+global Version_Inits_Needed, Using_Multiple_Versions
+global Per_Run, Per_Board, Version_Prompting
+! IYET, WPR
+global Using_IYET, Using_WPR ,BV$
+
+Testmain_Revision$="i3070 07.20p 0808 WN(panel)"
+True = 1
+False = 0
+Off = 0
+No_Histo = 1
+Histo = 2
+Pretest = 1
+Failures = 2
+Panel_Itself = 0
+Per_Run = 1
+Per_Board = 2
+Version_Inits_Needed = False
+call Set_Custom_Options
+call Initialize_Board_Constants ! external to testmain
+call Initialize_Constants
+call Verify_Board_Names
+
+! Initialize BoardSet to include all boards (needed by preloading of pintest)
+call Panel_Initialize_BoardSet(1)
+
+Logging_Started = False
+Logging = (QSTATS_Mode <> Off) or Using_ART
+if Using_ART then Serializing = True
+
+! call Get_Board_Revision        ! to interactively set Board_Rev$
+
+call Print_Startup_Message       ! prints out many variables' values
+acknowledge all failures
+learn capacitance off
+if Using_Buffered_Reporting then
+  buffered reporting on
+else
+  buffered reporting off
+end if
+report is Report_Printer$
+printer is *
+if Logging then
+  call Setup_Logging
+  call Create_Log_Queue
+else
+  log level is none
+end if
+if Using_ART then
+  report level is all
+else
+  report level is report
+end if
+if Using_Graphics then
+  ! If graphics are already running or a small monitor is in use,
+  ! the 'board graphics' statement generates an error.  Ignore it.
+  board graphics, Err
+  board graphics highlight clear all, Err
+end if
+if nrun = 1 then
+  print First_Run$
+  load board
+
+  !new==
+  print BV$     ," board verion is "
+  board version is BV$
+
+!'object checking on/off' statement goes here. Default is 'on'
+  object checking on
+end if
+if Using_Multiple_Versions and Version_Prompting = Per_Run then
+  call Get_Version_Label
+end if
+if nrun = 1 or Version_Inits_Needed then
+  call Do_Version_Inits
+  Did_First_Run_Inits=True
+end if
+
+! WPR
+if Using_WPR then probe report on
+
+! IYET
+if Using_IYET then call IYET_Initialize
+subend
+
+!##############################################################################
+sub Print_Startup_Message
+global Panel$, Panel_Rev$, Using_ART, QSTATS_Mode, Histo
+global Analog_Sample_Rate, Chek_Point_Mode, Failures
+global Report_Printer$, Using_Buffered_Reporting, Testmain_Revision$
+global Serializing, Serial_Length, Using_Graphics
+! IYET
+global Using_IYET, IYET_Report_On
+
+print using "@,2/"
+print "BOARD TYPE"
+print "  Name:     ";Panel$
+print "  Revision: ";Panel_Rev$
+print "AGILENT ICT TESTMAIN"
+print "  Report Printer: ";Report_Printer$
+print "  Revision:       ";Testmain_Revision$
+!   Build list of options to be printed
+!     O1$ is first line, O2$ is second line
+O1$ =  "  Options: "
+if Using_ART then O1$=O1$&" PR+"
+if QSTATS_Mode then O1$=O1$&" QSTATS"
+if Chek_Point_Mode then
+  O1$=O1$&" Chek-Point"
+  if Chek_Point_Mode = Failures then
+    O1$=O1$&"-Failures"
+  else
+    O1$=O1$&"-Pretest"
+  end if
+end if
+if Using_Graphics then O1$ = O1$ & " Graphics"
+if (O1$="  Options: ") then
+  O2$=O1$
+else
+  print O1$
+  O2$= "           "
+end if
+if Serializing then O2$=O2$&" Serializing("&val$(Serial_Length)&")"
+if learning then O2$=O2$&" LEARNING"
+if Using_Buffered_Reporting then O2$=O2$&" Buffered-Reporting"
+if QSTATS_Mode = Histo then
+  O2$=O2$&" Histograms("&val$(Analog_Sample_Rate)&")"
+end if
+if not (O2$ = "           ") then print O2$
+! IYET
+O3$="           "
+if Using_IYET then
+  O3$=O3$&" Intelligent Yield Enhancement Test"
+  if IYET_Report_On then O3$=O3$&"-Report"
+end if
+print O3$
+print using "2/"
+subend
+
+!##############################################################################
+sub Get_Board_Revision
+! NOTE: If Board revs are different from panel rev, modify this routine!
+global Panel_Rev$, Panel_Rev_Prompt$, Board_Rev$(*), Number_Boards_On_Panel
+global Panel_Itself, Using_BtBasic
+
+if Panel_Rev$ = "" then
+  if Using_BtBasic then
+    print using """"&Panel_Rev_Prompt$&""",#"
+    input "",Panel_Rev$
+  else
+    input prompt Panel_Rev_Prompt$; Panel_Rev$
+  end if
+  for I = Panel_Itself to Number_Boards_On_Panel
+    Board_Rev$(I) = Panel_Rev$
+  next I
+end if
+subend
+
+!##############################################################################
+sub Do_Version_Inits
+global Version_Inits_Needed, Chek_Point_Mode, True, False, Off
+
+unpowered
+faoff
+call Characterize                ! external to testmain
+if Chek_Point_Mode <> Off then   ! preload pins into testhead memory
+  Log_Level_Reset = False
+  if lli$ = "all" then
+    log level is none            ! turn off digital datalogging
+    Log_Level_Reset = True       ! for 'ignore all failures'
+  end if
+  ignore all failures
+  Err = fn Pinsfailed ("")       ! external to testmain
+  acknowledge all failures
+  if Log_Level_Reset = True then log level is all  ! reset datalogging
+end if
+Version_Inits_Needed = False
+subend
+
+!##############################################################################
+sub Get_Version_Label
+global Version_Label$, Version_Prompt$, True, False
+global Version_Inits_Needed, Using_Btbasic
+
+print "bv is "; bvi$
+if bvi$<>"" then
+  subexit
+end if
+    print "clear bv"
+
+
+Old_Version$ = bvi$
+Version_Inits_Needed = True
+loop
+  Version_Label$ = ""
+  if Using_BtBasic then
+    print using """" & Version_Prompt$ & """,#"
+    input "", Version_Label$
+  else
+    input prompt Version_Prompt$; Version_Label$
+  end if
+  if Version_Label$ = "" or Version_Label$ = "*" then
+    board version is *, Err
+  else
+    board version is Version_Label$, Err
+  end if
+  exit if not Err
+  print errmlong$
+end loop
+if bvi$ = Old_Version$ then
+  Version_Inits_Needed = False
+end if
+subend
+
+!##############################################################################
+sub Initialize_Constants
+global PreshortsMsg$, ShortsMsg$, PowerMsg$, DigitalMsg$, AnalogMsg$
+global DigitalFuncMsg$, AnalogPoweredMsg$, Chek_Point_Msg$, O$
+global Break_Detected, Mode$, Board_Not_Tested$
+global True, False, InvOn$, InvOff$, First_Run$, Panel_Rev_Prompt$
+global Pass_Msg$, Fail_Msg$, Pass_File$, Fail_File$, Stop_Msg$, Break_Msg$
+global No_Init_Warning$, Rep_Test$, Place_Board_Prompt$, Learning_Off_Msg$
+global Failed_In_Learn, Failed_Pin_Test, Failed_In_Preshorts, Failed_In_Shorts
+global Failed_In_Analog, Failed_In_Power_Supplies, Failed_In_Digital
+global Failed_In_Functional, Failed_In_BScan, Passed, Failed, Xed_Out
+global Directory_Exists, Log_Path$, System$, Queue_Error_Msg$
+global Break_Code, Error_Code, Using_BtBasic
+global But$, Put$, Serial_Prompt$, Bad_Serial_Image$, Oper_Id_Prompt$
+global Known_Good_Prompt$, Serial_Nr$, Failed_Board$
+global Retry_PinTest$, Cycle_Vacuum$, Recycle_Vacuum$
+global Pin_Msg$, Pin_Msg2$, Max_Times_To_Fix_Contact
+global BScanIntconMsg$, BScanIncktMsg$, All_Xout$
+global VectorlessTestMsg$, Failed_In_VectorlessTest
+global PolarityMsg$, Failed_In_Polarity_Check
+global BScanPShortsMsg$, No_Version_Init_Warning$
+global Version_Label$, Version_Prompt$
+global ConnectCheckMsg$, Failed_In_ConnectCheck
+global Failed_In_Flash, FlashProgMsg$
+global AnalogClusterMsg$, Failed_In_Analog_Cluster
+global PrePoweredMsg$, Failed_In_Pre_Powered
+global BScanSiNailsMsg$, Failed_In_BScan_SiNails
+global CoverExtendMsg$, Failed_In_Cover_Extend
+global SW_ScanPathVerifyMsg$, Failed_In_SW_Testing
+global SW_DrVerifyMsg$, SW_IrVerifyMsg$
+global SW_InterconnectMsg$, SW_MemInterconnectMsg$
+global SW_ClusterMsg$, SW_MemBistMsg$
+global SW_ProgrammingMsg$, Failed_In_SW_Programming
+global SW_FlashMsg$, Failed_In_SW_Flash
+global VerifyGroundsMsg$, Failed_In_Verify_Grounds
+global Bad_Board_Name$
+
+Using_BtBasic = True
+if localizable then Using_BtBasic = False
+
+if Using_BtBasic then
+  InvOn$                 = chr$(27)&"&dB"&chr$(7)  ! chr$(7) rings bell
+  InvOff$                = chr$(27)&"&d@"
+else
+  InvOn$                 = "<FONT COLOR=blue SIZE=+2><B>"
+  InvOff$                = "</B></FONT>"
+end if
+
+Break_Detected           = False
+Passed                   = 0
+Failed                   = 1
+Failed_Pin_Test          = 2
+Failed_In_Learn          = 3
+Failed_In_Shorts         = 4
+Failed_In_Analog         = 6
+Failed_In_Power_Supplies = 7
+Failed_In_Digital        = 8
+Failed_In_Functional     = 9
+Failed_In_Preshorts      = 10
+! Status codes 11, 12 reserved for use by EFS
+Xed_Out                  = 13     ! This status is maintained but not logged
+Failed_In_BScan          = 8      ! Equate to Failed_In_Digital
+Failed_In_VectorlessTest = 14
+Failed_In_Polarity_Check = 15
+Failed_In_ConnectCheck   = 16
+Failed_In_Analog_Cluster = 17
+Failed_In_Flash          = 18
+Failed_In_BScan_SiNails  = 19
+Failed_In_SW_Testing     = 8      ! Equate to Failed_In_Digital
+Failed_In_SW_Programming = 20
+Failed_In_SW_Flash       = 21
+Failed_In_Verify_Grounds = 22
+Failed_In_Cover_Extend   = 23
+Failed_In_Pre_Powered    = 24
+Error_Code               = 80
+Break_Code               = 82
+Directory_Exists         = 100312
+Log_Path$                = btgetenv$("AGILENT3070_ROOT")&"/qm/logdata/testerq/"
+enter "uname -n |";System$              ! gets hostname (without domain)
+Max_Times_To_Fix_Contact = 4            ! MUST BE >= 1
+Pin_Msg$                 = "FIXTURE CONTACT PROBLEM"
+Pin_Msg2$                = "FIXTURE CONTACT PROBLEM ON FOLLOWING BOARDS:"
+O$                       = InvOn$&"Press YES"&InvOff$
+O$                       = O$&" to retry Pins Test, "&InvOn$&"NO"&InvOff$
+Retry_PinTest$           = O$&" to continue."
+O$                       = InvOn$&"Press YES"&InvOff$&" to cycle vacuum, "
+Cycle_Vacuum$            = O$&InvOn$&"NO"&InvOff$&" Otherwise."
+O$                       = InvOn$&"Press YES"&InvOff$
+Recycle_Vacuum$          = O$&" to turn vacuum on and continue testing."
+Queue_Error_Msg$         = "Cannot create directory to queue up log data.  Error is:"
+But$                     = "Board Under Test: "
+Put$                     = "Panel Under Test: "
+Serial_Prompt$           = InvOn$&"Enter"&InvOff$&" Panel Identifier: "
+O$                       = "/,""Identifier has wrong length ("",dd,""), must be "
+Bad_Serial_Image$        = O$&""",dd,""."",/"
+Oper_Id_Prompt$          = InvOn$&"Enter"&InvOff$&" Operator Identifier: "
+Known_Good_Prompt$       = InvOn$&"Enter"&InvOff$&" Verification Board Identifier: "
+Rep_Test$                = "Repeating test of the following boards: "
+First_Run$               = "Please stand by -- doing first-run initializations"
+No_Init_Warning$         = "** WARNING: FIRST RUN INITIALIZATIONS NOT COMPLETED --"
+No_Init_Warning$         = No_Init_Warning$ & " CLEARING NRUN **"
+O$                       = "** WARNING: VERSION CHANGE INITIALIZATIONS NOT"
+No_Version_Init_Warning$ = O$ & " COMPLETED -- CLEARING NRUN **"
+Pass_File$               = btgetenv$("AGILENT3070_ROOT")&"/util/pass"
+Fail_File$               = btgetenv$("AGILENT3070_ROOT")&"/util/fail"
+Board_Not_Tested$        = "Board not fully tested."
+Pass_Msg$                = "Selected boards on panel PASSED"
+Fail_Msg$                = "Selected boards on panel FAILED"
+Stop_Msg$                = "P R O G R A M   S T O P P E D"
+Break_Msg$               = "Break/Stop detected."
+Place_Board_Prompt$      = "Place panel on fixture and "&InvOn$&"press START"
+Panel_Rev_Prompt$        = InvOn$&"Enter"&InvOff$&" Panel Revision: "
+Learning_Off_Msg$        = "Learning turned off"
+if learning then
+  Mode$                  = "Learning "
+else
+  Mode$                  = "Testing "
+end if
+PreshortsMsg$            = "Preshorts"
+ShortsMsg$               = "Shorts"
+PowerMsg$                = "Setting Up Power Supplies"
+DigitalMsg$              = "Digital Incircuit"
+AnalogMsg$               = "Analog Unpowered"
+AnalogClusterMsg$        = "Analog Cluster"
+VectorlessTestMsg$       = "Vectorless Test"
+PolarityMsg$             = "Polarity Check"
+ConnectCheckMsg$         = "Connect Check"
+DigitalFuncMsg$          = "Digital Functional"
+AnalogPoweredMsg$        = "Analog Powered and Mixed"
+BScanIntconMsg$          = "Boundary Scan Interconnect"
+BScanIncktMsg$           = "Boundary Scan Incircuit"
+BScanPShortsMsg$         = "Boundary Scan Powered Shorts"
+BScanSiNailsMsg$         = "Boundary Scan Silicon Nails"
+CoverExtendMsg$          = "Cover-Extend"
+PrePoweredMsg$           = "Pre Powered Tests"
+FlashProgMsg$            = "Programming Flash"
+SW_ScanPathVerifyMsg$    = "Scan Path Verify with ScanWorks"
+SW_DrVerifyMsg$          = "DR Verify with ScanWorks"
+SW_IrVerifyMsg$          = "IR Verify with ScanWorks"
+SW_InterconnectMsg$      = "Interconnect with ScanWorks"
+SW_MemInterconnectMsg$   = "Memory Interconnect with ScanWorks"
+SW_ClusterMsg$           = "Cluster with ScanWorks"
+SW_MemBistMsg$           = "Memory BIST with ScanWorks"
+SW_ProgrammingMsg$       = "Programming Devices with ScanWorks"
+SW_FlashMsg$             = "Programming Flash with ScanWorks"
+VerifyGroundsMsg$        = "Verify Grounds"
+Serial_Nr$               = "Serial #: "
+All_Xout$                = "No boards selected; panel has FAILED."
+Chek_Point_Msg$          = "Testing Pin Contact"
+O$                       = "Further testing on this panel is suspended "
+Failed_Board$            = O$&"due to failures on boards: "
+Version_Label$           = ""
+Version_Prompt$          = InvOn$&"Enter"&InvOff$&" Version Label: "
+Bad_Board_Name$          = "Board name contains space, cannot proceed:"
+subend
+
+!##############################################################################
+sub Set_Custom_Options
+!  All variables likely to need to be changed are initialized here.
+!  The Usage flag(s) can be set True or False to selectively enable or
+!  disable the code needed for each indicated subsystem or feature.
+global Using_ART, QSTATS_Mode, Testrev$
+global Analog_Sample_Rate
+global Serializing, Serial_Length
+global Chek_Point_Mode, Using_Graphics
+global Report_Printer$, True, False, Using_Buffered_Reporting
+global Off, Pretest, Failures, No_Histo, Histo
+global Per_Run, Per_Board, Version_Prompting
+global Programming
+! IYET, WPR
+global Using_IYET, IYET_Shorts_Attempts, IYET_Analog_Tests_Attempts
+global IYET_Report_On, IYET_VectorlessTest_Attempts, IYET_Preshorts_Attempts
+global Using_WPR
+
+!   Usage flag(s)
+
+QSTATS_Mode                  = Off       ! Choose {Off, No_Histo, Histo}
+Chek_Point_Mode              = Off       ! Choose {Off, Pretest, Failures}
+Using_ART                    = True      ! Agilent Repair Tool.
+Serializing                  = False     ! Will get set True if Using_ART.
+Using_Buffered_Reporting     = True      ! Report failures during board handling
+Using_Graphics               = False     ! Will get set False if SimPlate fxt.
+Programming                  = False     ! Execute Flash and device programming.
+Using_IYET                   = True     ! Agilent Intelligent Yield Enhancement
+                                         ! Test (IYET)
+IYET_Report_On               = False      !   Create & display report at breaks
+IYET_Preshorts_Attempts      = 3         !   Preshorts re-test attempts
+IYET_Shorts_Attempts         = 3         !   Shorts re-test attempts
+IYET_Analog_Tests_Attempts   = 3         !   Analog unp. re-test attempts
+IYET_VectorlessTest_Attempts = 3         !   VectorlessTest re-test attempts
+Using_WPR                    = False     ! Agilent Worse Probe Report (WPR)
+
+!   Other parameters
+
+Report_Printer$           = btgetenv$("RPR"&th$) ! Final report destination
+!Report_Printer$           = "/dev/tty"  ! Send reports to the screen
+Testrev$                  = "RevA"      ! Update this faithfully
+Analog_Sample_Rate        = .10         ! Meaningful if QSTATS_Mode = Histo
+Serial_Length             = 23          ! Board Id Length (0 = no checking)
+Version_Prompting         = Per_Board   ! Choose {Per_Board, Per_Run}
+subend
+
+!##############################################################################
+sub Cleanup_Flash
+global Logging, Report_level$
+
+if Report_level$ = "all" then report level is all
+if Report_level$ = "none" then report level is none
+if Report_level$ = "log" then report level is log
+if Report_level$ = "report" then report level is report
+if Logging then
+  call Set_Log_Level
+end if
+subend
+
+!       Data Logging Subroutines
+
+!##############################################################################
+sub Set_Log_Level
+global Sampling
+if learning then
+  log level is all
+else
+  if Sampling then
+    log level is analog without nhls, pins
+  else
+    log level is indictments without nhls
+  end if
+end if
+subend
+
+!       IYET Subroutines
+
+!##############################################################################
+sub IYET_Initialize
+
+global IYET_Path$, IYET_Failure_File$, IYET_Retest_Log_File$
+global O$, InvOn$, InvOff$
+global IYET_Vacuum_Off_Delay, IYET_Vacuum_On_Delay
+global IYET_Report_On, IYET_Max_Report_Count, IYET_File_Timeout
+global IYET_Err_Msg$, IYET_NoRT_Msg$
+global IYET_Test_Msg$, IYET_Max_Msg$, IYET_Fail_Msg$
+global IYET_Rpt1_Msg$, IYET_Rpt2_Msg$, IYET_Rpt3_Msg$
+global Chek_Point_Mode, Max_Times_To_Fix_Contact, Failures, True, False
+
+! Initialize paths and files
+IYET_Path$                = "./iyet/"
+IYET_Retest_Log_File$     = IYET_Path$&"retest"&datetime$[1;6]&".txt"
+IYET_Failure_File$        = IYET_Path$&"failure.txt"
+
+! Initialize variables
+IYET_Vacuum_Off_Delay     = 1.5
+IYET_Vacuum_On_Delay      = 1.5
+IYET_Max_Report_Count     = 10
+IYET_File_Timeout         = 5
+
+! Initialize message strings
+IYET_Err_Msg$  = "Error with file: "
+IYET_NoRT_Msg$ = "No re-tests found or missing file: "
+IYET_Test_Msg$ = "Re-testing "
+IYET_Max_Msg$  = "Maximum number of attempts for IYET must be >= 1."
+IYET_Fail_Msg$ = " failed, releasing panel..."
+
+! Initialize report strings
+IYET_Rpt1_Msg$ = "IYET Unstable Test Report - from file: "
+IYET_Rpt2_Msg$ = "Unstable Test"
+IYET_Rpt3_Msg$ = "# Re-tests"
+
+! When pins test is "Failures", disable redundant re-contacts
+if Chek_Point_Mode = Failures then Max_Times_To_Fix_Contact = 1
+
+! Create IYET directory
+create dir IYET_Path$, Error
+if (Error <> 100312) and (Error <> 0) then
+   print IYET_Err_Msg$ & IYET_Path$
+   print errmlong$(Error)
+   beep
+   stop
+end if
+
+! Generate and print re-test report
+if (Error = 100312) and IYET_Report_On then
+   print using "@"
+   print IYET_Rpt1_Msg$ & IYET_Retest_Log_File$
+   print
+   call IYET_Create_Report
+   print
+   O$             = InvOn$&"Press YES"&InvOff$
+   Prompt$ = O$&" to continue testing with IYET."
+!   question Prompt$, Continue
+!   if not Continue then stop
+   print using "@"
+end if
+subend
+
+!##############################################################################
+sub IYET_Create_Report
+! Collect all failing devices from log file and create retest report
+
+global IYET_Retest_Log_File$
+global IYET_Retest_Failing_Devices$(*), IYET_Top_Retests$(*)
+global IYET_Max_Report_Count, IYET_File_Timeout
+global IYET_NoRT_Msg$, IYET_Err_Msg$
+global IYET_Rpt1_Msg$, IYET_Rpt2_Msg$, IYET_Rpt3_Msg$
+
+! Open retest log file and get failing devices
+assign @Retest_Log, Error to IYET_Retest_Log_File$;read
+if Error then
+   print IYET_NoRT_Msg$ & IYET_Retest_Log_File$
+   print
+   subexit
+end if
+
+! Read all failing devices until end of file or until IYET_File_Timeout.
+Start_Time = msec
+I = 0
+loop
+   Input$ = ""
+   enter @Retest_Log,,Error;Input$
+   if (Error <> 0) and (Error <> 101007) then
+      print IYET_Err_Msg$ & IYET_Retest_Log_File$
+      print errmlong$(Error)
+      beep
+      stop
+   end if
+
+   ! Look for shorts failures, vectorless test failures
+   if pos(Input$," Report for """) then
+      End_Input = pos(Input$,""".")
+      Begin_Input = pos(Input$,"""") + 1
+      Temp_device$ = Input$[Begin_Input;End_Input - Begin_Input]
+      IYET_Retest_Failing_Devices$(I) = Temp_device$
+      I = I + 1
+   end if
+
+   ! Look for analog failures
+   if pos(Input$,"HAS FAILED") then
+      IYET_Retest_Failing_Devices$(I) = Input$[1;pos(Input$,"HAS FAILED")-1]
+      I = I + 1
+   end if
+
+   exit if Error = 101007
+
+   if (msec - Start_Time)/1000 > IYET_File_Timeout then
+      print IYET_Err_Msg$ & IYET_Retest_Log_File$
+      beep
+      stop
+   end if
+end loop
+
+assign @Retest_Log to *
+Device_Total = I-1
+
+! Count failures and remove duplicates
+K = 0
+for I = 0 to Device_Total
+   if IYET_Retest_Failing_Devices$(I) <> "" then
+      Temp$ =  IYET_Retest_Failing_Devices$(I)
+      Temp_Retests = 1
+      for J = I + 1 to Device_Total
+         if IYET_Retest_Failing_Devices$(J) <> "" then
+            if Temp$ = IYET_Retest_Failing_Devices$(J) then
+               Temp_Retests = Temp_Retests + 1
+               IYET_Retest_Failing_Devices$(J) = ""
+            end if
+         end if
+      next J
+      IYET_Top_Retests$(K,1) = Temp$
+      IYET_Top_Retests$(K,2) = val$(Temp_Retests)
+      K = K + 1
+   end if
+next I
+Top_Retest_Total = K-1
+
+! Sort ascending
+for I = 0 to Top_Retest_Total
+   for J = Top_Retest_Total to 1 step -1
+      if val(IYET_Top_Retests$(J,2)) > val(IYET_Top_Retests$(J-1,2)) then
+         Temp$ = IYET_Top_Retests$(J-1,1)
+         Temp_Retests = val(IYET_Top_Retests$(J-1,2))
+
+         IYET_Top_Retests$(J-1,1) = IYET_Top_Retests$(J,1)
+         IYET_Top_Retests$(J-1,2) = IYET_Top_Retests$(J,2)
+
+         IYET_Top_Retests$(J,1) = Temp$
+         IYET_Top_Retests$(J,2) = val$(Temp_Retests)
+      end if
+   next J
+next I
+
+! Print
+IYET_Max_Report_Count = IYET_Max_Report_Count - 1
+if Top_Retest_Total <= IYET_Max_Report_Count then
+   IYET_Max_Report_Count = Top_Retest_Total
+end if
+
+print IYET_Rpt2_Msg$;tab (50);IYET_Rpt3_Msg$
+
+for I = 0 to IYET_Max_Report_Count
+   print IYET_Top_Retests$(I,1);tab (55);IYET_Top_Retests$(I,2)
+next I
+subend
+
+!##############################################################################
+sub IYET_Vacuum_Off
+! Edit this subroutine to match your vacuum actuation commands. Note that the
+! delay for vacuum off is completed in the "IYET_Vacuum_On" subroutine.
+
+global IYET_Start_Vacuum_Off
+
+IYET_Start_Vacuum_Off = msec
+faoff 0
+subend
+
+!##############################################################################
+sub IYET_Vacuum_On(Prompt$)
+! Edit this subroutine to match your vacuum actuation commands. Do not
+! comment the line:
+!
+!  question Prompt$,Continue | if not Continue then stop
+!
+! unless your fixture is approved for actuation without operator
+! intervention.
+
+global IYET_Start_Vacuum_Off, IYET_Vacuum_Off_Delay, IYET_Vacuum_On_Delay
+global FaonOneBoard
+
+! question Prompt$,Continue | if not Continue then stop
+
+! Wait for vacuum to release
+loop
+   exit if (msec - IYET_Start_Vacuum_Off)/1000 > IYET_Vacuum_Off_Delay
+end loop
+
+faon IYET_Vacuum_On_Delay  |FaonOneBoard =FaonOneBoard+1
+subend
+
+!##############################################################################
+sub IYET_Get_Failed_Tests (IYET_Abort)
+! Collect all failing tests from failure file.
+! To save time, this is call between the vacuum off and vacuum on.
+
+global IYET_Failing_Tests$(*), IYET_Test_Total, IYET_File_Timeout
+global IYET_Failure_File$, IYET_Retest_Log_File$, IYET_Err_Msg$
+global Report_Printer$, Serial$(*), True, False
+global Number_Boards_On_Panel, Status(*), BoardSet(*), Xed_Out
+
+! Save failure ticket to retry log file
+report is IYET_Retest_Log_File$,,Error;append
+if Error then
+   print IYET_Err_Msg$ & IYET_Retest_Log_File$
+   print errmlong$(Error)
+   beep
+   stop
+end if
+
+for I = 1 to Number_Boards_On_Panel
+   if BoardSet(I) then
+      board number is I
+      if boardfailed and Status(I) <> Xed_Out then
+         report "Board #:";bni
+         report "Version:";bvi$
+         report "S/N:"&Serial$(I) | report out
+      end if
+   end if
+next I
+
+! Save failure ticket to temporary file
+report is IYET_Failure_File$,,Err
+if Error then
+   print IYET_Err_Msg$ & IYET_Failure_File$
+   print errmlong$(Error)
+   beep
+   stop
+end if
+
+for I = 1 to Number_Boards_On_Panel
+   if BoardSet(I) then
+      board number is I
+      if boardfailed and Status(I) <> Xed_Out then
+         report out
+      end if
+   end if
+next I
+
+copy IYET_Failure_File$ over IYET_Failure_File$ &".eee" ,Errrrr
+
+! Restore original report printer
+report is Report_Printer$
+
+! Open failure ticket and get failing tests
+assign @Ticket, Error to IYET_Failure_File$;read
+if Error then
+   print IYET_Err_Msg$ & IYET_Failure_File$
+   print errmlong$(Error)
+   beep
+   stop
+end if
+
+! Read all failing tests until end of file or until IYET_File_Timeout.
+Start_Time = msec
+I = 0
+IYET_Abort = False
+loop
+   Input$ = ""
+   enter @Ticket,,Error;Input$
+   if (Error <> 0) and (Error <> 101007) then
+      print IYET_Err_Msg$ & IYET_Failure_File$
+      print errmlong$(Error)
+      beep
+      stop
+   end if
+
+   ! Look for shorts, vectorless test failures
+   if pos(Input$," Report for """) then
+      End_Input = pos(Input$,""".")
+      Begin_Input = pos(Input$,"""") + 1
+      IYET_Failing_Tests$(I) = Input$[Begin_Input;End_Input - Begin_Input]
+      I = I + 1
+   end if
+
+        ! Look for "Short #" to stop test !!!!!!!!!!!!!!!
+   if pos(Input$,"Short #") then
+      IYET_Abort = True
+   end if
+
+   ! Look for analog test failures
+   if pos(Input$,"HAS FAILED") then
+      IYET_Failing_Tests$(I) = Input$[1;pos(Input$,"HAS FAILED")-1]
+      I = I + 1
+   end if
+
+   ! Look for compensation failures and set abort flag
+   if pos(Input$,"Compensation capacitance has not been") then
+      IYET_Abort = True
+   end if
+
+   exit if IYET_Abort
+
+   exit if Error = 101007
+
+   if (msec - Start_Time)/1000 > IYET_File_Timeout then
+      print IYET_Err_Msg$ & IYET_Failure_File$
+      beep
+      stop
+   end if
+end loop
+
+assign @Ticket to *
+IYET_Test_Total = I - 1
+
+! Abort if no tests are found
+if IYET_Test_Total < 0 then IYET_Abort = True
+
+! Clear report buffer and failures unless aborted
+if not IYET_Abort then
+   for I = 1 to Number_Boards_On_Panel
+      if BoardSet(I) then
+         board number is I
+         if boardfailed and Status(I) <> Xed_Out then
+            report clear
+            clear failures
+         end if
+      end if
+   next I
+end if
+subend
+
+!##############################################################################
+sub IYET_Update_Status (All_Passed)
+global True, False, Number_Boards_On_Panel, BoardSet(*), Status(*), Xed_Out
+
+All_Passed = True
+for I = 1 to Number_Boards_On_Panel
+   if BoardSet(I) then
+      board number is I
+      if boardfailed and Status(I) <> Xed_Out then
+         All_Passed = False
+      end if
+   end if
+next I
+subend
+
+!##############################################################################
+sub IYET_Retest_Failed_Tests
+global IYET_Failing_Tests$(*), IYET_Test_Total, IYET_Test_Msg$
+
+for I = 0 to IYET_Test_Total
+    print tab(11);IYET_Test_Msg$;lwc$(IYET_Failing_Tests$(I))
+    ! Update 'board number is'
+    board number is val(IYET_Failing_Tests$(I)[1;pos(IYET_Failing_Tests$(I),"%")-1])
+    test lwc$(IYET_Failing_Tests$(I))
+next I
+subend
+
+!##############################################################################
+sub IYET (TestType$, Maximum_Number_Attempts)
+global Failed_In_Preshorts, PreshortsMsg$, Failed_In_Shorts, ShortsMsg$
+global Failed_In_Analog, AnalogMsg$
+global Failed_In_VectorlessTest, VectorlessTestMsg$
+global Using_Buffered_Reporting, Logging, True, False, Mode$, All_Failed
+global Number_Boards_On_Panel, Status(*), BoardSet(*), Xed_Out
+global IYET_Fail_Msg$, IYET_Max_Msg$, IYET_Skip_Update_Status, Recycle_Vacuum$
+
+! Check that maximum number of attempts is OK.
+if Maximum_Number_Attempts < 1 then
+   print IYET_Max_Msg$
+   beep
+   stop
+end if
+Retests_Remaining = dround(Maximum_Number_Attempts,1)
+
+! Force log level, will be restored by Cleanup_Flash
+if Logging then
+  log level is none
+end if
+
+! Force buffered reporting, save flag to restore at end
+if not Using_Buffered_Reporting then
+   buffered reporting on
+   Not_Using_Buffered_Reporting = True
+end if
+
+! Call the test subroutine for the first time, skip update status...
+IYET_Skip_Update_Status = True
+
+if TestType$ = PreshortsMsg$ then
+   call Pre_Shorts (Failed_In_Preshorts, Mode$ & PreshortsMsg$)
+end if
+
+if TestType$ = ShortsMsg$ then
+   call Shorts (Failed_In_Shorts, Mode$ & ShortsMsg$)
+end if
+
+if TestType$ = AnalogMsg$ then
+   call Analog_Tests (Failed_In_Analog, Mode$ & AnalogMsg$)
+end if
+
+if TestType$ = VectorlessTestMsg$ then
+   call VectorlessTest (Failed_In_VectorlessTest, Mode$ & VectorlessTestMsg$)
+end if
+
+Retests_Remaining = Retests_Remaining - 1
+
+loop
+
+   ! Exit if first attempt is successful
+   call IYET_Update_Status (All_Passed)
+   exit if All_Passed
+
+   ! Exit if done with re-tests
+   exit if (Retests_Remaining = 0)
+
+   ! Process failures during vacuum cycle time
+   print tab(8);TestType$ & IYET_Fail_Msg$
+   call IYET_Vacuum_Off
+   call IYET_Get_Failed_Tests (IYET_Abort)
+   call IYET_Vacuum_On(Recycle_Vacuum$)
+
+   ! Exit if aborted
+   exit if IYET_Abort
+
+   ! For last time through the loop, restore logging and reporting
+   if Retests_Remaining = 1 then call Cleanup_Flash
+
+   ! Re-test
+   call IYET_Retest_Failed_Tests
+   Retests_Remaining = Retests_Remaining - 1
+
+end loop
+
+! Now some clean up. Could be redundant.
+
+! Restore Log & Report level
+call Cleanup_Flash
+
+! Restore 'unbuffered' reporting, after dumping report buffer
+if Not_Using_Buffered_Reporting then
+   for I = 1 to Number_Boards_On_Panel
+      if BoardSet(I) then
+         board number is I
+         if boardfailed and Status(I) <> Xed_Out then
+            report out
+         end if
+      end if
+   next I
+   buffered reporting off
+end if
+
+! Update status of final run of tests
+IYET_Skip_Update_Status = False
+
+if TestType$ = PreshortsMsg$ then
+   call Update_Status (Failed_In_Preshorts, All_Failed)
+end if
+
+if TestType$ = ShortsMsg$ then
+   call Update_Status (Failed_In_Shorts, All_Failed)
+end if
+
+if TestType$ = AnalogMsg$ then
+   call Update_Status (Failed_In_Analog, All_Failed)
+end if
+
+if TestType$ = VectorlessTestMsg$ then
+   call Update_Status (Failed_In_VectorlessTest, All_Failed)
+end if
+subend
+
+!                          END OF TESTMAIN
+!##############################################################################
+
+
+sub Initialize_Board_Constants
+global Panel$,Panel_Rev$
+global Board$(*),Board_Rev$(*),Number_Boards_On_Panel
+global Using_Multiple_Versions, True, False
+global Using_AwareTest,BV$
+
+
+
+   Number_Boards_On_Panel = 3
+   Panel$ = "09290-sb"
+   Panel_Rev$ = ""
+   Board$(0) = Panel$
+   Board_Rev$(0) = Panel_Rev$
+   for Board_Num = 1 to 1
+      Board$(Board_Num) = "09290-SB"
+      Board_Rev$(Board_Num) = ""
+   next Board_Num
+   for Board_Num = 3 to 3
+      Board$(Board_Num) = "09629-SB"
+      Board_Rev$(Board_Num) = ""
+   next Board_Num
+   for Board_Num = 2 to 2
+      Board$(Board_Num) = "09661-SB"
+      Board_Rev$(Board_Num) = ""
+   next Board_Num
+
+! 'vacuum well' statement goes here (if required)
+   vacuum well a is 2,3
+   Using_Multiple_Versions = True
+   Using_AwareTest = False
+
+ ReInputVer:
+    print "Total 3  Board version"
+    print tab(5);" (1) is   DIS S08G"
+    print tab(5);" (2) is   DIS S11G"
+    print tab(5);" (3) is   DIS S07G"
+    print tab(5);" (4) is   DIS S10G"
+    print tab(5);" (5) is   UMA S06G"
+    print tab(5);" (6) is   UMA S09G"
+    Board_Ver_SN$=""
+    input "Please select Board Version",TmpVer$
+        TmpVer$=upc$(TmpVer$)
+        TmpVer$=TmpVer$[1;1]
+     if TmpVer$="1" then
+        Board_Ver_SN$="554RU01D08G"
+        BV$="S08G"
+     end if
+     if TmpVer$="2" then
+        Board_Ver_SN$="554RU01D11G"
+        BV$="S11G"
+     end if
+
+     if TmpVer$="3" then
+        Board_Ver_SN$="554RU01D07G"
+        BV$="S07G"
+     end if
+
+     if TmpVer$="4" then
+        Board_Ver_SN$="554RU01D10G"
+        BV$="S10G"
+     end if
+
+     if TmpVer$="5" then
+        Board_Ver_SN$="554RU01D06G"
+        BV$="S06G"
+     end if
+      if TmpVer$="6" then
+        Board_Ver_SN$="554RU01D09G"
+        BV$="S06G"
+     end if
+
+
+   Panel_Rev$= Board_Ver_SN$
+!000000000000
+
+   !  BV$=bvi$
+   ! board version is BV$
+     print "your input is ";bvi$
+     if Board_Ver_SN$="" or BV$="" then
+       print "Please check reversion"
+       goto  ReInputVer
+
+      end if
+
+
+subend
+
+sub Panel_Initialize_BoardSet(State)
+global BoardSet(*)
+global Number_Boards_On_Panel
+
+   for Board_Num = 1 to Number_Boards_On_Panel
+      BoardSet(Board_Num) = State
+   next Board_Num
+subend
+
+sub Panel_Enable_Boards
+global BoardSet(*)
+global BoardSet_flash(*)
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+!TPW: This subroutine is used by debug and is also provided for
+!TPW: use in custom testplans.
+   for Board_Num = 1 to 1
+      BoardSet_boards_1_to_1(Board_Num) = BoardSet(Board_Num)
+      BoardSet_flash(Board_Num) = BoardSet(Board_Num)
+   next Board_Num
+   for Board_Num = 3 to 3
+      BoardSet_boards_3_to_3(Board_Num) = BoardSet(Board_Num)
+      BoardSet_flash(Board_Num) = BoardSet(Board_Num)
+   next Board_Num
+   for Board_Num = 2 to 2
+      BoardSet_boards_2_to_2(Board_Num) = BoardSet(Board_Num)
+      BoardSet_flash(Board_Num) = BoardSet(Board_Num)
+   next Board_Num
+subend
+
+sub Panel_Disable_Boards
+global Number_Boards_On_Panel
+
+!TPW: This subroutine is supplied for use in custom testplans.
+!TPW: Note that BoardSet(*) is not modified - use this only in
+!TPW: test subroutines. BoardSet(*) will be modified in the
+!TPW: testmain after returning from this subroutine.
+   for Board_Num = 1 to Number_Boards_On_Panel
+      board number is Board_Num
+      if boardfailed then call Panel_Disable_Single_Board(Board_Num)
+   next Board_Num
+subend
+
+sub Panel_Disable_Single_Board(Board_Num)
+global BoardSet_flash(*)
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+!TPW: This subroutine is supplied for use in custom testplans.
+   if (Board_Num >= 1) and (Board_Num <= 1) then
+      BoardSet_boards_1_to_1(Board_Num) = 0
+   end if
+   if (Board_Num >= 3) and (Board_Num <= 3) then
+      BoardSet_boards_3_to_3(Board_Num) = 0
+   end if
+   if (Board_Num >= 2) and (Board_Num <= 2) then
+      BoardSet_boards_2_to_2(Board_Num) = 0
+   end if
+subend
+
+sub Flash_Enable_Boards
+global BoardSet_flash(*)
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+!TPW: This subroutine is used by flash and is also provided for
+!TPW: use in custom testplans.
+  for Board_Num = 1 to 1
+    BoardSet_boards_1_to_1(Board_Num) = BoardSet_flash(Board_Num)
+  next Board_Num
+  for Board_Num = 3 to 3
+    BoardSet_boards_3_to_3(Board_Num) = BoardSet_flash(Board_Num)
+  next Board_Num
+  for Board_Num = 2 to 2
+    BoardSet_boards_2_to_2(Board_Num) = BoardSet_flash(Board_Num)
+  next Board_Num
+subend
+
+sub Flash_Disable_Single_Board(Board_Num)
+global BoardSet_flash(*)
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+!TPW: This subroutine is supplied for use in custom testplans.
+  if (Board_Num >= 1) and (Board_Num <= 1) then
+    BoardSet_boards_1_to_1(Board_Num) = 0
+    BoardSet_flash(Board_Num) = 0
+  end if
+  if (Board_Num >= 3) and (Board_Num <= 3) then
+    BoardSet_boards_3_to_3(Board_Num) = 0
+    BoardSet_flash(Board_Num) = 0
+  end if
+  if (Board_Num >= 2) and (Board_Num <= 2) then
+    BoardSet_boards_2_to_2(Board_Num) = 0
+    BoardSet_flash(Board_Num) = 0
+  end if
+subend
+
+sub Characterize
+global All_Failed, Failed_In_Learn
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+   call Panel_Initialize_BoardSet(1)
+   call Panel_Enable_Boards
+   learn capacitance on
+   test "pc5315" on boards BoardSet_boards_1_to_1(*)
+   test "c3903" on boards BoardSet_boards_1_to_1(*)
+   test "c3914" on boards BoardSet_boards_1_to_1(*)
+   test "c5501" on boards BoardSet_boards_1_to_1(*)
+   test "c714" on boards BoardSet_boards_1_to_1(*)
+   test "c715" on boards BoardSet_boards_1_to_1(*)
+   test "c2307" on boards BoardSet_boards_1_to_1(*)
+   test "c2311" on boards BoardSet_boards_1_to_1(*)
+   test "c2402" on boards BoardSet_boards_1_to_1(*)
+   test "c2403" on boards BoardSet_boards_1_to_1(*)
+   test "c3026" on boards BoardSet_boards_1_to_1(*)
+   test "pc4603" on boards BoardSet_boards_1_to_1(*)
+   test "pc4740" on boards BoardSet_boards_1_to_1(*)
+   test "pc4760" on boards BoardSet_boards_1_to_1(*)
+   test "pc4907" on boards BoardSet_boards_1_to_1(*)
+   test "pc5003" on boards BoardSet_boards_1_to_1(*)
+   test "pc5034" on boards BoardSet_boards_1_to_1(*)
+   test "pc5316" on boards BoardSet_boards_1_to_1(*)
+   test "pc5317" on boards BoardSet_boards_1_to_1(*)
+   test "c3906" on boards BoardSet_boards_1_to_1(*)
+   test "pc5314" on boards BoardSet_boards_1_to_1(*)
+   test "c5506" on boards BoardSet_boards_1_to_1(*)
+   test "c5508" on boards BoardSet_boards_1_to_1(*)
+   test "c6804" on boards BoardSet_boards_1_to_1(*)
+   test "c6806" on boards BoardSet_boards_1_to_1(*)
+!@ test "pc4744" on boards BoardSet_boards_1_to_1(*)    !P
+   test "ec6401" on boards BoardSet_boards_1_to_1(*)
+   test "pc4516" on boards BoardSet_boards_1_to_1(*)
+   test "pc5309" on boards BoardSet_boards_1_to_1(*)
+   test "pc4518" on boards BoardSet_boards_1_to_1(*)
+   test "pc4748" on boards BoardSet_boards_1_to_1(*)
+   test "pc4525" on boards BoardSet_boards_1_to_1(*)
+!@ test "pc4751" on boards BoardSet_boards_1_to_1(*)    !P
+   test "pc4754" on boards BoardSet_boards_1_to_1(*)
+   test "pc4759" on boards BoardSet_boards_1_to_1(*)
+   test "pc5106" on boards BoardSet_boards_1_to_1(*)
+   test "pc5311" on boards BoardSet_boards_1_to_1(*)
+   test "pc8718" on boards BoardSet_boards_1_to_1(*)
+   test "c3521" on boards BoardSet_boards_3_to_3(*)
+   test "c3522" on boards BoardSet_boards_3_to_3(*)
+   test "c6105" on boards BoardSet_boards_3_to_3(*)
+   test "c6106" on boards BoardSet_boards_3_to_3(*)
+   test "c6107" on boards BoardSet_boards_3_to_3(*)
+   test "ec6101" on boards BoardSet_boards_3_to_3(*)
+   test "c6002" on boards BoardSet_boards_2_to_2(*)
+   test "c6003" on boards BoardSet_boards_2_to_2(*)
+   test "ec6001" on boards BoardSet_boards_2_to_2(*)
+   test "ec6002" on boards BoardSet_boards_2_to_2(*)
+   learn capacitance off
+   call Update_Status (Failed_In_Learn, All_Failed)
+subend
+
+sub Pre_Shorts (Status_Code, Message$)
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+   if Message$ <> "" then  print tab(5);Message$
+   call Panel_Enable_Boards
+   test "f5401" on boards BoardSet_boards_1_to_1(*)
+   test "l2603" on boards BoardSet_boards_1_to_1(*)
+   test "l2604" on boards BoardSet_boards_1_to_1(*)
+   test "l2702" on boards BoardSet_boards_1_to_1(*)
+   test "l2703" on boards BoardSet_boards_1_to_1(*)
+   test "l3001" on boards BoardSet_boards_1_to_1(*)
+   test "l3002" on boards BoardSet_boards_1_to_1(*)
+   test "l3701" on boards BoardSet_boards_1_to_1(*)
+   test "l5502" on boards BoardSet_boards_1_to_1(*)
+   test "l5503" on boards BoardSet_boards_1_to_1(*)
+   test "l8105" on boards BoardSet_boards_1_to_1(*)
+   test "l8106" on boards BoardSet_boards_1_to_1(*)
+   test "l8107" on boards BoardSet_boards_1_to_1(*)
+   test "l8109" on boards BoardSet_boards_1_to_1(*)
+   test "l8110" on boards BoardSet_boards_1_to_1(*)
+   test "pg4401" on boards BoardSet_boards_1_to_1(*)
+   test "pg4501" on boards BoardSet_boards_1_to_1(*)
+   test "pg4502" on boards BoardSet_boards_1_to_1(*)
+   test "pg4503" on boards BoardSet_boards_1_to_1(*)
+   test "pg4505" on boards BoardSet_boards_1_to_1(*)
+   test "pg4507" on boards BoardSet_boards_1_to_1(*)
+   test "pg4508" on boards BoardSet_boards_1_to_1(*)
+   test "pg4509" on boards BoardSet_boards_1_to_1(*)
+   test "pg4601" on boards BoardSet_boards_1_to_1(*)
+   test "pg4602" on boards BoardSet_boards_1_to_1(*)
+   test "pg4603" on boards BoardSet_boards_1_to_1(*)
+   test "pg4610" on boards BoardSet_boards_1_to_1(*)
+   test "pg4612" on boards BoardSet_boards_1_to_1(*)
+   test "pg4618" on boards BoardSet_boards_1_to_1(*)
+   test "pg4620" on boards BoardSet_boards_1_to_1(*)
+   test "pg4623" on boards BoardSet_boards_1_to_1(*)
+   test "pg4713" on boards BoardSet_boards_1_to_1(*)
+   test "pg4714" on boards BoardSet_boards_1_to_1(*)
+   test "pg4801" on boards BoardSet_boards_1_to_1(*)
+   test "pg4802" on boards BoardSet_boards_1_to_1(*)
+   test "pg4803" on boards BoardSet_boards_1_to_1(*)
+   test "pg4804" on boards BoardSet_boards_1_to_1(*)
+   test "pg4805" on boards BoardSet_boards_1_to_1(*)
+   test "pg4813" on boards BoardSet_boards_1_to_1(*)
+   test "pg4901" on boards BoardSet_boards_1_to_1(*)
+   test "pg4902" on boards BoardSet_boards_1_to_1(*)
+   test "pg4921" on boards BoardSet_boards_1_to_1(*)
+   test "pg5001" on boards BoardSet_boards_1_to_1(*)
+   test "pg5002" on boards BoardSet_boards_1_to_1(*)
+   test "pg5014" on boards BoardSet_boards_1_to_1(*)
+   test "pg5016" on boards BoardSet_boards_1_to_1(*)
+   test "pg5102" on boards BoardSet_boards_1_to_1(*)
+   test "pg5104" on boards BoardSet_boards_1_to_1(*)
+   test "pg5214" on boards BoardSet_boards_1_to_1(*)
+   test "pg5229" on boards BoardSet_boards_1_to_1(*)
+   test "pg5302" on boards BoardSet_boards_1_to_1(*)
+   test "pg5323" on boards BoardSet_boards_1_to_1(*)
+   test "pg5324" on boards BoardSet_boards_1_to_1(*)
+   test "pg5325" on boards BoardSet_boards_1_to_1(*)
+   test "pg8601" on boards BoardSet_boards_1_to_1(*)
+   test "pg8604" on boards BoardSet_boards_1_to_1(*)
+   test "pg8605" on boards BoardSet_boards_1_to_1(*)
+   test "pg8706" on boards BoardSet_boards_1_to_1(*)
+   test "pg8708" on boards BoardSet_boards_1_to_1(*)
+   test "pl4501" on boards BoardSet_boards_1_to_1(*)
+   test "pl4601" on boards BoardSet_boards_1_to_1(*)
+   test "pl4602" on boards BoardSet_boards_1_to_1(*)
+   test "pl4701" on boards BoardSet_boards_1_to_1(*)
+   test "pl4801" on boards BoardSet_boards_1_to_1(*)
+   test "pl4802" on boards BoardSet_boards_1_to_1(*)
+   test "pl4901" on boards BoardSet_boards_1_to_1(*)
+   test "pl5001" on boards BoardSet_boards_1_to_1(*)
+   test "pl5301" on boards BoardSet_boards_1_to_1(*)
+   test "pl8601" on boards BoardSet_boards_1_to_1(*)
+   test "pr4305" on boards BoardSet_boards_1_to_1(*)
+   test "pr4505" on boards BoardSet_boards_1_to_1(*)
+   test "pr4508" on boards BoardSet_boards_1_to_1(*)
+   test "pr4509" on boards BoardSet_boards_1_to_1(*)
+   test "pr4510" on boards BoardSet_boards_1_to_1(*)
+   test "pr4515" on boards BoardSet_boards_1_to_1(*)
+   test "pr4519" on boards BoardSet_boards_1_to_1(*)
+   test "pr4522" on boards BoardSet_boards_1_to_1(*)
+   test "pr4524" on boards BoardSet_boards_1_to_1(*)
+   test "pr4530" on boards BoardSet_boards_1_to_1(*)
+   test "pr4531" on boards BoardSet_boards_1_to_1(*)
+   test "pr4532" on boards BoardSet_boards_1_to_1(*)
+   test "pr4533" on boards BoardSet_boards_1_to_1(*)
+   test "pr4534" on boards BoardSet_boards_1_to_1(*)
+   test "pr4536" on boards BoardSet_boards_1_to_1(*)
+   test "pr4607" on boards BoardSet_boards_1_to_1(*)
+   test "pr4616" on boards BoardSet_boards_1_to_1(*)
+   test "pr4618" on boards BoardSet_boards_1_to_1(*)
+   test "pr4620" on boards BoardSet_boards_1_to_1(*)
+   test "pr4735" on boards BoardSet_boards_1_to_1(*)
+   test "pr4736" on boards BoardSet_boards_1_to_1(*)
+   test "pr4737" on boards BoardSet_boards_1_to_1(*)
+   test "pr4738" on boards BoardSet_boards_1_to_1(*)
+   test "pr4739" on boards BoardSet_boards_1_to_1(*)
+   test "pr4740" on boards BoardSet_boards_1_to_1(*)
+   test "pr4741" on boards BoardSet_boards_1_to_1(*)
+   test "pr4742" on boards BoardSet_boards_1_to_1(*)
+   test "pr4743" on boards BoardSet_boards_1_to_1(*)
+   test "pr4744" on boards BoardSet_boards_1_to_1(*)
+   test "pr4745" on boards BoardSet_boards_1_to_1(*)
+   test "pr4746" on boards BoardSet_boards_1_to_1(*)
+   test "pr4748" on boards BoardSet_boards_1_to_1(*)
+   test "pr4750" on boards BoardSet_boards_1_to_1(*)
+   test "pr4752" on boards BoardSet_boards_1_to_1(*)
+   test "pr4755" on boards BoardSet_boards_1_to_1(*)
+   test "pr4760" on boards BoardSet_boards_1_to_1(*)
+   test "pr4767" on boards BoardSet_boards_1_to_1(*)
+   test "pr4768" on boards BoardSet_boards_1_to_1(*)
+   test "pr4769" on boards BoardSet_boards_1_to_1(*)
+   test "pr4794" on boards BoardSet_boards_1_to_1(*)
+   test "pr4803" on boards BoardSet_boards_1_to_1(*)
+   test "pr4809" on boards BoardSet_boards_1_to_1(*)
+   test "pr4812" on boards BoardSet_boards_1_to_1(*)
+   test "pr4901" on boards BoardSet_boards_1_to_1(*)
+   test "pr5003" on boards BoardSet_boards_1_to_1(*)
+   test "pr5015" on boards BoardSet_boards_1_to_1(*)
+   test "pr5302" on boards BoardSet_boards_1_to_1(*)
+   test "pr5303" on boards BoardSet_boards_1_to_1(*)
+   test "pr5304" on boards BoardSet_boards_1_to_1(*)
+   test "pr5305" on boards BoardSet_boards_1_to_1(*)
+   test "pr5307" on boards BoardSet_boards_1_to_1(*)
+   test "pr5308" on boards BoardSet_boards_1_to_1(*)
+   test "pr5309" on boards BoardSet_boards_1_to_1(*)
+   test "pr5310" on boards BoardSet_boards_1_to_1(*)
+   test "pr5315" on boards BoardSet_boards_1_to_1(*)
+   test "pr5317" on boards BoardSet_boards_1_to_1(*)
+   test "pr5331" on boards BoardSet_boards_1_to_1(*)
+   test "pr5332" on boards BoardSet_boards_1_to_1(*)
+   test "pr5333" on boards BoardSet_boards_1_to_1(*)
+   test "pr8633" on boards BoardSet_boards_1_to_1(*)
+   test "pr8711" on boards BoardSet_boards_1_to_1(*)
+   test "r708" on boards BoardSet_boards_1_to_1(*)
+   test "r709" on boards BoardSet_boards_1_to_1(*)
+   test "r908" on boards BoardSet_boards_1_to_1(*)
+   test "r909" on boards BoardSet_boards_1_to_1(*)
+   test "r921" on boards BoardSet_boards_1_to_1(*)
+   test "r924" on boards BoardSet_boards_1_to_1(*)
+   test "r926" on boards BoardSet_boards_1_to_1(*)
+   test "r1803" on boards BoardSet_boards_1_to_1(*)
+   test "r1905" on boards BoardSet_boards_1_to_1(*)
+   test "r2011" on boards BoardSet_boards_1_to_1(*)
+   test "r2012" on boards BoardSet_boards_1_to_1(*)
+   test "r2013" on boards BoardSet_boards_1_to_1(*)
+   test "r2014" on boards BoardSet_boards_1_to_1(*)
+   test "r2103" on boards BoardSet_boards_1_to_1(*)
+   test "r2115" on boards BoardSet_boards_1_to_1(*)
+   test "r2116" on boards BoardSet_boards_1_to_1(*)
+   test "r2121" on boards BoardSet_boards_1_to_1(*)
+   test "r2207" on boards BoardSet_boards_1_to_1(*)
+   test "r2210" on boards BoardSet_boards_1_to_1(*)
+   test "r2211" on boards BoardSet_boards_1_to_1(*)
+   test "r2212" on boards BoardSet_boards_1_to_1(*)
+   test "r2213" on boards BoardSet_boards_1_to_1(*)
+   test "r2216" on boards BoardSet_boards_1_to_1(*)
+   test "r2218" on boards BoardSet_boards_1_to_1(*)
+   test "r2219" on boards BoardSet_boards_1_to_1(*)
+   test "r2220" on boards BoardSet_boards_1_to_1(*)
+   test "r2417" on boards BoardSet_boards_1_to_1(*)
+   test "r2506" on boards BoardSet_boards_1_to_1(*)
+   test "r2601" on boards BoardSet_boards_1_to_1(*)
+   test "r2602" on boards BoardSet_boards_1_to_1(*)
+   test "r2605" on boards BoardSet_boards_1_to_1(*)
+   test "r2606" on boards BoardSet_boards_1_to_1(*)
+   test "r2609" on boards BoardSet_boards_1_to_1(*)
+   test "r2707" on boards BoardSet_boards_1_to_1(*)
+   test "r2708" on boards BoardSet_boards_1_to_1(*)
+   test "r3002" on boards BoardSet_boards_1_to_1(*)
+   test "r3702" on boards BoardSet_boards_1_to_1(*)
+   test "r3706" on boards BoardSet_boards_1_to_1(*)
+   test "r3707" on boards BoardSet_boards_1_to_1(*)
+   test "r3719" on boards BoardSet_boards_1_to_1(*)
+   test "r3720" on boards BoardSet_boards_1_to_1(*)
+   test "r3730" on boards BoardSet_boards_1_to_1(*)
+   test "r3731" on boards BoardSet_boards_1_to_1(*)
+   test "r3735" on boards BoardSet_boards_1_to_1(*)
+   test "r3747" on boards BoardSet_boards_1_to_1(*)
+   test "r3757" on boards BoardSet_boards_1_to_1(*)
+   test "r3918" on boards BoardSet_boards_1_to_1(*)
+   test "r3919" on boards BoardSet_boards_1_to_1(*)
+   test "r5439" on boards BoardSet_boards_1_to_1(*)
+   test "r5506" on boards BoardSet_boards_1_to_1(*)
+   test "r5508" on boards BoardSet_boards_1_to_1(*)
+   test "r5702" on boards BoardSet_boards_1_to_1(*)
+   test "r5703" on boards BoardSet_boards_1_to_1(*)
+   test "r5705" on boards BoardSet_boards_1_to_1(*)
+   test "r5706" on boards BoardSet_boards_1_to_1(*)
+   test "r5707" on boards BoardSet_boards_1_to_1(*)
+   test "r5708" on boards BoardSet_boards_1_to_1(*)
+   test "r5711" on boards BoardSet_boards_1_to_1(*)
+   test "r5712" on boards BoardSet_boards_1_to_1(*)
+   test "r6001" on boards BoardSet_boards_1_to_1(*)
+   test "r6002" on boards BoardSet_boards_1_to_1(*)
+   test "r6006" on boards BoardSet_boards_1_to_1(*)
+   test "r6007" on boards BoardSet_boards_1_to_1(*)
+   test "r6204" on boards BoardSet_boards_1_to_1(*)
+   test "r6205" on boards BoardSet_boards_1_to_1(*)
+   test "r6301" on boards BoardSet_boards_1_to_1(*)
+   test "r6304" on boards BoardSet_boards_1_to_1(*)
+   test "r6306" on boards BoardSet_boards_1_to_1(*)
+   test "r6310" on boards BoardSet_boards_1_to_1(*)
+   test "r6311" on boards BoardSet_boards_1_to_1(*)
+   test "r6312" on boards BoardSet_boards_1_to_1(*)
+   test "r6405" on boards BoardSet_boards_1_to_1(*)
+   test "r6406" on boards BoardSet_boards_1_to_1(*)
+   test "r6617" on boards BoardSet_boards_1_to_1(*)
+   test "r6619" on boards BoardSet_boards_1_to_1(*)
+   test "r6626" on boards BoardSet_boards_1_to_1(*)
+   test "r6629" on boards BoardSet_boards_1_to_1(*)
+   test "r6630" on boards BoardSet_boards_1_to_1(*)
+   test "r6632" on boards BoardSet_boards_1_to_1(*)
+   test "r7301" on boards BoardSet_boards_1_to_1(*)
+   test "r7302" on boards BoardSet_boards_1_to_1(*)
+   test "r7303" on boards BoardSet_boards_1_to_1(*)
+   test "r7801" on boards BoardSet_boards_1_to_1(*)
+   test "r7802" on boards BoardSet_boards_1_to_1(*)
+   test "r8039" on boards BoardSet_boards_1_to_1(*)
+   test "r8135" on boards BoardSet_boards_1_to_1(*)
+   test "rn709%jp1" on boards BoardSet_boards_1_to_1(*)
+   test "rn709%jp2" on boards BoardSet_boards_1_to_1(*)
+   test "rn901%jp1" on boards BoardSet_boards_1_to_1(*)
+   test "rn901%jp2" on boards BoardSet_boards_1_to_1(*)
+   test "rn903%jp1" on boards BoardSet_boards_1_to_1(*)
+   test "rn903%jp2" on boards BoardSet_boards_1_to_1(*)
+   test "rn906%jp1" on boards BoardSet_boards_1_to_1(*)
+   test "rn906%jp2" on boards BoardSet_boards_1_to_1(*)
+   test "rn2304%jp1" on boards BoardSet_boards_1_to_1(*)
+   test "rn2304%jp2" on boards BoardSet_boards_1_to_1(*)
+   test "rn2305%jp1" on boards BoardSet_boards_1_to_1(*)
+   test "rn2305%jp2" on boards BoardSet_boards_1_to_1(*)
+   test "rn2310%jp1" on boards BoardSet_boards_1_to_1(*)
+   test "rn2310%jp2" on boards BoardSet_boards_1_to_1(*)
+   test "rn2311%jp1" on boards BoardSet_boards_1_to_1(*)
+   test "rn2311%jp2" on boards BoardSet_boards_1_to_1(*)
+   test "rn6301%jp1" on boards BoardSet_boards_1_to_1(*)
+   test "rn6301%jp2" on boards BoardSet_boards_1_to_1(*)
+   test "rn6302%jp1" on boards BoardSet_boards_1_to_1(*)
+   test "rn6302%jp2" on boards BoardSet_boards_1_to_1(*)
+   test "rn7501%jp1" on boards BoardSet_boards_1_to_1(*)
+   test "rn7501%jp2" on boards BoardSet_boards_1_to_1(*)
+   test "rn7502%jp1" on boards BoardSet_boards_1_to_1(*)
+   test "rn7502%jp2" on boards BoardSet_boards_1_to_1(*)
+   test "rn7503%jp1" on boards BoardSet_boards_1_to_1(*)
+   test "rn7503%jp2" on boards BoardSet_boards_1_to_1(*)
+   test "rn7504%jp1" on boards BoardSet_boards_1_to_1(*)
+   test "rn7504%jp2" on boards BoardSet_boards_1_to_1(*)
+   test "rn7505%jp1" on boards BoardSet_boards_1_to_1(*)
+   test "rn7505%jp2" on boards BoardSet_boards_1_to_1(*)
+   test "rn7506%jp1" on boards BoardSet_boards_1_to_1(*)
+   test "rn7506%jp2" on boards BoardSet_boards_1_to_1(*)
+   test "rn7507%jp1" on boards BoardSet_boards_1_to_1(*)
+   test "rn7507%jp2" on boards BoardSet_boards_1_to_1(*)
+   test "rn7508%jp1" on boards BoardSet_boards_1_to_1(*)
+   test "tr6304%jp1" on boards BoardSet_boards_1_to_1(*)
+   test "tr6304%jp2" on boards BoardSet_boards_1_to_1(*)
+   test "tr6305%jp1" on boards BoardSet_boards_1_to_1(*)
+   test "tr6305%jp2" on boards BoardSet_boards_1_to_1(*)
+   test "g2401" on boards BoardSet_boards_1_to_1(*)
+   test "l2601" on boards BoardSet_boards_1_to_1(*)
+   test "l2602" on boards BoardSet_boards_1_to_1(*)
+   test "l2701" on boards BoardSet_boards_1_to_1(*)
+   test "l2704" on boards BoardSet_boards_1_to_1(*)
+   test "pr5215" on boards BoardSet_boards_1_to_1(*)
+   test "r1301" on boards BoardSet_boards_1_to_1(*)
+   test "r2308" on boards BoardSet_boards_1_to_1(*)
+   test "r3920" on boards BoardSet_boards_1_to_1(*)
+   test "r3921" on boards BoardSet_boards_1_to_1(*)
+   test "r4901" on boards BoardSet_boards_1_to_1(*)
+   test "r5411" on boards BoardSet_boards_1_to_1(*)
+   test "r5413" on boards BoardSet_boards_1_to_1(*)
+   test "r5414" on boards BoardSet_boards_1_to_1(*)
+   test "r5504" on boards BoardSet_boards_1_to_1(*)
+   test "r5505" on boards BoardSet_boards_1_to_1(*)
+   test "r8040" on boards BoardSet_boards_1_to_1(*)
+   test "pl5201" on boards BoardSet_boards_1_to_1(*)
+   test "r3505" on boards BoardSet_boards_3_to_3(*)
+   test "r3506" on boards BoardSet_boards_3_to_3(*)
+   test "r3509" on boards BoardSet_boards_3_to_3(*)
+   test "r3512" on boards BoardSet_boards_3_to_3(*)
+   test "r6003" on boards BoardSet_boards_3_to_3(*)
+   test "r6004" on boards BoardSet_boards_3_to_3(*)
+   test "r6302" on boards BoardSet_boards_3_to_3(*)
+   test "r6303" on boards BoardSet_boards_3_to_3(*)
+   test "xf6101%jp1" on boards BoardSet_boards_3_to_3(*)
+   test "xf6101%jp2" on boards BoardSet_boards_3_to_3(*)
+   test "xf6101%jp3" on boards BoardSet_boards_3_to_3(*)
+   test "xf6101%jp4" on boards BoardSet_boards_3_to_3(*)
+   test "xf6101%jp5" on boards BoardSet_boards_3_to_3(*)
+   test "xf6101%jp6" on boards BoardSet_boards_3_to_3(*)
+   test "xf6101%jp7" on boards BoardSet_boards_3_to_3(*)
+   test "xf6101%jp8" on boards BoardSet_boards_3_to_3(*)
+   test "xf6101%jp9" on boards BoardSet_boards_3_to_3(*)
+   test "xf6101%jp10" on boards BoardSet_boards_3_to_3(*)
+   test "xf6101%jp11" on boards BoardSet_boards_3_to_3(*)
+   test "xf6101%jp12" on boards BoardSet_boards_3_to_3(*)
+   test "xf6101%jp13" on boards BoardSet_boards_3_to_3(*)
+   test "xf6101%jp14" on boards BoardSet_boards_3_to_3(*)
+   test "xf6101%jp15" on boards BoardSet_boards_3_to_3(*)
+   test "xf6101%jp16" on boards BoardSet_boards_3_to_3(*)
+   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub Shorts (Status_Code, Message$)
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+   if Message$ <> "" then  print tab(5);Message$
+   call Panel_Enable_Boards
+   test "shorts" on boards BoardSet_boards_1_to_1(*)
+   test "shorts" on boards BoardSet_boards_3_to_3(*)
+   test "shorts" on boards BoardSet_boards_2_to_2(*)
+   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub Analog_Tests (Status_Code, Message$)
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+   if Message$ <> "" then  print tab(5);Message$
+   call Panel_Enable_Boards
+   test "c2603" on boards BoardSet_boards_1_to_1(*)
+   test "c710" on boards BoardSet_boards_1_to_1(*)
+   test "ptc4901" on boards BoardSet_boards_1_to_1(*)
+   test "ptc4701" on boards BoardSet_boards_1_to_1(*)
+   test "pc5107" on boards BoardSet_boards_1_to_1(*)
+   test "ptc5301" on boards BoardSet_boards_1_to_1(*)
+   test "c1323" on boards BoardSet_boards_1_to_1(*)
+!@ test "pc5315" on boards BoardSet_boards_1_to_1(*)
+   test "ptc5001" on boards BoardSet_boards_1_to_1(*)
+   test "tc1803" on boards BoardSet_boards_1_to_1(*)
+   test "c1805" on boards BoardSet_boards_1_to_1(*)
+!W test "c1809" on boards BoardSet_boards_1_to_1(*)
+   test "c1912" on boards BoardSet_boards_1_to_1(*)
+   test "c3011" on boards BoardSet_boards_1_to_1(*)
+   test "pc4625" on boards BoardSet_boards_1_to_1(*)
+   test "c3903" on boards BoardSet_boards_1_to_1(*)
+   test "c3914" on boards BoardSet_boards_1_to_1(*)
+   test "c5501" on boards BoardSet_boards_1_to_1(*)
+   test "ptc4602" on boards BoardSet_boards_1_to_1(*)
+   test "tc6302" on boards BoardSet_boards_1_to_1(*)
+   test "tc6303" on boards BoardSet_boards_1_to_1(*)
+   test "c6406" on boards BoardSet_boards_1_to_1(*)
+   test "c7556" on boards BoardSet_boards_1_to_1(*)
+   test "c7557" on boards BoardSet_boards_1_to_1(*)
+   test "c7558" on boards BoardSet_boards_1_to_1(*)
+   test "c7559" on boards BoardSet_boards_1_to_1(*)
+   test "c7560" on boards BoardSet_boards_1_to_1(*)
+   test "c7561" on boards BoardSet_boards_1_to_1(*)
+   test "c7562" on boards BoardSet_boards_1_to_1(*)
+   test "c7563" on boards BoardSet_boards_1_to_1(*)
+   test "c8704" on boards BoardSet_boards_1_to_1(*)
+   test "ec7905" on boards BoardSet_boards_1_to_1(*)
+   test "pc4512" on boards BoardSet_boards_1_to_1(*)
+   test "pc4511" on boards BoardSet_boards_1_to_1(*)
+   test "pr4602" on boards BoardSet_boards_1_to_1(*)
+   test "pr4603" on boards BoardSet_boards_1_to_1(*)
+   test "ptc4601" on boards BoardSet_boards_1_to_1(*)
+!@ test "pr5009" on boards BoardSet_boards_1_to_1(*)     !P
+   test "pc5221" on boards BoardSet_boards_1_to_1(*)
+!@ test "pc5222" on boards BoardSet_boards_1_to_1(*)
+   test "pc5223" on boards BoardSet_boards_1_to_1(*)
+   test "ptc5201" on boards BoardSet_boards_1_to_1(*)
+   test "c1306" on boards BoardSet_boards_1_to_1(*)
+   test "c801" on boards BoardSet_boards_1_to_1(*)
+   test "c802" on boards BoardSet_boards_1_to_1(*)
+   test "c803" on boards BoardSet_boards_1_to_1(*)
+   test "c804" on boards BoardSet_boards_1_to_1(*)
+   test "c805" on boards BoardSet_boards_1_to_1(*)
+   test "c806" on boards BoardSet_boards_1_to_1(*)
+   test "c807" on boards BoardSet_boards_1_to_1(*)
+   test "c808" on boards BoardSet_boards_1_to_1(*)
+   test "c809" on boards BoardSet_boards_1_to_1(*)
+   test "c810" on boards BoardSet_boards_1_to_1(*)
+   test "c812" on boards BoardSet_boards_1_to_1(*)
+   test "c813" on boards BoardSet_boards_1_to_1(*)
+   test "c814" on boards BoardSet_boards_1_to_1(*)
+   test "c815" on boards BoardSet_boards_1_to_1(*)
+   test "c816" on boards BoardSet_boards_1_to_1(*)
+   test "c817" on boards BoardSet_boards_1_to_1(*)
+   test "c818" on boards BoardSet_boards_1_to_1(*)
+   test "c819" on boards BoardSet_boards_1_to_1(*)
+   test "c820" on boards BoardSet_boards_1_to_1(*)
+   test "c821" on boards BoardSet_boards_1_to_1(*)
+   test "c823" on boards BoardSet_boards_1_to_1(*)
+   test "c824" on boards BoardSet_boards_1_to_1(*)
+   test "c825" on boards BoardSet_boards_1_to_1(*)
+   test "c827" on boards BoardSet_boards_1_to_1(*)
+   test "c829" on boards BoardSet_boards_1_to_1(*)
+   test "c830" on boards BoardSet_boards_1_to_1(*)
+   test "c831" on boards BoardSet_boards_1_to_1(*)
+   test "c832" on boards BoardSet_boards_1_to_1(*)
+   test "c2303" on boards BoardSet_boards_1_to_1(*)
+   test "c2304" on boards BoardSet_boards_1_to_1(*)
+   test "c2305" on boards BoardSet_boards_1_to_1(*)
+   test "c2306" on boards BoardSet_boards_1_to_1(*)
+   test "c2308" on boards BoardSet_boards_1_to_1(*)
+   test "c2309" on boards BoardSet_boards_1_to_1(*)
+   test "c2310" on boards BoardSet_boards_1_to_1(*)
+   test "c2318" on boards BoardSet_boards_1_to_1(*)
+   test "c2707" on boards BoardSet_boards_1_to_1(*)
+   test "c2713" on boards BoardSet_boards_1_to_1(*)
+   test "c2723" on boards BoardSet_boards_1_to_1(*)
+   test "c2724" on boards BoardSet_boards_1_to_1(*)
+   test "c6202" on boards BoardSet_boards_1_to_1(*)
+   test "c3006" on boards BoardSet_boards_1_to_1(*)
+   test "c3007" on boards BoardSet_boards_1_to_1(*)
+   test "c3716" on boards BoardSet_boards_1_to_1(*)
+   test "c3902" on boards BoardSet_boards_1_to_1(*)
+   test "c3904" on boards BoardSet_boards_1_to_1(*)
+   test "c3905" on boards BoardSet_boards_1_to_1(*)
+   test "c5403" on boards BoardSet_boards_1_to_1(*)
+   test "c5404" on boards BoardSet_boards_1_to_1(*)
+   test "c7407" on boards BoardSet_boards_1_to_1(*)
+   test "c7564" on boards BoardSet_boards_1_to_1(*)
+   test "c7565" on boards BoardSet_boards_1_to_1(*)
+   test "c7566" on boards BoardSet_boards_1_to_1(*)
+   test "c7567" on boards BoardSet_boards_1_to_1(*)
+   test "c7568" on boards BoardSet_boards_1_to_1(*)
+   test "c7569" on boards BoardSet_boards_1_to_1(*)
+   test "c7570" on boards BoardSet_boards_1_to_1(*)
+   test "c7571" on boards BoardSet_boards_1_to_1(*)
+   test "c8001" on boards BoardSet_boards_1_to_1(*)
+   test "c8002" on boards BoardSet_boards_1_to_1(*)
+   test "c8003" on boards BoardSet_boards_1_to_1(*)
+   test "c8004" on boards BoardSet_boards_1_to_1(*)
+   test "c8005" on boards BoardSet_boards_1_to_1(*)
+   test "c8006" on boards BoardSet_boards_1_to_1(*)
+   test "c8008" on boards BoardSet_boards_1_to_1(*)
+   test "c8009" on boards BoardSet_boards_1_to_1(*)
+   test "c8010" on boards BoardSet_boards_1_to_1(*)
+   test "c8011" on boards BoardSet_boards_1_to_1(*)
+   test "c8012" on boards BoardSet_boards_1_to_1(*)
+   test "c8013" on boards BoardSet_boards_1_to_1(*)
+   test "c8015" on boards BoardSet_boards_1_to_1(*)
+   test "c8016" on boards BoardSet_boards_1_to_1(*)
+   test "c8017" on boards BoardSet_boards_1_to_1(*)
+   test "c8018" on boards BoardSet_boards_1_to_1(*)
+   test "c8019" on boards BoardSet_boards_1_to_1(*)
+   test "c8020" on boards BoardSet_boards_1_to_1(*)
+   test "c8021" on boards BoardSet_boards_1_to_1(*)
+   test "c8022" on boards BoardSet_boards_1_to_1(*)
+   test "c8025" on boards BoardSet_boards_1_to_1(*)
+   test "c8026" on boards BoardSet_boards_1_to_1(*)
+   test "c8027" on boards BoardSet_boards_1_to_1(*)
+   test "c8028" on boards BoardSet_boards_1_to_1(*)
+   test "c8029" on boards BoardSet_boards_1_to_1(*)
+   test "c8030" on boards BoardSet_boards_1_to_1(*)
+   test "c8031" on boards BoardSet_boards_1_to_1(*)
+   test "c8032" on boards BoardSet_boards_1_to_1(*)
+   test "c8041" on boards BoardSet_boards_1_to_1(*)
+   test "c8103" on boards BoardSet_boards_1_to_1(*)
+   test "pc8719" on boards BoardSet_boards_1_to_1(*)
+   test "c8702" on boards BoardSet_boards_1_to_1(*)
+   test "pc4301" on boards BoardSet_boards_1_to_1(*)
+   test "pc4522" on boards BoardSet_boards_1_to_1(*)
+   test "pc4527" on boards BoardSet_boards_1_to_1(*)
+   test "pc4531" on boards BoardSet_boards_1_to_1(*)
+   test "pc4602" on boards BoardSet_boards_1_to_1(*)
+   test "pc4604" on boards BoardSet_boards_1_to_1(*)
+   test "pc4606" on boards BoardSet_boards_1_to_1(*)
+   test "pc4617" on boards BoardSet_boards_1_to_1(*)
+   test "pc4618" on boards BoardSet_boards_1_to_1(*)
+   test "pc4762" on boards BoardSet_boards_1_to_1(*)
+   test "pc4906" on boards BoardSet_boards_1_to_1(*)
+   test "c1823" on boards BoardSet_boards_1_to_1(*)
+   test "pc5012" on boards BoardSet_boards_1_to_1(*)
+   test "ptc8601" on boards BoardSet_boards_1_to_1(*)
+   test "pc8608" on boards BoardSet_boards_1_to_1(*)
+   test "pc8610" on boards BoardSet_boards_1_to_1(*)
+   test "pc8616" on boards BoardSet_boards_1_to_1(*)
+   test "c3003" on boards BoardSet_boards_1_to_1(*)
+   test "c3012" on boards BoardSet_boards_1_to_1(*)
+   test "c3018" on boards BoardSet_boards_1_to_1(*)
+   test "pc4628" on boards BoardSet_boards_1_to_1(*)
+!@ test "c714" on boards BoardSet_boards_1_to_1(*)
+!@ test "c715" on boards BoardSet_boards_1_to_1(*)
+   test "c915" on boards BoardSet_boards_1_to_1(*)
+   test "c6901" on boards BoardSet_boards_1_to_1(*)
+   test "c5801" on boards BoardSet_boards_1_to_1(*)
+   test "c2401" on boards BoardSet_boards_1_to_1(*)
+   test "c2404" on boards BoardSet_boards_1_to_1(*)
+   test "c2712" on boards BoardSet_boards_1_to_1(*)
+   test "c2715" on boards BoardSet_boards_1_to_1(*)
+   test "c3008" on boards BoardSet_boards_1_to_1(*)
+   test "c3013" on boards BoardSet_boards_1_to_1(*)
+   test "c3019" on boards BoardSet_boards_1_to_1(*)
+   test "c3710" on boards BoardSet_boards_1_to_1(*)
+   test "c7702" on boards BoardSet_boards_1_to_1(*)
+   test "c8786" on boards BoardSet_boards_1_to_1(*)
+   test "pc4302" on boards BoardSet_boards_1_to_1(*)
+   test "pc4534" on boards BoardSet_boards_1_to_1(*)
+   test "pc4609" on boards BoardSet_boards_1_to_1(*)
+!@ test "pc4752" on boards BoardSet_boards_1_to_1(*)
+   test "pc5018" on boards BoardSet_boards_1_to_1(*)
+   test "pc5301" on boards BoardSet_boards_1_to_1(*)
+   test "c3002" on boards BoardSet_boards_1_to_1(*)
+!@ test "c2307" on boards BoardSet_boards_1_to_1(*)
+!@ test "c2311" on boards BoardSet_boards_1_to_1(*)
+!@ test "c2402" on boards BoardSet_boards_1_to_1(*)  !PROBE REMOVED
+!@ test "c2403" on boards BoardSet_boards_1_to_1(*)  !PROBE REMOVED
+   test "c4203" on boards BoardSet_boards_1_to_1(*)
+   test "c4206" on boards BoardSet_boards_1_to_1(*)
+   test "c4209" on boards BoardSet_boards_1_to_1(*)
+   test "c5904" on boards BoardSet_boards_1_to_1(*)
+   test "c5905" on boards BoardSet_boards_1_to_1(*)
+   test "c5906" on boards BoardSet_boards_1_to_1(*)
+   test "c5908" on boards BoardSet_boards_1_to_1(*)
+   test "c5911" on boards BoardSet_boards_1_to_1(*)
+   test "c5912" on boards BoardSet_boards_1_to_1(*)
+   test "c5913" on boards BoardSet_boards_1_to_1(*)
+   test "c5914" on boards BoardSet_boards_1_to_1(*)
+   test "c6311" on boards BoardSet_boards_1_to_1(*)
+   test "c6312" on boards BoardSet_boards_1_to_1(*)
+   test "c6315" on boards BoardSet_boards_1_to_1(*)
+   test "c6316" on boards BoardSet_boards_1_to_1(*)
+   test "c8420" on boards BoardSet_boards_1_to_1(*)
+   test "c8421" on boards BoardSet_boards_1_to_1(*)
+   test "c8503" on boards BoardSet_boards_1_to_1(*)
+   test "c8506" on boards BoardSet_boards_1_to_1(*)
+   test "c8705" on boards BoardSet_boards_1_to_1(*)
+   test "c8707" on boards BoardSet_boards_1_to_1(*)
+   test "c8708" on boards BoardSet_boards_1_to_1(*)
+   test "c8721" on boards BoardSet_boards_1_to_1(*)
+   test "c8803" on boards BoardSet_boards_1_to_1(*)
+   test "c8806" on boards BoardSet_boards_1_to_1(*)
+   test "c8920" on boards BoardSet_boards_1_to_1(*)
+   test "pc4548" on boards BoardSet_boards_1_to_1(*)
+   test "pc4756" on boards BoardSet_boards_1_to_1(*)
+   test "pc4758" on boards BoardSet_boards_1_to_1(*)
+   test "c3010" on boards BoardSet_boards_1_to_1(*)
+   test "c3026" on boards BoardSet_boards_1_to_1(*)
+   test "pc4603" on boards BoardSet_boards_1_to_1(*)
+   test "pc4740" on boards BoardSet_boards_1_to_1(*)
+!@ test "pc4760" on boards BoardSet_boards_1_to_1(*)
+   test "pc4907" on boards BoardSet_boards_1_to_1(*)
+   test "pc5003" on boards BoardSet_boards_1_to_1(*)
+   test "pc5034" on boards BoardSet_boards_1_to_1(*)
+   test "pc5316" on boards BoardSet_boards_1_to_1(*)
+   test "pc5317" on boards BoardSet_boards_1_to_1(*)
+   test "pc5319" on boards BoardSet_boards_1_to_1(*)
+   test "c3906" on boards BoardSet_boards_1_to_1(*)
+!@ test "pc5314" on boards BoardSet_boards_1_to_1(*)
+   test "c4204" on boards BoardSet_boards_1_to_1(*)
+   test "c5506" on boards BoardSet_boards_1_to_1(*)
+   test "c5508" on boards BoardSet_boards_1_to_1(*)
+   test "c6804" on boards BoardSet_boards_1_to_1(*)
+   test "c6806" on boards BoardSet_boards_1_to_1(*)
+!@ test "pc4744" on boards BoardSet_boards_1_to_1(*)    !P
+   test "pc4622" on boards BoardSet_boards_1_to_1(*)
+   test "pc4736" on boards BoardSet_boards_1_to_1(*)
+   test "pc4743" on boards BoardSet_boards_1_to_1(*)
+   test "pc4745" on boards BoardSet_boards_1_to_1(*)
+   test "pc4746" on boards BoardSet_boards_1_to_1(*)
+   test "pc4749" on boards BoardSet_boards_1_to_1(*)
+   test "pc4750" on boards BoardSet_boards_1_to_1(*)
+!@ test "pc4753" on boards BoardSet_boards_1_to_1(*)
+   test "pc4867" on boards BoardSet_boards_1_to_1(*)
+   test "pc5308" on boards BoardSet_boards_1_to_1(*)
+   test "ec6401" on boards BoardSet_boards_1_to_1(*)
+   test "pc4516" on boards BoardSet_boards_1_to_1(*)
+   test "pc5309" on boards BoardSet_boards_1_to_1(*)
+   test "pc4540" on boards BoardSet_boards_1_to_1(*)
+   test "pc4518" on boards BoardSet_boards_1_to_1(*)
+   test "pc4748" on boards BoardSet_boards_1_to_1(*)
+   test "pc4525" on boards BoardSet_boards_1_to_1(*)
+!@ test "pc4751" on boards BoardSet_boards_1_to_1(*)    !P
+   test "pc4754" on boards BoardSet_boards_1_to_1(*)
+!@ test "pc4759" on boards BoardSet_boards_1_to_1(*)
+!@ test "pc5021" on boards BoardSet_boards_1_to_1(*)
+   test "pc5106" on boards BoardSet_boards_1_to_1(*)
+   test "pc5307" on boards BoardSet_boards_1_to_1(*)
+!@ test "pc5311" on boards BoardSet_boards_1_to_1(*)   !!P
+   test "pc8718" on boards BoardSet_boards_1_to_1(*)
+   test "pq4303%cr1-3" on boards BoardSet_boards_1_to_1(*)
+!@ test "pr4906" on boards BoardSet_boards_1_to_1(*)    !P
+   test "pr5211" on boards BoardSet_boards_1_to_1(*)
+   test "pr5213" on boards BoardSet_boards_1_to_1(*)
+!@ test "pr5214" on boards BoardSet_boards_1_to_1(*)    !P
+   test "pr5218" on boards BoardSet_boards_1_to_1(*)
+   test "pr5220" on boards BoardSet_boards_1_to_1(*)
+!@ test "pr5221" on boards BoardSet_boards_1_to_1(*)    !P
+   test "r1108" on boards BoardSet_boards_1_to_1(*)
+   test "r1110" on boards BoardSet_boards_1_to_1(*)
+   test "r4006" on boards BoardSet_boards_1_to_1(*)
+   test "r2527" on boards BoardSet_boards_1_to_1(*)
+   test "r3729" on boards BoardSet_boards_1_to_1(*)
+!@ test "r3733" on boards BoardSet_boards_1_to_1(*)     !P
+   test "d3901" on boards BoardSet_boards_1_to_1(*)
+   test "q5402%cr1-6" on boards BoardSet_boards_1_to_1(*)
+   test "r5746" on boards BoardSet_boards_1_to_1(*)
+   test "r7515" on boards BoardSet_boards_1_to_1(*)
+   test "r7522" on boards BoardSet_boards_1_to_1(*)
+   test "r7523" on boards BoardSet_boards_1_to_1(*)
+   test "r7524" on boards BoardSet_boards_1_to_1(*)
+   test "r7526" on boards BoardSet_boards_1_to_1(*)
+   test "q7410%cr4-3" on boards BoardSet_boards_1_to_1(*)
+   test "pr4302" on boards BoardSet_boards_1_to_1(*)
+   test "r703" on boards BoardSet_boards_1_to_1(*)
+   test "r2409" on boards BoardSet_boards_1_to_1(*)
+   test "r3003" on boards BoardSet_boards_1_to_1(*)
+   test "r3014" on boards BoardSet_boards_1_to_1(*)
+   test "r5404" on boards BoardSet_boards_1_to_1(*)
+   test "r7304" on boards BoardSet_boards_1_to_1(*)
+   test "pr4303" on boards BoardSet_boards_1_to_1(*)
+   test "pr4511" on boards BoardSet_boards_1_to_1(*)
+   test "pr4513" on boards BoardSet_boards_1_to_1(*)
+   test "pr4527" on boards BoardSet_boards_1_to_1(*)
+!@ test "pr4613" on boards BoardSet_boards_1_to_1(*)    !P
+   test "pr4795" on boards BoardSet_boards_1_to_1(*)
+   test "pr4907" on boards BoardSet_boards_1_to_1(*)
+   test "pr5313" on boards BoardSet_boards_1_to_1(*)
+   test "pr8617" on boards BoardSet_boards_1_to_1(*)
+   test "pr8618" on boards BoardSet_boards_1_to_1(*)
+   test "pr8619" on boards BoardSet_boards_1_to_1(*)
+   test "pr8620" on boards BoardSet_boards_1_to_1(*)
+   test "r705" on boards BoardSet_boards_1_to_1(*)
+   test "r707" on boards BoardSet_boards_1_to_1(*)
+   test "r937" on boards BoardSet_boards_1_to_1(*)
+   test "r1801" on boards BoardSet_boards_1_to_1(*)
+   test "r1802" on boards BoardSet_boards_1_to_1(*)
+   test "r1901" on boards BoardSet_boards_1_to_1(*)
+   test "r1904" on boards BoardSet_boards_1_to_1(*)
+   test "r2114" on boards BoardSet_boards_1_to_1(*)
+   test "r2201" on boards BoardSet_boards_1_to_1(*)
+   test "r2203" on boards BoardSet_boards_1_to_1(*)
+   test "r2205" on boards BoardSet_boards_1_to_1(*)
+   test "r2208" on boards BoardSet_boards_1_to_1(*)
+   test "r2209" on boards BoardSet_boards_1_to_1(*)
+   test "r2214" on boards BoardSet_boards_1_to_1(*)
+   test "r2217" on boards BoardSet_boards_1_to_1(*)
+   test "r2301" on boards BoardSet_boards_1_to_1(*)
+   test "r2302" on boards BoardSet_boards_1_to_1(*)
+   test "r2303" on boards BoardSet_boards_1_to_1(*)
+   test "r2304" on boards BoardSet_boards_1_to_1(*)
+   test "r2411" on boards BoardSet_boards_1_to_1(*)
+   test "r2416" on boards BoardSet_boards_1_to_1(*)
+   test "r2507" on boards BoardSet_boards_1_to_1(*)
+   test "r2508" on boards BoardSet_boards_1_to_1(*)
+   test "r2515" on boards BoardSet_boards_1_to_1(*)
+   test "r2517" on boards BoardSet_boards_1_to_1(*)
+   test "r2523" on boards BoardSet_boards_1_to_1(*)
+   test "r2524" on boards BoardSet_boards_1_to_1(*)
+   test "r2525" on boards BoardSet_boards_1_to_1(*)
+   test "r2528" on boards BoardSet_boards_1_to_1(*)
+   test "r2530" on boards BoardSet_boards_1_to_1(*)
+   test "r2531" on boards BoardSet_boards_1_to_1(*)
+   test "r2533" on boards BoardSet_boards_1_to_1(*)
+   test "r2552" on boards BoardSet_boards_1_to_1(*)
+   test "r3004" on boards BoardSet_boards_1_to_1(*)
+   test "r3701" on boards BoardSet_boards_1_to_1(*)
+   test "r3711" on boards BoardSet_boards_1_to_1(*)
+   test "r3721" on boards BoardSet_boards_1_to_1(*)
+   test "r3723" on boards BoardSet_boards_1_to_1(*)
+   test "r3724" on boards BoardSet_boards_1_to_1(*)
+   test "r3742" on boards BoardSet_boards_1_to_1(*)
+   test "r3743" on boards BoardSet_boards_1_to_1(*)
+   test "r3750" on boards BoardSet_boards_1_to_1(*)
+   test "r3753" on boards BoardSet_boards_1_to_1(*)
+   test "r3754" on boards BoardSet_boards_1_to_1(*)
+   test "r3902" on boards BoardSet_boards_1_to_1(*)
+   test "r3906" on boards BoardSet_boards_1_to_1(*)
+   test "r3907" on boards BoardSet_boards_1_to_1(*)
+   test "r3910" on boards BoardSet_boards_1_to_1(*)
+   test "r3914" on boards BoardSet_boards_1_to_1(*)
+   test "r3917" on boards BoardSet_boards_1_to_1(*)
+   test "r4205" on boards BoardSet_boards_1_to_1(*)
+   test "r4211" on boards BoardSet_boards_1_to_1(*)
+   test "r4221" on boards BoardSet_boards_1_to_1(*)
+   test "r5407" on boards BoardSet_boards_1_to_1(*)
+   test "r5717" on boards BoardSet_boards_1_to_1(*)
+   test "r8004" on boards BoardSet_boards_1_to_1(*)
+   test "r8107" on boards BoardSet_boards_1_to_1(*)
+   test "r8124" on boards BoardSet_boards_1_to_1(*)
+   test "r8125" on boards BoardSet_boards_1_to_1(*)
+   test "r8239" on boards BoardSet_boards_1_to_1(*)
+   test "r8240" on boards BoardSet_boards_1_to_1(*)
+   test "r8313" on boards BoardSet_boards_1_to_1(*)
+   test "r8409" on boards BoardSet_boards_1_to_1(*)
+   test "r8410" on boards BoardSet_boards_1_to_1(*)
+   test "r8411" on boards BoardSet_boards_1_to_1(*)
+   test "r8506" on boards BoardSet_boards_1_to_1(*)
+   test "r8508" on boards BoardSet_boards_1_to_1(*)
+   test "r8713" on boards BoardSet_boards_1_to_1(*)
+   test "r8716" on boards BoardSet_boards_1_to_1(*)
+   test "r8717" on boards BoardSet_boards_1_to_1(*)
+   test "r8909" on boards BoardSet_boards_1_to_1(*)
+   test "r8910" on boards BoardSet_boards_1_to_1(*)
+   test "r8911" on boards BoardSet_boards_1_to_1(*)
+   test "r9006" on boards BoardSet_boards_1_to_1(*)
+   test "r9008" on boards BoardSet_boards_1_to_1(*)
+   test "pr4304" on boards BoardSet_boards_1_to_1(*)
+   test "pr5102" on boards BoardSet_boards_1_to_1(*)
+   test "r701" on boards BoardSet_boards_1_to_1(*)
+   test "r2555" on boards BoardSet_boards_1_to_1(*)
+   test "r3716" on boards BoardSet_boards_1_to_1(*)
+   test "r3737" on boards BoardSet_boards_1_to_1(*)
+   test "r3738" on boards BoardSet_boards_1_to_1(*)
+   test "r3748" on boards BoardSet_boards_1_to_1(*)
+!W test "r3758" on boards BoardSet_boards_1_to_1(*)
+   test "pr4306" on boards BoardSet_boards_1_to_1(*)
+!@ test "pr5104" on boards BoardSet_boards_1_to_1(*)    !P
+   test "pr8712" on boards BoardSet_boards_1_to_1(*)
+   test "r8304" on boards BoardSet_boards_1_to_1(*)
+   test "pr4307" on boards BoardSet_boards_1_to_1(*)
+   test "r5405" on boards BoardSet_boards_1_to_1(*)
+   test "pr4308" on boards BoardSet_boards_1_to_1(*)
+   test "pr4309" on boards BoardSet_boards_1_to_1(*)
+   test "pr4512" on boards BoardSet_boards_1_to_1(*)
+   test "pr4523" on boards BoardSet_boards_1_to_1(*)
+   test "pr4601" on boards BoardSet_boards_1_to_1(*)
+   test "pr4614" on boards BoardSet_boards_1_to_1(*)
+   test "pr4908" on boards BoardSet_boards_1_to_1(*)
+   test "pr5219" on boards BoardSet_boards_1_to_1(*)
+   test "r988" on boards BoardSet_boards_1_to_1(*)
+   test "r3709" on boards BoardSet_boards_1_to_1(*)
+   test "r3740" on boards BoardSet_boards_1_to_1(*)
+   test "r3745" on boards BoardSet_boards_1_to_1(*)
+   test "r4005" on boards BoardSet_boards_1_to_1(*)
+   test "r4201" on boards BoardSet_boards_1_to_1(*)
+   test "r4206" on boards BoardSet_boards_1_to_1(*)
+   test "r5034" on boards BoardSet_boards_1_to_1(*)
+   test "r5745" on boards BoardSet_boards_1_to_1(*)
+!@ test "r6201" on boards BoardSet_boards_1_to_1(*) !probe removed
+   test "r6803" on boards BoardSet_boards_1_to_1(*)
+   test "r7701" on boards BoardSet_boards_1_to_1(*)
+!N test "r8016" on boards BoardSet_boards_1_to_1(*)
+   test "r8708" on boards BoardSet_boards_1_to_1(*)
+   test "r8710" on boards BoardSet_boards_1_to_1(*)
+   test "r8711" on boards BoardSet_boards_1_to_1(*)
+   test "r8712" on boards BoardSet_boards_1_to_1(*)
+   test "r8714" on boards BoardSet_boards_1_to_1(*)
+   test "r8715" on boards BoardSet_boards_1_to_1(*)
+   test "pr4401" on boards BoardSet_boards_1_to_1(*)
+   test "pr4514" on boards BoardSet_boards_1_to_1(*)
+   test "pr4903" on boards BoardSet_boards_1_to_1(*)
+   test "pr8604" on boards BoardSet_boards_1_to_1(*)
+   test "pr4402" on boards BoardSet_boards_1_to_1(*)
+   test "pr5335" on boards BoardSet_boards_1_to_1(*)
+   test "pr5336" on boards BoardSet_boards_1_to_1(*)
+   test "prn4401%r1" on boards BoardSet_boards_1_to_1(*)
+   test "prn4401%r2" on boards BoardSet_boards_1_to_1(*)
+   test "r907" on boards BoardSet_boards_1_to_1(*)
+   test "r1201" on boards BoardSet_boards_1_to_1(*)
+   test "r1204" on boards BoardSet_boards_1_to_1(*)
+   test "r2548" on boards BoardSet_boards_1_to_1(*)
+   test "r2701" on boards BoardSet_boards_1_to_1(*)
+   test "r2702" on boards BoardSet_boards_1_to_1(*)
+   test "r3712" on boards BoardSet_boards_1_to_1(*)
+   test "r3746" on boards BoardSet_boards_1_to_1(*)
+   test "r3749" on boards BoardSet_boards_1_to_1(*)
+   test "r5406" on boards BoardSet_boards_1_to_1(*)
+   test "r5408" on boards BoardSet_boards_1_to_1(*)
+   test "r5415" on boards BoardSet_boards_1_to_1(*)
+   test "pr4502" on boards BoardSet_boards_1_to_1(*)
+   test "pr4520" on boards BoardSet_boards_1_to_1(*)
+   test "pr4526" on boards BoardSet_boards_1_to_1(*)
+   test "pr4537" on boards BoardSet_boards_1_to_1(*)
+   test "pr4539" on boards BoardSet_boards_1_to_1(*)
+   test "pr5311" on boards BoardSet_boards_1_to_1(*)
+   test "r3727" on boards BoardSet_boards_1_to_1(*)
+   test "r6207" on boards BoardSet_boards_1_to_1(*)
+   test "pr4604" on boards BoardSet_boards_1_to_1(*)
+   test "pr4605" on boards BoardSet_boards_1_to_1(*)
+!@ test "pr4609" on boards BoardSet_boards_1_to_1(*)     !P
+!W test "pr4612" on boards BoardSet_boards_1_to_1(*)
+!@ test "pr4615" on boards BoardSet_boards_1_to_1(*)     !P
+   test "pr4622" on boards BoardSet_boards_1_to_1(*)
+   test "pr4747" on boards BoardSet_boards_1_to_1(*)
+   test "pr4749" on boards BoardSet_boards_1_to_1(*)
+   test "pr4751" on boards BoardSet_boards_1_to_1(*)
+   test "r933" on boards BoardSet_boards_1_to_1(*)
+   test "pr4754" on boards BoardSet_boards_1_to_1(*)
+   test "pr4756" on boards BoardSet_boards_1_to_1(*)
+   test "pr4762" on boards BoardSet_boards_1_to_1(*)
+   test "pr4763" on boards BoardSet_boards_1_to_1(*)
+   test "pr4759" on boards BoardSet_boards_1_to_1(*)
+   test "pr4761" on boards BoardSet_boards_1_to_1(*)
+!@ test "pr4766" on boards BoardSet_boards_1_to_1(*)    !P
+   test "pr4770" on boards BoardSet_boards_1_to_1(*)
+   test "pr4771" on boards BoardSet_boards_1_to_1(*)
+   test "pr4772" on boards BoardSet_boards_1_to_1(*)
+   test "pr4775" on boards BoardSet_boards_1_to_1(*)
+   test "pr4777" on boards BoardSet_boards_1_to_1(*)
+   test "pr4788" on boards BoardSet_boards_1_to_1(*)
+   test "pr4789" on boards BoardSet_boards_1_to_1(*)
+   test "pr4791" on boards BoardSet_boards_1_to_1(*)
+   test "pr4793" on boards BoardSet_boards_1_to_1(*)
+   test "pr4909" on boards BoardSet_boards_1_to_1(*)
+   test "pr4921" on boards BoardSet_boards_1_to_1(*)
+!W test "pr5318" on boards BoardSet_boards_1_to_1(*)
+   test "pr5324" on boards BoardSet_boards_1_to_1(*)
+   test "pr8631" on boards BoardSet_boards_1_to_1(*)
+   test "r934" on boards BoardSet_boards_1_to_1(*)
+   test "r1302" on boards BoardSet_boards_1_to_1(*)
+   test "r2004" on boards BoardSet_boards_1_to_1(*)
+   test "r2202" on boards BoardSet_boards_1_to_1(*)
+   test "r2532" on boards BoardSet_boards_1_to_1(*)
+   test "r4203" on boards BoardSet_boards_1_to_1(*)
+   test "r6202" on boards BoardSet_boards_1_to_1(*)
+   test "r6815" on boards BoardSet_boards_1_to_1(*)
+   test "r8120" on boards BoardSet_boards_1_to_1(*)
+   test "r8401" on boards BoardSet_boards_1_to_1(*)
+   test "r8402" on boards BoardSet_boards_1_to_1(*)
+   test "r8403" on boards BoardSet_boards_1_to_1(*)
+   test "r8404" on boards BoardSet_boards_1_to_1(*)
+   test "r8501" on boards BoardSet_boards_1_to_1(*)
+   test "r8504" on boards BoardSet_boards_1_to_1(*)
+   test "r8507" on boards BoardSet_boards_1_to_1(*)
+   test "r8510" on boards BoardSet_boards_1_to_1(*)
+   test "r8901" on boards BoardSet_boards_1_to_1(*)
+   test "r8902" on boards BoardSet_boards_1_to_1(*)
+   test "r8903" on boards BoardSet_boards_1_to_1(*)
+   test "r8904" on boards BoardSet_boards_1_to_1(*)
+   test "r9001" on boards BoardSet_boards_1_to_1(*)
+   test "r9004" on boards BoardSet_boards_1_to_1(*)
+   test "r9007" on boards BoardSet_boards_1_to_1(*)
+   test "r9010" on boards BoardSet_boards_1_to_1(*)
+!@ test "pr4779" on boards BoardSet_boards_1_to_1(*)    !P
+!@ test "pr4780" on boards BoardSet_boards_1_to_1(*)    !P
+   test "r2002" on boards BoardSet_boards_1_to_1(*)
+   test "r3904" on boards BoardSet_boards_1_to_1(*)
+   test "pr4781" on boards BoardSet_boards_1_to_1(*)
+   test "pr4782" on boards BoardSet_boards_1_to_1(*)
+   test "pr4783" on boards BoardSet_boards_1_to_1(*)
+   test "pr4796" on boards BoardSet_boards_1_to_1(*)
+   test "pr4902" on boards BoardSet_boards_1_to_1(*)
+!W test "pr4905" on boards BoardSet_boards_1_to_1(*)
+!@ test "pr8603" on boards BoardSet_boards_1_to_1(*)   !P
+   test "pr8614" on boards BoardSet_boards_1_to_1(*)
+   test "pr8615" on boards BoardSet_boards_1_to_1(*)
+   test "pr5006" on boards BoardSet_boards_1_to_1(*)
+   test "pr5007" on boards BoardSet_boards_1_to_1(*)
+!@ test "pr5010" on boards BoardSet_boards_1_to_1(*)   !P
+!@ test "pr5105" on boards BoardSet_boards_1_to_1(*)   !P
+   test "pr8713" on boards BoardSet_boards_1_to_1(*)
+   test "pr5306" on boards BoardSet_boards_1_to_1(*)
+!@ test "r3741" on boards BoardSet_boards_1_to_1(*)    !P
+   test "r3913" on boards BoardSet_boards_1_to_1(*)
+!10otest "r6901" on boards BoardSet_boards_1_to_1(*)
+   test "pr5314" on boards BoardSet_boards_1_to_1(*)
+   test "pr5316" on boards BoardSet_boards_1_to_1(*)
+   test "pr5319" on boards BoardSet_boards_1_to_1(*)
+   test "r2402" on boards BoardSet_boards_1_to_1(*)
+   test "r2403" on boards BoardSet_boards_1_to_1(*)
+   test "r3022" on boards BoardSet_boards_1_to_1(*)
+   test "r5716" on boards BoardSet_boards_1_to_1(*)
+   test "r6620" on boards BoardSet_boards_1_to_1(*)
+   test "r6621" on boards BoardSet_boards_1_to_1(*)
+   test "r6622" on boards BoardSet_boards_1_to_1(*)
+   test "r6623" on boards BoardSet_boards_1_to_1(*)
+   test "r6624" on boards BoardSet_boards_1_to_1(*)
+   test "r6625" on boards BoardSet_boards_1_to_1(*)
+   test "r6628" on boards BoardSet_boards_1_to_1(*)
+   test "r6631" on boards BoardSet_boards_1_to_1(*)
+   test "r7485" on boards BoardSet_boards_1_to_1(*)
+   test "r7487" on boards BoardSet_boards_1_to_1(*)
+   test "r8308" on boards BoardSet_boards_1_to_1(*)
+   test "pr5320" on boards BoardSet_boards_1_to_1(*)
+   test "pr5322" on boards BoardSet_boards_1_to_1(*)
+   test "pr5326" on boards BoardSet_boards_1_to_1(*)
+   test "pr5327" on boards BoardSet_boards_1_to_1(*)
+   test "pr5328" on boards BoardSet_boards_1_to_1(*)
+!@ test "pr8607" on boards BoardSet_boards_1_to_1(*)      !P
+!@ test "pr8613" on boards BoardSet_boards_1_to_1(*)      !P
+   test "r8306" on boards BoardSet_boards_1_to_1(*)
+!W test "pr8611" on boards BoardSet_boards_1_to_1(*)
+   test "pr8632" on boards BoardSet_boards_1_to_1(*)
+   test "q5403%r1" on boards BoardSet_boards_1_to_1(*)
+   test "q6606%r1" on boards BoardSet_boards_1_to_1(*)
+   test "q6608%r1" on boards BoardSet_boards_1_to_1(*)
+!W test "q6607%r1" on boards BoardSet_boards_1_to_1(*)
+!W test "q6609%r1" on boards BoardSet_boards_1_to_1(*)
+   test "r801" on boards BoardSet_boards_1_to_1(*)
+   test "r902" on boards BoardSet_boards_1_to_1(*)
+   test "r905" on boards BoardSet_boards_1_to_1(*)
+   test "r906" on boards BoardSet_boards_1_to_1(*)
+   test "r2204" on boards BoardSet_boards_1_to_1(*)
+   test "r3908" on boards BoardSet_boards_1_to_1(*)
+   test "r802" on boards BoardSet_boards_1_to_1(*)
+   test "r915" on boards BoardSet_boards_1_to_1(*)
+   test "r920" on boards BoardSet_boards_1_to_1(*)
+   test "r901" on boards BoardSet_boards_1_to_1(*)
+   test "r903" on boards BoardSet_boards_1_to_1(*)
+   test "r910" on boards BoardSet_boards_1_to_1(*)
+   test "r911" on boards BoardSet_boards_1_to_1(*)
+   test "r913" on boards BoardSet_boards_1_to_1(*)
+   test "r977" on boards BoardSet_boards_1_to_1(*)
+   test "r923" on boards BoardSet_boards_1_to_1(*)
+   test "r928" on boards BoardSet_boards_1_to_1(*)
+   test "r1102" on boards BoardSet_boards_1_to_1(*)
+   test "r2005" on boards BoardSet_boards_1_to_1(*)
+   test "r2006" on boards BoardSet_boards_1_to_1(*)
+   test "r2007" on boards BoardSet_boards_1_to_1(*)
+   test "r5501" on boards BoardSet_boards_1_to_1(*)
+   test "r5502" on boards BoardSet_boards_1_to_1(*)
+   test "r5503" on boards BoardSet_boards_1_to_1(*)
+   test "r8116" on boards BoardSet_boards_1_to_1(*)
+   test "r8118" on boards BoardSet_boards_1_to_1(*)
+   test "r8119" on boards BoardSet_boards_1_to_1(*)
+   test "r2106" on boards BoardSet_boards_1_to_1(*)
+   test "r2108" on boards BoardSet_boards_1_to_1(*)
+   test "r2420" on boards BoardSet_boards_1_to_1(*)
+   test "r2422" on boards BoardSet_boards_1_to_1(*)
+   test "r2425" on boards BoardSet_boards_1_to_1(*)
+   test "r4212" on boards BoardSet_boards_1_to_1(*)
+   test "r2305" on boards BoardSet_boards_1_to_1(*)
+   test "r2406" on boards BoardSet_boards_1_to_1(*)
+   test "r2306" on boards BoardSet_boards_1_to_1(*)
+!@ test "r2401" on boards BoardSet_boards_1_to_1(*)  !probe re moved
+   test "r2404" on boards BoardSet_boards_1_to_1(*)
+   test "r5402" on boards BoardSet_boards_1_to_1(*)
+   test "r2412" on boards BoardSet_boards_1_to_1(*)
+   test "r2413" on boards BoardSet_boards_1_to_1(*)
+   test "r2414" on boards BoardSet_boards_1_to_1(*)
+   test "r2415" on boards BoardSet_boards_1_to_1(*)
+   test "r6206" on boards BoardSet_boards_1_to_1(*)
+   test "r2509" on boards BoardSet_boards_1_to_1(*)
+   test "r2511" on boards BoardSet_boards_1_to_1(*)
+   test "r3008" on boards BoardSet_boards_1_to_1(*)
+   test "r3018" on boards BoardSet_boards_1_to_1(*)
+   test "r8001" on boards BoardSet_boards_1_to_1(*)
+   test "r3010" on boards BoardSet_boards_1_to_1(*)
+   test "r3015" on boards BoardSet_boards_1_to_1(*)
+   test "r3017" on boards BoardSet_boards_1_to_1(*)
+   test "r3019" on boards BoardSet_boards_1_to_1(*)
+   test "r3021" on boards BoardSet_boards_1_to_1(*)
+   test "r4213" on boards BoardSet_boards_1_to_1(*)
+   test "r4226" on boards BoardSet_boards_1_to_1(*)
+   test "r5401" on boards BoardSet_boards_1_to_1(*)
+   test "r7529" on boards BoardSet_boards_1_to_1(*)
+   test "r7530" on boards BoardSet_boards_1_to_1(*)
+   test "r7532" on boards BoardSet_boards_1_to_1(*)
+   test "r7533" on boards BoardSet_boards_1_to_1(*)
+   test "r7534" on boards BoardSet_boards_1_to_1(*)
+   test "r7535" on boards BoardSet_boards_1_to_1(*)
+   test "r7536" on boards BoardSet_boards_1_to_1(*)
+   test "r7537" on boards BoardSet_boards_1_to_1(*)
+   test "r8106" on boards BoardSet_boards_1_to_1(*)
+   test "r8133" on boards BoardSet_boards_1_to_1(*)
+   test "r8314" on boards BoardSet_boards_1_to_1(*)
+   test "r8406" on boards BoardSet_boards_1_to_1(*)
+   test "r8407" on boards BoardSet_boards_1_to_1(*)
+!W test "r8418" on boards BoardSet_boards_1_to_1(*)
+   test "r8503" on boards BoardSet_boards_1_to_1(*)
+   test "r8509" on boards BoardSet_boards_1_to_1(*)
+!W test "r8517" on boards BoardSet_boards_1_to_1(*)
+   test "r8906" on boards BoardSet_boards_1_to_1(*)
+   test "r8907" on boards BoardSet_boards_1_to_1(*)
+!W test "r8918" on boards BoardSet_boards_1_to_1(*)
+   test "r9003" on boards BoardSet_boards_1_to_1(*)
+   test "r9009" on boards BoardSet_boards_1_to_1(*)
+!W test "r9017" on boards BoardSet_boards_1_to_1(*)
+   test "r8778" on boards BoardSet_boards_1_to_1(*)
+   test "rn905%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn905%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn2001%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn2001%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn2103%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn2103%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn2103%r3" on boards BoardSet_boards_1_to_1(*)
+   test "rn2103%r4" on boards BoardSet_boards_1_to_1(*)
+   test "rn2201%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn2201%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn2307%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn2307%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn2307%r3" on boards BoardSet_boards_1_to_1(*)
+   test "rn2307%r4" on boards BoardSet_boards_1_to_1(*)
+   test "rn2308%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn2308%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn2401%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn2401%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn2501%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn2501%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn2502%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn2502%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn2503%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn2503%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn3702%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn3702%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn3902%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn3902%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn6802%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn6802%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rp2101%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rp2101%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rp2101%r3" on boards BoardSet_boards_1_to_1(*)
+   test "rp2101%r4" on boards BoardSet_boards_1_to_1(*)
+   test "rp2101%r5" on boards BoardSet_boards_1_to_1(*)
+   test "rp2101%r6" on boards BoardSet_boards_1_to_1(*)
+   test "rp2101%r7" on boards BoardSet_boards_1_to_1(*)
+   test "rp2101%r8" on boards BoardSet_boards_1_to_1(*)
+   test "rn907%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn907%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn2101%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn2101%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn2101%r3" on boards BoardSet_boards_1_to_1(*)
+   test "rn2101%r4" on boards BoardSet_boards_1_to_1(*)
+   test "rn2101%r5" on boards BoardSet_boards_1_to_1(*)
+   test "rn2101%r6" on boards BoardSet_boards_1_to_1(*)
+   test "rn2101%r7" on boards BoardSet_boards_1_to_1(*)
+   test "rn2101%r8" on boards BoardSet_boards_1_to_1(*)
+   test "rn2102%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn2102%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn2102%r3" on boards BoardSet_boards_1_to_1(*)
+   test "rn2102%r4" on boards BoardSet_boards_1_to_1(*)
+   test "rn2102%r5" on boards BoardSet_boards_1_to_1(*)
+   test "rn2102%r6" on boards BoardSet_boards_1_to_1(*)
+   test "rn2102%r7" on boards BoardSet_boards_1_to_1(*)
+   test "rn2102%r8" on boards BoardSet_boards_1_to_1(*)
+   test "rn2302%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn2302%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn2303%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn2303%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn2306%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn2306%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn2313%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn2313%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn5404%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn5409%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn5409%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn5510%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn5510%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn5511%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn5511%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn5513%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn5513%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn5714%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn5714%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn5715%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn5715%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn8112%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn8112%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn3701%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn3701%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn3901%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn3901%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn6202%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn6202%r2" on boards BoardSet_boards_1_to_1(*)
+   test "rn7701%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn7701%r2" on boards BoardSet_boards_1_to_1(*)
+!@ test "rn6201%r1" on boards BoardSet_boards_1_to_1(*)  !probe removed
+   test "rn7445%r1" on boards BoardSet_boards_1_to_1(*)
+   test "rn7445%r2" on boards BoardSet_boards_1_to_1(*)
+   test "d2701" on boards BoardSet_boards_1_to_1(*)
+   test "d2702" on boards BoardSet_boards_1_to_1(*)
+   test "d3701" on boards BoardSet_boards_1_to_1(*)
+   test "d3702" on boards BoardSet_boards_1_to_1(*)
+   test "d3712%cr1" on boards BoardSet_boards_1_to_1(*)
+   test "d3712%cr2" on boards BoardSet_boards_1_to_1(*)
+   test "d4201" on boards BoardSet_boards_1_to_1(*)
+   test "d5402%cr1" on boards BoardSet_boards_1_to_1(*)
+   test "d5402%cr2" on boards BoardSet_boards_1_to_1(*)
+   test "d5504" on boards BoardSet_boards_1_to_1(*)
+   test "d5801" on boards BoardSet_boards_1_to_1(*)
+   test "d6201%cr1" on boards BoardSet_boards_1_to_1(*)
+   test "d6201%cr2" on boards BoardSet_boards_1_to_1(*)
+   test "d8706%cr1" on boards BoardSet_boards_1_to_1(*)
+   test "pd4301%cr1" on boards BoardSet_boards_1_to_1(*)
+   test "pd4301%cr2" on boards BoardSet_boards_1_to_1(*)
+   test "pd4304" on boards BoardSet_boards_1_to_1(*)
+   test "pd4401%cr1" on boards BoardSet_boards_1_to_1(*)
+   test "pd4401%cr2" on boards BoardSet_boards_1_to_1(*)
+   test "pd4402%cr1" on boards BoardSet_boards_1_to_1(*)
+   test "pd4402%cr2" on boards BoardSet_boards_1_to_1(*)
+   test "pd4403%cr1" on boards BoardSet_boards_1_to_1(*)
+   test "pd4403%cr2" on boards BoardSet_boards_1_to_1(*)
+   test "pd4501" on boards BoardSet_boards_1_to_1(*)
+   test "pd4603%cr1" on boards BoardSet_boards_1_to_1(*)
+   test "pd4603%cr2" on boards BoardSet_boards_1_to_1(*)
+   test "pd4604%cr1" on boards BoardSet_boards_1_to_1(*)
+   test "pd4604%cr2" on boards BoardSet_boards_1_to_1(*)
+   test "pd5201" on boards BoardSet_boards_1_to_1(*)
+   test "pd5202" on boards BoardSet_boards_1_to_1(*)
+   test "pd5203%cr1" on boards BoardSet_boards_1_to_1(*)
+   test "pd5203%cr2" on boards BoardSet_boards_1_to_1(*)
+   test "pd8601" on boards BoardSet_boards_1_to_1(*)
+   test "pd8615" on boards BoardSet_boards_1_to_1(*)
+   test "pq4304%cr1" on boards BoardSet_boards_1_to_1(*)
+   test "pq4304%cr2" on boards BoardSet_boards_1_to_1(*)
+   test "q2515%cr1" on boards BoardSet_boards_1_to_1(*)
+   test "q2515%cr2" on boards BoardSet_boards_1_to_1(*)
+   test "q3701%cr1" on boards BoardSet_boards_1_to_1(*)
+   test "q3701%cr2" on boards BoardSet_boards_1_to_1(*)
+   test "q3702%cr1" on boards BoardSet_boards_1_to_1(*)
+   test "q3702%cr2" on boards BoardSet_boards_1_to_1(*)
+   test "q3709%cr1" on boards BoardSet_boards_1_to_1(*)
+   test "q3709%cr2" on boards BoardSet_boards_1_to_1(*)
+   test "q3714%cr1" on boards BoardSet_boards_1_to_1(*)
+   test "q3714%cr2" on boards BoardSet_boards_1_to_1(*)
+   test "q3901%cr1" on boards BoardSet_boards_1_to_1(*)
+   test "q3905%cr2" on boards BoardSet_boards_1_to_1(*)
+   test "q7701%cr1" on boards BoardSet_boards_1_to_1(*)
+   test "q7701%cr2" on boards BoardSet_boards_1_to_1(*)
+   test "pq4502%cr1-6" on boards BoardSet_boards_1_to_1(*)
+   test "pq4502%cr4-3" on boards BoardSet_boards_1_to_1(*)
+   test "pq4504%cr1-3" on boards BoardSet_boards_1_to_1(*)
+   test "pq4601%cr1-3" on boards BoardSet_boards_1_to_1(*)
+   test "pq4602%cr1-6" on boards BoardSet_boards_1_to_1(*)
+   test "pq4602%cr4-3" on boards BoardSet_boards_1_to_1(*)
+   test "pq4901%cr1-6" on boards BoardSet_boards_1_to_1(*)
+   test "pq4901%cr4-3" on boards BoardSet_boards_1_to_1(*)
+   test "pq8601%cr1-3" on boards BoardSet_boards_1_to_1(*)
+   test "pq8602%cr1-3" on boards BoardSet_boards_1_to_1(*)
+   test "q701%cr1-3" on boards BoardSet_boards_1_to_1(*)
+!W test "q901%cr1-3" on boards BoardSet_boards_1_to_1(*)
+   test "q2301%cr1-6" on boards BoardSet_boards_1_to_1(*)
+   test "q2301%cr4-3" on boards BoardSet_boards_1_to_1(*)
+   test "q2305%cr1-3" on boards BoardSet_boards_1_to_1(*)
+   test "q3902%cr1-3" on boards BoardSet_boards_1_to_1(*)
+   test "q3903%cr1-3" on boards BoardSet_boards_1_to_1(*)
+   test "q4002%cr1-6" on boards BoardSet_boards_1_to_1(*)
+   test "q4002%cr4-3" on boards BoardSet_boards_1_to_1(*)
+   test "q4202%cr1-6" on boards BoardSet_boards_1_to_1(*)
+   test "q4202%cr4-3" on boards BoardSet_boards_1_to_1(*)
+   test "q4203%cr1-3" on boards BoardSet_boards_1_to_1(*)
+   test "q4204%cr1-3" on boards BoardSet_boards_1_to_1(*)
+   test "q5003%cr1-3" on boards BoardSet_boards_1_to_1(*)
+   test "q5402%cr4-3" on boards BoardSet_boards_1_to_1(*)
+   test "q5517%cr1-6" on boards BoardSet_boards_1_to_1(*)
+   test "q5517%cr4-3" on boards BoardSet_boards_1_to_1(*)
+   test "q5703%cr1-6" on boards BoardSet_boards_1_to_1(*)
+   test "q5703%cr4-3" on boards BoardSet_boards_1_to_1(*)
+   test "q5720%cr1-6" on boards BoardSet_boards_1_to_1(*)
+   test "q5720%cr4-3" on boards BoardSet_boards_1_to_1(*)
+   test "q6808%cr1-3" on boards BoardSet_boards_1_to_1(*)
+   test "q7410%cr1-6" on boards BoardSet_boards_1_to_1(*)
+   test "q7501%cr1-3" on boards BoardSet_boards_1_to_1(*)
+   test "q8704%cr1-6" on boards BoardSet_boards_1_to_1(*)
+   test "q8704%cr4-3" on boards BoardSet_boards_1_to_1(*)
+   test "q8705%cr1-6" on boards BoardSet_boards_1_to_1(*)
+   test "q8705%cr4-3" on boards BoardSet_boards_1_to_1(*)
+   test "q8707%cr1-6" on boards BoardSet_boards_1_to_1(*)
+   test "q8707%cr4-3" on boards BoardSet_boards_1_to_1(*)
+   test "u3702%cr1-6" on boards BoardSet_boards_1_to_1(*)
+   test "u3702%cr4-3" on boards BoardSet_boards_1_to_1(*)
+   test "q3904%cr1" on boards BoardSet_boards_1_to_1(*)
+   test "q7503%cr1-3" on boards BoardSet_boards_1_to_1(*)
+   test "c3508" on boards BoardSet_boards_3_to_3(*)
+   test "c3520" on boards BoardSet_boards_3_to_3(*)
+   test "c3519" on boards BoardSet_boards_3_to_3(*)
+   test "c3524" on boards BoardSet_boards_3_to_3(*)
+   test "tc6304" on boards BoardSet_boards_3_to_3(*)
+   test "c7690" on boards BoardSet_boards_3_to_3(*)
+   test "c7604" on boards BoardSet_boards_3_to_3(*)
+   test "c3525" on boards BoardSet_boards_3_to_3(*)
+   test "c3521" on boards BoardSet_boards_3_to_3(*)
+   test "c3522" on boards BoardSet_boards_3_to_3(*)
+   test "c6101" on boards BoardSet_boards_3_to_3(*)
+   test "c6105" on boards BoardSet_boards_3_to_3(*)
+   test "c6106" on boards BoardSet_boards_3_to_3(*)
+   test "c6107" on boards BoardSet_boards_3_to_3(*)
+   test "ec6101" on boards BoardSet_boards_3_to_3(*)
+   test "q3501%cr1-3" on boards BoardSet_boards_3_to_3(*)
+   test "r3502" on boards BoardSet_boards_3_to_3(*)
+   test "r3517" on boards BoardSet_boards_3_to_3(*)
+   test "r3534" on boards BoardSet_boards_3_to_3(*)
+   test "r3503" on boards BoardSet_boards_3_to_3(*)
+   test "r3504" on boards BoardSet_boards_3_to_3(*)
+   test "r3507" on boards BoardSet_boards_3_to_3(*)
+   test "r3511" on boards BoardSet_boards_3_to_3(*)
+   test "r3515" on boards BoardSet_boards_3_to_3(*)
+   test "r3508" on boards BoardSet_boards_3_to_3(*)
+   test "r3525" on boards BoardSet_boards_3_to_3(*)
+   test "r6101" on boards BoardSet_boards_3_to_3(*)
+   test "r6102" on boards BoardSet_boards_3_to_3(*)
+   test "r6103" on boards BoardSet_boards_3_to_3(*)
+   test "r6104" on boards BoardSet_boards_3_to_3(*)
+   test "q3502%cr1-3" on boards BoardSet_boards_3_to_3(*)
+   test "q3506%cr1" on boards BoardSet_boards_3_to_3(*)
+   test "q3507%cr1" on boards BoardSet_boards_3_to_3(*)
+   test "c7301" on boards BoardSet_boards_2_to_2(*)
+   test "c6002" on boards BoardSet_boards_2_to_2(*)
+   test "c6003" on boards BoardSet_boards_2_to_2(*)
+   test "c6409" on boards BoardSet_boards_2_to_2(*)
+   test "ec6001" on boards BoardSet_boards_2_to_2(*)
+   test "ec6002" on boards BoardSet_boards_2_to_2(*)
+   test "ec6004" on boards BoardSet_boards_2_to_2(*)
+   test "ec6005" on boards BoardSet_boards_2_to_2(*)
+   test "r3017" on boards BoardSet_boards_2_to_2(*)
+   test "r3018" on boards BoardSet_boards_2_to_2(*)
+   test "r4203" on boards BoardSet_boards_2_to_2(*)
+   test "r7306" on boards BoardSet_boards_2_to_2(*)
+   test "r7718" on boards BoardSet_boards_2_to_2(*)
+   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub VectorlessTest (Status_Code, Message$)
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+   if Message$ <> "" then  print tab(5);Message$
+   call Panel_Enable_Boards
+   test "testjet" on boards BoardSet_boards_1_to_1(*)
+   test "testjet" on boards BoardSet_boards_3_to_3(*)
+   test "testjet" on boards BoardSet_boards_2_to_2(*)
+   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub Polarity_Check (Status_Code, Message$)
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+!   if Message$ <> "" then  print tab(5);Message$
+!   call Panel_Enable_Boards
+!   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub Connect_Check (Status_Code, Message$)
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+!   if Message$ <> "" then  print tab(5);Message$
+!   call Panel_Enable_Boards
+!   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub Analog_Cluster_Tests (Status_Code, Message$)
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+!   if Message$ <> "" then  print tab(5);Message$
+!   call Panel_Enable_Boards
+!   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub Verify_Grounds (Status_Code, Message$)
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+!   if Message$ <> "" then  print tab(5);Message$
+!   call Panel_Enable_Boards
+!   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub Pre_Powered_Tests (Status_Code, Message$)
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+!   if Message$ <> "" then  print tab(5);Message$
+!   call Panel_Enable_Boards
+!   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub Disconnect_Power_On_Board(Board_Num)
+global BoardSet(*)
+
+   ! Check to see if in powered mode.
+   Must_Be_Powered = 223
+   rps 2, V, C, Error
+   if Error = Must_Be_Powered then subexit
+
+   if (Board_Num = 1) and BoardSet(1) then
+      ! Disconnect this board
+      dps 2
+   end if
+   if (Board_Num = 2) and BoardSet(2) then
+   end if
+   if (Board_Num = 3) and BoardSet(3) then
+   end if
+subend
+
+sub Report_Power_Supply_Limit(Pslimit)
+   I = 1
+   for Pscount = 1 to 2
+      if binand (Pslimit,I) then
+         report "Power Supply Number "
+         report Pscount
+         report "In Current Limit"
+      end if
+      I = 2*I
+   next Pscount
+   report "________________________________________"
+   report "Check for backwards"
+   report "IC's or Capacitors."
+   report "________________________________________"
+subend
+
+sub Setup_Power_Supplies (Status_Code, Message$)
+global All_Failed
+global BoardSet(*)
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+
+   if Message$ <> "" then  print tab(5);Message$
+   cps
+   if BoardSet(1) then
+      board number is 1
+      sps 2,19.50,2.00;optimize
+      Pslimit = pslimit
+      pass device
+      if Pslimit then
+         dps 2
+         fail device
+         call Report_Power_Supply_Limit(Pslimit)
+      end if
+   end if
+     wait 2
+    test "power_in" on boards BoardSet_boards_1_to_1(*)
+    test "power_s5" on boards BoardSet_boards_1_to_1(*)
+    test "power_s3" on boards BoardSet_boards_1_to_1(*)
+!   test "power_s0" on boards BoardSet_boards_1_to_1(*)
+
+   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub Cycle_Power_On_Board
+global PowerMsg$
+global Failed_In_Power_Supplies, Number_Boards_On_Panel, BoardSet(*)
+   for I = 1 to Number_Boards_On_Panel
+      if BoardSet(I) then call Disconnect_Power_On_Board (I)
+   next I
+   call Setup_Power_Supplies (Failed_In_Power_Supplies, PowerMsg$)
+subend
+
+sub BScan_Powered_Shorts_Tests (Status_Code, Message$)
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+   if Message$ <> "" then  print tab(5);Message$
+   call BScan_Disable_All_Chains
+   if panelfailed then
+      print "BScan disable failure, powered shorts tests skipped"
+      call Update_Status (Status_Code, All_Failed)
+      subexit
+   end if
+   call Panel_Enable_Boards
+   test "u2001_u2001_ps" on boards BoardSet_boards_1_to_1(*)
+   test "u2001_u2001_dis" on boards BoardSet_boards_1_to_1(*)
+   test "u8001_u8001_ps" on boards BoardSet_boards_1_to_1(*)
+   test "u8001_u8001_dis" on boards BoardSet_boards_1_to_1(*)
+   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub BScan_Interconnect_Tests (Status_Code, Message$)
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+   if Message$ <> "" then  print tab(5);Message$
+   call BScan_Disable_All_Chains
+   if panelfailed then
+      print "BScan disable failure; interconnect tests skipped"
+      call Update_Status (Status_Code, All_Failed)
+      subexit
+   end if
+   call Panel_Enable_Boards
+   test "u2001_u2001_aio" on boards BoardSet_boards_1_to_1(*)
+!   test u2001_u2001_aio_dis on boards BoardSet_boards_1_to_1(*)  ! commented since disable is missing from testorder
+   call BScan_Disable_All_Chains
+   test "u2001_u2001" on boards BoardSet_boards_1_to_1(*)
+   test "u2001_u2001_dis" on boards BoardSet_boards_1_to_1(*)
+   test "u8001_u8001" on boards BoardSet_boards_1_to_1(*)
+   test "u8001_u8001_dis" on boards BoardSet_boards_1_to_1(*)
+   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub BScan_Incircuit_Tests (Status_Code, Message$)
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+   if Message$ <> "" then  print tab(5);Message$
+   call BScan_Disable_All_Chains
+   if panelfailed then
+      print "BScan disable failure; scan incircuit tests skipped"
+      call Update_Status (Status_Code, All_Failed)
+      subexit
+   end if
+   call Panel_Enable_Boards
+! The following section ensures that all chains are left in a
+! disabled state after their connect tests are completed.  Since
+! chains may vary between versions, these tests may be called
+! in a different order for each version.
+   if bvi$ = "" then
+      test "u2001_connect_a" on boards BoardSet_boards_1_to_1(*)
+      test "u2001_connect_b" on boards BoardSet_boards_1_to_1(*)
+      test "u2001_connect_c" on boards BoardSet_boards_1_to_1(*)
+      test "u2001_connect_d" on boards BoardSet_boards_1_to_1(*)
+      test "u2001_connect_e" on boards BoardSet_boards_1_to_1(*)
+      test "u2001_connect_f" on boards BoardSet_boards_1_to_1(*)
+      test "u2001_connect_g" on boards BoardSet_boards_1_to_1(*)
+      test "u2001_connect_h" on boards BoardSet_boards_1_to_1(*)
+      test "u2001_connect_i" on boards BoardSet_boards_1_to_1(*)
+      test "u2001_connect_j" on boards BoardSet_boards_1_to_1(*)
+      test "u2001_connect_k" on boards BoardSet_boards_1_to_1(*)
+      test "u2001_connect_l" on boards BoardSet_boards_1_to_1(*)
+      test "u2001_u2001_dis" on boards BoardSet_boards_1_to_1(*)
+      test "u8001_connect_a" on boards BoardSet_boards_1_to_1(*)
+      test "u8001_connect_b" on boards BoardSet_boards_1_to_1(*)
+      test "u8001_connect_c" on boards BoardSet_boards_1_to_1(*)
+      test "u8001_connect_d" on boards BoardSet_boards_1_to_1(*)
+      test "u8001_connect_e" on boards BoardSet_boards_1_to_1(*)
+      test "u8001_connect_f" on boards BoardSet_boards_1_to_1(*)
+      test "u8001_connect_g" on boards BoardSet_boards_1_to_1(*)
+      test "u8001_connect_h" on boards BoardSet_boards_1_to_1(*)
+      test "u8001_connect_i" on boards BoardSet_boards_1_to_1(*)
+      test "u8001_connect_j" on boards BoardSet_boards_1_to_1(*)
+      test "u8001_connect_k" on boards BoardSet_boards_1_to_1(*)
+      test "u8001_connect_l" on boards BoardSet_boards_1_to_1(*)
+      test "u8001_u8001_dis" on boards BoardSet_boards_1_to_1(*)
+   else
+      if bvi$ = "S06G" then
+         test "u2001_connect_a" on boards BoardSet_boards_1_to_1(*)
+         test "u2001_connect_b" on boards BoardSet_boards_1_to_1(*)
+         test "u2001_connect_c" on boards BoardSet_boards_1_to_1(*)
+         test "u2001_connect_d" on boards BoardSet_boards_1_to_1(*)
+         test "u2001_connect_e" on boards BoardSet_boards_1_to_1(*)
+         test "u2001_connect_f" on boards BoardSet_boards_1_to_1(*)
+         test "u2001_connect_g" on boards BoardSet_boards_1_to_1(*)
+         test "u2001_connect_h" on boards BoardSet_boards_1_to_1(*)
+         test "u2001_connect_i" on boards BoardSet_boards_1_to_1(*)
+         test "u2001_connect_j" on boards BoardSet_boards_1_to_1(*)
+         test "u2001_connect_k" on boards BoardSet_boards_1_to_1(*)
+         test "u2001_connect_l" on boards BoardSet_boards_1_to_1(*)
+         test "u2001_u2001_dis" on boards BoardSet_boards_1_to_1(*)
+      else
+         if bvi$ = "S07G" then
+            test "u2001_connect_a" on boards BoardSet_boards_1_to_1(*)
+            test "u2001_connect_b" on boards BoardSet_boards_1_to_1(*)
+            test "u2001_connect_c" on boards BoardSet_boards_1_to_1(*)
+            test "u2001_connect_d" on boards BoardSet_boards_1_to_1(*)
+            test "u2001_connect_e" on boards BoardSet_boards_1_to_1(*)
+            test "u2001_connect_f" on boards BoardSet_boards_1_to_1(*)
+            test "u2001_connect_g" on boards BoardSet_boards_1_to_1(*)
+            test "u2001_connect_h" on boards BoardSet_boards_1_to_1(*)
+            test "u2001_connect_i" on boards BoardSet_boards_1_to_1(*)
+            test "u2001_connect_j" on boards BoardSet_boards_1_to_1(*)
+            test "u2001_connect_k" on boards BoardSet_boards_1_to_1(*)
+            test "u2001_connect_l" on boards BoardSet_boards_1_to_1(*)
+            test "u2001_u2001_dis" on boards BoardSet_boards_1_to_1(*)
+            test "u8001_connect_a" on boards BoardSet_boards_1_to_1(*)
+            test "u8001_connect_b" on boards BoardSet_boards_1_to_1(*)
+            test "u8001_connect_c" on boards BoardSet_boards_1_to_1(*)
+            test "u8001_connect_d" on boards BoardSet_boards_1_to_1(*)
+            test "u8001_connect_e" on boards BoardSet_boards_1_to_1(*)
+            test "u8001_connect_f" on boards BoardSet_boards_1_to_1(*)
+            test "u8001_connect_g" on boards BoardSet_boards_1_to_1(*)
+            test "u8001_connect_h" on boards BoardSet_boards_1_to_1(*)
+            test "u8001_connect_i" on boards BoardSet_boards_1_to_1(*)
+            test "u8001_connect_j" on boards BoardSet_boards_1_to_1(*)
+            test "u8001_connect_k" on boards BoardSet_boards_1_to_1(*)
+            test "u8001_connect_l" on boards BoardSet_boards_1_to_1(*)
+            test "u8001_u8001_dis" on boards BoardSet_boards_1_to_1(*)
+         else
+            if bvi$ = "S08G" then
+               test "u2001_connect_a" on boards BoardSet_boards_1_to_1(*)
+               test "u2001_connect_b" on boards BoardSet_boards_1_to_1(*)
+               test "u2001_connect_c" on boards BoardSet_boards_1_to_1(*)
+               test "u2001_connect_d" on boards BoardSet_boards_1_to_1(*)
+               test "u2001_connect_e" on boards BoardSet_boards_1_to_1(*)
+               test "u2001_connect_f" on boards BoardSet_boards_1_to_1(*)
+               test "u2001_connect_g" on boards BoardSet_boards_1_to_1(*)
+               test "u2001_connect_h" on boards BoardSet_boards_1_to_1(*)
+               test "u2001_connect_i" on boards BoardSet_boards_1_to_1(*)
+               test "u2001_connect_j" on boards BoardSet_boards_1_to_1(*)
+               test "u2001_connect_k" on boards BoardSet_boards_1_to_1(*)
+               test "u2001_connect_l" on boards BoardSet_boards_1_to_1(*)
+               test "u2001_u2001_dis" on boards BoardSet_boards_1_to_1(*)
+               test "u8001_connect_a" on boards BoardSet_boards_1_to_1(*)
+               test "u8001_connect_b" on boards BoardSet_boards_1_to_1(*)
+               test "u8001_connect_c" on boards BoardSet_boards_1_to_1(*)
+               test "u8001_connect_d" on boards BoardSet_boards_1_to_1(*)
+               test "u8001_connect_e" on boards BoardSet_boards_1_to_1(*)
+               test "u8001_connect_f" on boards BoardSet_boards_1_to_1(*)
+               test "u8001_connect_g" on boards BoardSet_boards_1_to_1(*)
+               test "u8001_connect_h" on boards BoardSet_boards_1_to_1(*)
+               test "u8001_connect_i" on boards BoardSet_boards_1_to_1(*)
+               test "u8001_connect_j" on boards BoardSet_boards_1_to_1(*)
+               test "u8001_connect_k" on boards BoardSet_boards_1_to_1(*)
+               test "u8001_connect_l" on boards BoardSet_boards_1_to_1(*)
+               test "u8001_u8001_dis" on boards BoardSet_boards_1_to_1(*)
+            else
+               if bvi$ = "S10G" then
+                  test "u2001_connect_a" on boards BoardSet_boards_1_to_1(*)
+                  test "u2001_connect_b" on boards BoardSet_boards_1_to_1(*)
+                  test "u2001_connect_c" on boards BoardSet_boards_1_to_1(*)
+                  test "u2001_connect_d" on boards BoardSet_boards_1_to_1(*)
+                  test "u2001_connect_e" on boards BoardSet_boards_1_to_1(*)
+                  test "u2001_connect_f" on boards BoardSet_boards_1_to_1(*)
+                  test "u2001_connect_g" on boards BoardSet_boards_1_to_1(*)
+                  test "u2001_connect_h" on boards BoardSet_boards_1_to_1(*)
+                  test "u2001_connect_i" on boards BoardSet_boards_1_to_1(*)
+                  test "u2001_connect_j" on boards BoardSet_boards_1_to_1(*)
+                  test "u2001_connect_k" on boards BoardSet_boards_1_to_1(*)
+                  test "u2001_connect_l" on boards BoardSet_boards_1_to_1(*)
+                  test "u2001_u2001_dis" on boards BoardSet_boards_1_to_1(*)
+                  test "u8001_connect_a" on boards BoardSet_boards_1_to_1(*)
+                  test "u8001_connect_b" on boards BoardSet_boards_1_to_1(*)
+                  test "u8001_connect_c" on boards BoardSet_boards_1_to_1(*)
+                  test "u8001_connect_d" on boards BoardSet_boards_1_to_1(*)
+                  test "u8001_connect_e" on boards BoardSet_boards_1_to_1(*)
+                  test "u8001_connect_f" on boards BoardSet_boards_1_to_1(*)
+                  test "u8001_connect_g" on boards BoardSet_boards_1_to_1(*)
+                  test "u8001_connect_h" on boards BoardSet_boards_1_to_1(*)
+                  test "u8001_connect_i" on boards BoardSet_boards_1_to_1(*)
+                  test "u8001_connect_j" on boards BoardSet_boards_1_to_1(*)
+                  test "u8001_connect_k" on boards BoardSet_boards_1_to_1(*)
+                  test "u8001_connect_l" on boards BoardSet_boards_1_to_1(*)
+                  test "u8001_u8001_dis" on boards BoardSet_boards_1_to_1(*)
+               else
+                  if bvi$ = "S11G" then
+                     test "u2001_connect_a" on boards BoardSet_boards_1_to_1(*)
+                     test "u2001_connect_b" on boards BoardSet_boards_1_to_1(*)
+                     test "u2001_connect_c" on boards BoardSet_boards_1_to_1(*)
+                     test "u2001_connect_d" on boards BoardSet_boards_1_to_1(*)
+                     test "u2001_connect_e" on boards BoardSet_boards_1_to_1(*)
+                     test "u2001_connect_f" on boards BoardSet_boards_1_to_1(*)
+                     test "u2001_connect_g" on boards BoardSet_boards_1_to_1(*)
+                     test "u2001_connect_h" on boards BoardSet_boards_1_to_1(*)
+                     test "u2001_connect_i" on boards BoardSet_boards_1_to_1(*)
+                     test "u2001_connect_j" on boards BoardSet_boards_1_to_1(*)
+                     test "u2001_connect_k" on boards BoardSet_boards_1_to_1(*)
+                     test "u2001_connect_l" on boards BoardSet_boards_1_to_1(*)
+                     test "u2001_u2001_dis" on boards BoardSet_boards_1_to_1(*)
+                     test "u8001_connect_a" on boards BoardSet_boards_1_to_1(*)
+                     test "u8001_connect_b" on boards BoardSet_boards_1_to_1(*)
+                     test "u8001_connect_c" on boards BoardSet_boards_1_to_1(*)
+                     test "u8001_connect_d" on boards BoardSet_boards_1_to_1(*)
+                     test "u8001_connect_e" on boards BoardSet_boards_1_to_1(*)
+                     test "u8001_connect_f" on boards BoardSet_boards_1_to_1(*)
+                     test "u8001_connect_g" on boards BoardSet_boards_1_to_1(*)
+                     test "u8001_connect_h" on boards BoardSet_boards_1_to_1(*)
+                     test "u8001_connect_i" on boards BoardSet_boards_1_to_1(*)
+                     test "u8001_connect_j" on boards BoardSet_boards_1_to_1(*)
+                     test "u8001_connect_k" on boards BoardSet_boards_1_to_1(*)
+                     test "u8001_connect_l" on boards BoardSet_boards_1_to_1(*)
+                     test "u8001_u8001_dis" on boards BoardSet_boards_1_to_1(*)
+                  end if
+               end if
+            end if
+         end if
+      end if
+   end if
+   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub BScan_Silicon_Nails_Tests (Status_Code, Message$)
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+!   if Message$ <> "" then  print tab(5);Message$
+!   call BScan_Disable_All_Chains
+!   if panelfailed then
+!      print "BScan disable failure; Silicon Nails tests skipped"
+!      call Update_Status (Status_Code, All_Failed)
+!      subexit
+!   end if
+!   call Panel_Enable_Boards
+!   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub Cover_Extend_Tests (Status_Code, Message$)
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+!   if Message$ <> "" then  print tab(5);Message$
+
+!------------------------------------------------------------------------------
+!print "Test Programmer Action Reminder:"
+!print "Evaluate, act, and then delete this 'pause' section."
+
+!pause ! Comment out pause and print statements above when evaluation complete.
+
+!------------------------------------------------------------------------------
+! This 'pause' section is placed here to remind the test programmer
+! that the Cover-Extend tests must be debugged before they can
+!
+! When you have debugged the Cover-Extend test, you should
+! comment out the print/pause statements above.
+!------------------------------------------------------------------------------
+
+!   call BScan_Disable_All_Chains
+!   if panelfailed then
+!      print "BScan disable failure; Cover-Extend tests skipped"
+!      call Update_Status (Status_Code, All_Failed)
+!      subexit
+!   end if
+!   call Panel_Enable_Boards
+!   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub BScan_Disable_All_Chains
+!------------------------------------------------------------------------------
+print "Test Programmer Action Reminder:"
+print "Evaluate, act, and then delete this 'pause' section."
+
+pause ! Comment out pause and print statements above when evaluation complete.
+
+!------------------------------------------------------------------------------
+! This 'pause' section is placed here to remind the test programmer
+! that the Boundary-Scan disable tests depend upon their respective
+! TCK/TMS signals being held in a stable state while other testing
+! is done.  This assures that the disabled state of the Boundary-Scan
+! chain is not accidentally lost.  Board level circuitry may
+! interfere with the persistance of the disabled state.  You may
+! need to take additional measures;  for example, you may place your
+! own pullup/down resistor in the fixture to assure a stable TMS
+! and/or TCK, or utilize a GP relay to disable some TCK oscillator, etc.
+! For further explanation, see the Boundary-Scan Manual for the
+! section titled 'Maintaining Persistance of Boundary-Scan Disables'.
+!
+! When you have assured persistance of the disable state, you should
+! comment out the print/pause statements above.  It would also be a
+! good idea to briefly document here the measures you may have taken
+! (if any were needed) to assure persistance of the disables.
+!------------------------------------------------------------------------------
+
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+   call Panel_Enable_Boards
+   test "u2001_u2001_dis" on boards BoardSet_boards_1_to_1(*)
+   test "u8001_u8001_dis" on boards BoardSet_boards_1_to_1(*)
+subend
+
+sub Digital_Tests (Status_Code, Message$)
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+   if Message$ <> "" then  print tab(5);Message$
+   call Panel_Enable_Boards
+   test "u927" on boards BoardSet_boards_1_to_1(*)
+   test "u2101" on boards BoardSet_boards_1_to_1(*)
+   test "u5444" on boards BoardSet_boards_1_to_1(*)
+   test "u5445" on boards BoardSet_boards_1_to_1(*)
+   test "u5446" on boards BoardSet_boards_1_to_1(*)
+   test "u5448" on boards BoardSet_boards_1_to_1(*)
+   test "u5542" on boards BoardSet_boards_1_to_1(*)
+   test "u5543" on boards BoardSet_boards_1_to_1(*)
+   test "u5746" on boards BoardSet_boards_1_to_1(*)
+   test "u5747" on boards BoardSet_boards_1_to_1(*)
+   test "u5749" on boards BoardSet_boards_1_to_1(*)
+   test "u6202" on boards BoardSet_boards_1_to_1(*)
+   test "u6203" on boards BoardSet_boards_1_to_1(*)
+   test "u7411" on boards BoardSet_boards_1_to_1(*)
+   test "u7412" on boards BoardSet_boards_1_to_1(*)
+   test "u7435" on boards BoardSet_boards_1_to_1(*)
+   test "u8028" on boards BoardSet_boards_1_to_1(*)
+ ! Safeguard Inhibited - An Upstream Device Is Non-Digital
+   test "u3901" on boards BoardSet_boards_1_to_1(*)
+ ! Safeguard Inhibited - An Upstream Device Is Non-Digital
+   test "u4001" on boards BoardSet_boards_1_to_1(*)
+ ! Safeguard Inhibited - An Upstream Device Is Non-Digital
+   test "u7408" on boards BoardSet_boards_1_to_1(*)
+   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub Functional_Tests (Status_Code, Message$)
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+!   if Message$ <> "" then  print tab(5);Message$
+!   call Panel_Enable_Boards
+!   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub Analog_Functional_Tests (Status_Code, Message$)
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+   if Message$ <> "" then  print tab(5);Message$
+   call Panel_Enable_Boards
+   test "hall1" on boards BoardSet_boards_1_to_1(*)
+   test "pq4303%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "pq4502%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "pq4504%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "pq4601%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "pq4602%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "pq4901%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "pq8601%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "pq8602%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "q701%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "q901%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "q2301%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "q2305%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "q3902%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "q3903%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "q4002%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "q4202%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "q4203%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "q4204%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "q5003%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "q5402%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "q5517%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "q5703%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "q5720%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "q6808%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "q7410%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "q7501%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "q8704%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "q8705%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "q8707%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "u3702%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "u6302" on boards BoardSet_boards_1_to_1(*)
+   test "u6303" on boards BoardSet_boards_1_to_1(*)
+   test "x701" on boards BoardSet_boards_1_to_1(*)
+   test "x2301" on boards BoardSet_boards_1_to_1(*)
+   test "x2401" on boards BoardSet_boards_1_to_1(*)
+   test "q7503%onoff" on boards BoardSet_boards_1_to_1(*)
+   test "pu4504" on boards BoardSet_boards_1_to_1(*)
+   test "q3501%onoff" on boards BoardSet_boards_3_to_3(*)
+   test "q3502%onoff" on boards BoardSet_boards_3_to_3(*)
+   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub Program_Flash (Device$, Status_Code, Message$)
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+global Number_Boards_On_Panel, BoardSet(*), BoardSet_flash(*)
+global Report_level$, Logging
+
+  if Device$ = "" then  subexit
+  if Message$ <> "" then  print tab(5);Message$
+  call Panel_Enable_Boards
+
+  ! Verify Manufacturer ID and device ID codes.
+  ! The ID test should be executed in digital for ICT purposes.
+  test Device$ & "%id" on boards BoardSet_boards_1_to_1(*)
+  test Device$ & "%id" on boards BoardSet_boards_3_to_3(*)
+  test Device$ & "%id" on boards BoardSet_boards_2_to_2(*)
+  if fnFlash_Boards_Failed then
+    for I = 1 to Number_Boards_On_Panel
+      if BoardSet_flash(I) then
+        board number is I
+        if dutfailed then
+          print using "14x,k,k,#"; Device$ & " on board", I
+          print ": Device ID failed"
+        end if
+      end if
+    next I
+    call Update_Status (Status_Code, All_Failed)
+    subexit ! if the wrong device is installed, exit the program subroutine
+  end if
+
+  !remove reporting and logging while verifying device status
+  Report_level$ = rli$
+  report level is none
+  if Logging then
+    log level is none
+  end if
+  print tab(8); "Verifying Status"
+  safeguard none  !flash! This board meets design for On-Board Programming
+                  !       criteria for safeguard none to be safe
+                  !       Programming runs very slowly with safeguard on
+
+  !flash! Comment the appropriate crc test(s) in Digital_Tests subroutine
+  test Device$ & "%crc" on boards BoardSet_boards_1_to_1(*)
+  test Device$ & "%crc" on boards BoardSet_boards_3_to_3(*)
+  test Device$ & "%crc" on boards BoardSet_boards_2_to_2(*)
+  All_passed = True
+  if fnFlash_Boards_Failed then
+    for I = 1 to Number_Boards_On_Panel
+      if BoardSet_flash(I) then
+        board number is I
+        if not dutfailed then
+          print using "14x,k,k,#"; Device$ & " on board", I
+          print ": Pre-programmed"
+          call Flash_Disable_Single_Board(I)
+        else
+          pass device
+          print using "14x,k,k,#"; Device$ & " on board", I
+          print Device$; " : Contains incorrect data"
+          All_passed = False
+        end if
+      end if
+    next I
+  end if
+
+  if All_passed then
+    print tab(15); "All devices pre-programmed"
+    call Panel_Enable_Boards
+    call Cleanup_Flash
+    call Update_Status (Status_Code, All_Failed)
+    subexit  ! the device is already properly programmed, exit subroutine
+  end if
+
+  ! Verify device is blank.
+  !flash! Comment the appropriate blank test(s) in Digital_Tests subroutine
+  test Device$ & "%blank" on boards BoardSet_boards_1_to_1(*)
+  test Device$ & "%blank" on boards BoardSet_boards_3_to_3(*)
+  test Device$ & "%blank" on boards BoardSet_boards_2_to_2(*)
+  All_passed = True
+  if fnFlash_Boards_Failed then
+    for I = 1 to Number_Boards_On_Panel
+      if BoardSet_flash(I) then
+        board number is I
+        if dutfailed then
+        ! Uncomment the next 2 lines to display individual blank status
+        !flash!   print using "14x,k,k,#"; Device$ & " on board", I
+        !flash!   print ": Not blank"
+          pass device
+          All_passed = False
+        else
+          call Panel_Disable_Single_Board(I)
+        end if
+      end if
+    next I
+    if not All_passed then
+      print tab(8); "Erasing"
+      !flash! call Setup_Power_Supplies_Program  ! add any necessary programming
+                                                 ! voltages to a new subroutine
+      !flash! Comment the appropriate erase test(s) in Digital_Tests subroutine
+      test Device$ & "%erase" on boards BoardSet_boards_1_to_1(*)
+      test Device$ & "%erase" on boards BoardSet_boards_3_to_3(*)
+      test Device$ & "%erase" on boards BoardSet_boards_2_to_2(*)
+      if not fnFlash_Boards_Failed then
+        print tab(8); "Erase complete"
+      end if
+    end if
+  end if
+  ! Some older devices may need two erase sequences. If erase fails
+  ! twice on only one board, continue to program all. The final CRC
+  ! check will determine the viability of the erase program sequence
+
+  if fnFlash_Boards_Failed then
+    for I = 1 to Number_Boards_On_Panel
+      if BoardSet_flash(I) then
+        board number is I
+        if dutfailed then
+          pass device
+          print using "14x,k,k,#"; Device$ & " on board", I
+          print ": Needed to be erased twice"
+        else
+          call Panel_Disable_Single_Board(I)
+        end if
+      end if
+    next I
+    test Device$ & "%erase" on boards BoardSet_boards_1_to_1(*)
+    test Device$ & "%erase" on boards BoardSet_boards_3_to_3(*)
+    test Device$ & "%erase" on boards BoardSet_boards_2_to_2(*)
+    All_failed = True
+    for I = 1 to Number_Boards_On_Panel
+      if BoardSet_flash(I) then
+        board number is I
+        if dutfailed then
+          print using "14x,k,k,#"; Device$ & " on board", I
+          print ": Erase Failed"
+          call Flash_Disable_Single_Board(I)
+        else
+          All_failed = False
+        end if
+      end if
+    next I
+    if All_failed then
+      call Panel_Enable_Boards
+      call Cleanup_Flash   !flash! move above erase test if full report
+                           !       of failing erase tests is desired
+      print "All boards failed erase"
+      call Update_Status (Status_Code, All_Failed)
+      subexit   ! if the device cannot be erased
+    else
+      for I = 1 to Number_Boards_On_Panel
+        if BoardSet_flash(I) then
+          board number is I
+          pass device
+        end if
+      next I
+    end if          !if dutfailed second erase
+    print tab(8); "Erase complete"
+  end if            !if dutfailed first erase
+  call Flash_Enable_Boards
+  print tab(8); "Programming"
+  A=msec
+  !flash! Comment the appropriate program test(s) in Digital_Tests subroutine
+  test Device$ & "%program" on boards BoardSet_boards_1_to_1(*)
+  test Device$ & "%program" on boards BoardSet_boards_3_to_3(*)
+  test Device$ & "%program" on boards BoardSet_boards_2_to_2(*)
+  B = (msec-A)/1000
+  if not fnFlash_Boards_Failed then
+    print tab(15); "Programming complete in"; B;" seconds"
+  else
+    print tab(15); "Programming Failed"
+  end if
+  if fnFlash_Boards_Failed then
+    for I = 1 to Number_Boards_On_Panel
+      if BoardSet_flash(I) then
+        board number is I
+        print using "14x,k,k,#"; Device$ & " on board", I
+        if dutfailed then
+          print ": Programming Failed"
+          pass device
+        else
+          print ": Programming Complete"
+        end if
+      end if
+    next I
+  end if
+
+  !flash! Hold_panel = panelfailed
+  !flash! call Setup_Power_Supplies (Failed_In_Power_Supplies, PowerMsg$)
+  !flash! if Hold_panel < panelfailed then
+  !flash!   for I = 1 to Number_Boards_On_Panel
+  !flash!     if BoardSet(I) then
+  !flash!       board number is I
+  !flash!       if dutfailed then
+  !flash!         print "Power supplies limited on board"; I
+  !flash!       end if
+  !flash!     end if
+  !flash!   next I
+  !flash!   call Panel_Enable_Boards
+  !flash!   call Cleanup_Flash
+  !flash!   call Update_Status (Status_Code, All_Failed)
+  !flash!   subexit
+  !flash! end if
+  call Cleanup_Flash  !flash! move above program test for full reporting
+  print tab(8); "Verifying Data"
+  !flash! Comment the appropriate crc test(s) in Digital_Tests subroutine
+  test Device$ & "%crc" on boards BoardSet_boards_1_to_1(*)
+  test Device$ & "%crc" on boards BoardSet_boards_3_to_3(*)
+  test Device$ & "%crc" on boards BoardSet_boards_2_to_2(*)
+  if fnFlash_Boards_Failed then
+    for I = 1 to Number_Boards_On_Panel
+      if BoardSet_flash(I) then
+        board number is I
+        print using "14x,k,k,#"; Device$ & " on board", I
+        if dutfailed then
+          print ": Contains incorrect data"
+        else
+          print ": Contains correct data"
+        end if
+      end if
+    next I
+  end if
+  call Panel_Enable_Boards
+  call Update_Status (Status_Code, All_Failed)
+subend
+
+def fnPinsfailed (Message$)
+global BoardSet(*)
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+   if Message$ <> "" then  print tab(5);Message$
+   call Panel_Enable_Boards
+   Pins_failed_flag = 0
+   test "pins" on boards BoardSet_boards_1_to_1(*)
+   for Board_Num = 1 to 1
+      board number is Board_Num
+      if BoardSet(Board_Num) and dutfailed then Pins_failed_flag = 1
+   next Board_Num
+   test "pins" on boards BoardSet_boards_3_to_3(*)
+   for Board_Num = 3 to 3
+      board number is Board_Num
+      if BoardSet(Board_Num) and dutfailed then Pins_failed_flag = 1
+   next Board_Num
+   test "pins" on boards BoardSet_boards_2_to_2(*)
+   for Board_Num = 2 to 2
+      board number is Board_Num
+      if BoardSet(Board_Num) and dutfailed then Pins_failed_flag = 1
+   next Board_Num
+   return Pins_failed_flag
+fnend
+
+def fnFlash_Boards_Failed
+global Number_Boards_On_Panel, BoardSet_flash(*)
+
+  Flash_failed_flag = 0
+  for I = 1 to Number_Boards_On_Panel
+    board number is I
+    if BoardSet_flash(I) and dutfailed then
+      Flash_failed_flag = 1
+    end if
+  next I
+  return Flash_failed_flag
+fnend
+
+sub ScanWorks_Setup
+! CAUTION:  Within this subroutine, do NOT use testhead statements
+! CAUTION:  with the exception of the following statements:
+! CAUTION:  testhead cleanup, test scanworks, scanworks reset.
+! CAUTION:  Failure to follow this guideline can result in damage
+! CAUTION:  to the BSI card.
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+   call Panel_Enable_Boards
+   testhead cleanup
+subend
+
+sub ScanWorks_Pretest
+! CAUTION:  Within this subroutine, do NOT use testhead statements
+! CAUTION:  with the exception of the following statements:
+! CAUTION:  testhead cleanup, test scanworks, scanworks reset.
+! CAUTION:  Failure to follow this guideline can result in damage
+! CAUTION:  to the BSI card.
+global All_Failed, Failed_In_SW_Testing
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+!   call Panel_Enable_Boards
+!   call ScanWorks_Setup
+!   call ScanWorks_Cleanup
+!   call Update_Status (Failed_In_SW_Testing, All_Failed)
+subend
+
+sub ScanWorks_Cleanup
+! CAUTION:  Within this subroutine, do NOT use testhead statements
+! CAUTION:  with the exception of the following statements:
+! CAUTION:  testhead cleanup, test scanworks, scanworks reset.
+! CAUTION:  Failure to follow this guideline can result in damage
+! CAUTION:  to the BSI card.
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+   call Panel_Enable_Boards
+   scanworks reset
+subend
+
+sub ScanWorks_Scan_Path_Verify_Tests (Status_Code, Message$)
+! CAUTION:  Within this subroutine, do NOT use testhead statements
+! CAUTION:  with the exception of the following statements:
+! CAUTION:  testhead cleanup, test scanworks, scanworks reset.
+! CAUTION:  Failure to follow this guideline can result in damage
+! CAUTION:  to the BSI card.
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+!   if Message$ <> "" then  print tab(5);Message$
+!   call Panel_Enable_Boards
+!   call ScanWorks_Setup
+!   call ScanWorks_Cleanup
+!   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub ScanWorks_Interconnect_Tests (Status_Code, Message$)
+! CAUTION:  Within this subroutine, do NOT use testhead statements
+! CAUTION:  with the exception of the following statements:
+! CAUTION:  testhead cleanup, test scanworks, scanworks reset.
+! CAUTION:  Failure to follow this guideline can result in damage
+! CAUTION:  to the BSI card.
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+!   if Message$ <> "" then  print tab(5);Message$
+!   call Panel_Enable_Boards
+!   call ScanWorks_Setup
+!   call ScanWorks_Cleanup
+!   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub ScanWorks_Mem_Interconnect_Tests (Status_Code, Message$)
+! CAUTION:  Within this subroutine, do NOT use testhead statements
+! CAUTION:  with the exception of the following statements:
+! CAUTION:  testhead cleanup, test scanworks, scanworks reset.
+! CAUTION:  Failure to follow this guideline can result in damage
+! CAUTION:  to the BSI card.
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+!   if Message$ <> "" then  print tab(5);Message$
+!   call Panel_Enable_Boards
+!   call ScanWorks_Setup
+!   call ScanWorks_Cleanup
+!   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub ScanWorks_Cluster_Tests (Status_Code, Message$)
+! CAUTION:  Within this subroutine, do NOT use testhead statements
+! CAUTION:  with the exception of the following statements:
+! CAUTION:  testhead cleanup, test scanworks, scanworks reset.
+! CAUTION:  Failure to follow this guideline can result in damage
+! CAUTION:  to the BSI card.
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+!   if Message$ <> "" then  print tab(5);Message$
+!   call Panel_Enable_Boards
+!   call ScanWorks_Setup
+!   call ScanWorks_Cleanup
+!   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub ScanWorks_Mem_BIST (Status_Code, Message$)
+! CAUTION:  Within this subroutine, do NOT use testhead statements
+! CAUTION:  with the exception of the following statements:
+! CAUTION:  testhead cleanup, test scanworks, scanworks reset.
+! CAUTION:  Failure to follow this guideline can result in damage
+! CAUTION:  to the BSI card.
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+!   if Message$ <> "" then  print tab(5);Message$
+!   call Panel_Enable_Boards
+!   call ScanWorks_Setup
+!   call ScanWorks_Cleanup
+!   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub ScanWorks_Device_Programming (Status_Code, Message$)
+! CAUTION:  Within this subroutine, do NOT use testhead statements
+! CAUTION:  with the exception of the following statements:
+! CAUTION:  testhead cleanup, test scanworks, scanworks reset.
+! CAUTION:  Failure to follow this guideline can result in damage
+! CAUTION:  to the BSI card.
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+!   if Message$ <> "" then  print tab(5);Message$
+!   call Panel_Enable_Boards
+!   call ScanWorks_Setup
+!   call ScanWorks_Cleanup
+!   call Update_Status (Status_Code, All_Failed)
+subend
+
+sub ScanWorks_Flash_Programming (Status_Code, Message$)
+! CAUTION:  Within this subroutine, do NOT use testhead statements
+! CAUTION:  with the exception of the following statements:
+! CAUTION:  testhead cleanup, test scanworks, scanworks reset.
+! CAUTION:  Failure to follow this guideline can result in damage
+! CAUTION:  to the BSI card.
+global All_Failed
+global BoardSet_boards_1_to_1(*)
+global BoardSet_boards_3_to_3(*)
+global BoardSet_boards_2_to_2(*)
+
+!   if Message$ <> "" then  print tab(5);Message$
+!   call Panel_Enable_Boards
+!   call ScanWorks_Setup
+!   call ScanWorks_Cleanup
+!   call Update_Status (Status_Code, All_Failed)
+subend
+
+
+!new=====
+sub InputMac
+!call this sub to input Mac and Mac is in a global variable Get_Mac$
+!(the other variable "SF_MAC$" used to save the MAC from SF)
+global Get_MAC$
+Get_MAC$=""
+loop
+ ! print "Please Scan MAC"
+
+  input "Please Scan MAC:",Get_MAC$
+   Get_MAC$=upc$(Get_MAC$)
+
+! if Get_MAC$ = "" then Ident$ = Default_Serial_Number$
+! exit if Ident$ = Default_Serial_Number$
+  exit if  len(Get_MAC$) = 12
+  print  "Please input right MAC , Length should be 12"
+end loop
+call CreateMacBin(Get_MAC$)
+
+subend
+
+sub CreateMacBin(Mac$)
+!create a bin file from a given MAC,
+!be sure you have the crc.exe in the current directory
+
+dim Stemplate$[1000]
+dim Bin$(16)[8]
+
+Bin$(0)="0" & chr$(10) & "0" & chr$(10) & "0" & chr$(10) & "0"
+Bin$(1)="0" & chr$(10) & "0" & chr$(10) & "0" & chr$(10) & "1"
+Bin$(2)="0" & chr$(10) & "0" & chr$(10) & "1" & chr$(10) & "0"
+Bin$(3)="0" & chr$(10) & "0" & chr$(10) & "1" & chr$(10) & "1"
+Bin$(4)="0" & chr$(10) & "1" & chr$(10) & "0" & chr$(10) & "0"
+Bin$(5)="0" & chr$(10) & "1" & chr$(10) & "0" & chr$(10) & "1"
+Bin$(6)="0" & chr$(10) & "1" & chr$(10) & "1" & chr$(10) & "0"
+Bin$(7)="0" & chr$(10) & "1" & chr$(10) & "1" & chr$(10) & "1"
+Bin$(8)="1" & chr$(10) & "0" & chr$(10) & "0" & chr$(10) & "0"
+Bin$(9)="1" & chr$(10) & "0" & chr$(10) & "0" & chr$(10) & "1"
+Bin$(10)="1" & chr$(10) & "0" & chr$(10) & "1" & chr$(10) & "0"
+Bin$(11)="1" & chr$(10) & "0" & chr$(10) & "1" & chr$(10) & "1"
+Bin$(12)="1" & chr$(10) & "1" & chr$(10) & "0" & chr$(10) & "0"
+Bin$(13)="1" & chr$(10) & "1" & chr$(10) & "0" & chr$(10) & "1"
+Bin$(14)="1" & chr$(10) & "1" & chr$(10) & "1" & chr$(10) & "0"
+Bin$(15)="1" & chr$(10) & "1" & chr$(10) & "1" & chr$(10) & "1"
+
+
+Stemplate$ =           "2001000001d81028170c000035022000"
+Stemplate$=Stemplate$ &"07f0180000000000ffffffffffffffff"
+Stemplate$=Stemplate$ &"ffffffffffffffffffffffffffffffff"
+Stemplate$=Stemplate$ &"ffffffffffffffffffffffffffffffff"
+Stemplate$=Stemplate$ &"ffffffffffffffffffffffffffff0014"
+Stemplate$=Stemplate$ &"22112233ffffffffffff0001ffffffff"
+Stemplate$=Stemplate$ &"ffffffffffffffffffffffffffffffff"
+Stemplate$=Stemplate$ &"ffffffffffffffffffffffffffff4610"
+
+if len(Mac$)<>12 then
+   printer is *
+   print "Mac length must be  12 !!!"
+   subexit
+end if
+Stemplate$[157;12] = Mac$
+
+printer is "test.txt"
+for I=1 to len(Stemplate$) step 4
+   print Stemplate$[I;4]
+next I
+printer is *
+
+unlink "crc.chk" ,Er
+wait 10m
+execute "crc.exe -t 0 -i test.txt -o crc.chk"
+wait 100m
+
+keyboard is "crc.chk"
+input CRC$
+keyboard is *
+CRC$ =trimr$(CRC$)
+CRC$ =triml$(CRC$)
+if len(CRC$)=1 then CRC$ ="0" & CRC$
+
+
+!print "CRC=" & CRC$
+Stemplate$[253;2]=CRC$
+printer is "crcread.txt"
+print CRC$
+printer is *
+
+unlink "mac.bin"
+wait 10m
+printer is "Mac.bin"
+for I=1 to len(Stemplate$)
+
+    print Bin$(hti(Stemplate$[I;1]))
+next I
+
+printer is *
+
+subend
+
+sub Send_RRR
+!For SF use ,Send out a require file
+!With the format as they require
+! global Serial_Length, Bad_Serial_Image$, Default_Serial_Number$
+global Get_MAC$,MES_path$,BACKUP_path$,Oper$ ,Panel_Serial$
+
+   MES_RRR$=MES_path$ &"/" &Panel_Serial$ &".RRR"
+   BACKUP_RR1$=BACKUP_path$ &"/" &Panel_Serial$ &".RR1"
+   BACKUP_RRR$=BACKUP_path$ &"/" &Panel_Serial$ &".RRR"
+
+print   MES_RRR$
+print   BACKUP_RR1$
+print   BACKUP_RRR$
+
+create ascii MES_RRR$, ,Er
+ assign @MES,Er to MES_RRR$
+if Er<>0 then print Er;"Failed out put to RRR file ,file name [" & MES_RRR$ & "]"
+
+ output @MES;"[SFC]"
+ output @MES;"USN=" & Panel_Serial$
+ output @MES;"STAGE=TA"
+ if Oper$="" then
+     output @MES;"OPID=K0412008"
+ else
+     output @MES;"OPID=" &  Oper$
+ end if
+assign @MES to *
+copy MES_RRR$ over BACKUP_RR1$ ,Er
+rename  BACKUP_RR1$ to BACKUP_RRR$ ,Er
+if Er<>0 then
+   enter MES_RRR$,,Er
+   if Er<>0 then
+        printer is "AAAlog.txt";append
+        print "read RRR failed file name [" & MES_RRR$ & "]"
+        printer is *
+
+   end if
+end if
+
+subend
+
+sub Send_BBB(Board_I,ErrCode$,FixtureID$)
+!Send out the test result file
+!the format is as they required
+! global Serial_Length, Bad_Serial_Image$, Default_Serial_Number$
+global Get_MAC$,MES_path$,BACKUP_path$,Oper$, Panel_Serial$
+global FaonOneBoard
+   MES_BBB$=MES_path$ &"/" &Panel_Serial$ &".BBB"
+   BACKUP_BB1$=BACKUP_path$ &"/" &Panel_Serial$ &".BB1"
+   BACKUP_BBB$=BACKUP_path$ &"/" &Panel_Serial$ &".BBB"
+create ascii MES_BBB$, ,Er
+
+ assign @MES,Er to MES_BBB$
+
+if Er<>0 then print Er;"Failed out put to BBB file ,file name [" & MES_BBB$ & "]"
+
+ output @MES;"[SFC]"
+ output @MES;"USN=" & Panel_Serial$
+ output @MES;"STAGE=TA"
+ output @MES;"ERRORCODE=" & ErrCode$
+ output @MES;"TESTTIME=" & datetime$
+ output @MES;"FIXTUREID=" & FixtureID$
+
+ if Oper$="" then
+     output @MES;"OPID=K0412008"
+ else
+     output @MES;"OPID=" &  Oper$
+ end if
+
+assign @MES to *
+
+   if ErrCode$="0000" then          !!!!
+       copy MES_BBB$ over BACKUP_BB1$   !!!!
+
+       rename BACKUP_BB1$ to BACKUP_BBB$ !!!!
+   else                             !!!!
+   question"",Con                 !!!!
+   if Con then                        !!!!
+   !   copy MES_BBB$ over BACKUP_BB1$
+    !  rename BACKUP_BB1$ to BACKUP_BBB$
+   end if                                      !!!!
+  !  copy MES_BBB$ over "z:\ate\fp6\" & Panel_Serial$ &".BBB" ,Errrord
+   end if                                      !!!!
+    call Send_EEE (Board_I)
+
+! save retest time log
+    create dir "TestLog"   ,ERRRRR
+
+    Log_Log$=".\TestLog\log_" & datetime$[1;6]&".log"
+    printer is Log_log$;append
+    print Panel_Serial$ &"  " , FaonOneBoard ,"  " &  ErrCode$ & "  " & datetime$[1;12]
+    printer is *
+!end retest time log
+!call Send_EEE(Board_I)
+
+subend
+
+
+sub Read_AAA
+!read a answer file from SF
+!get the data from SF,the main data is SF_MAC$,SF_ERRCODE$
+global Get_MAC$,MES_path$,BACKUP_path$,Oper$,SF_MAC$,SF_ERRCODE$ ,  Panel_Serial$
+
+   MES_AAA$=BACKUP_path$ &"/" &Panel_Serial$ &".AAA"
+
+ Stime=msec
+ print "Reading AAA..."
+ loop
+ assign @MES,Er to MES_AAA$
+
+ exit if Er=0
+ wait 10m
+
+ if msec-Stime>6000 then
+        print "Failed Open AAA file ,file name [" & MES_AAA$ & "]"
+
+        fail device
+        printer is "AAAlog.txt";append
+        print "Failed Open AAA file ,file name [" & MES_AAA$ & "]"
+        printer is *
+
+        wait 1
+
+        subexit
+ end if
+ end loop
+
+ SF_MAC$=""
+ SF_ERRCODE$=""
+
+loop
+enter @MES,,Err;Row$
+   exit if Err = 101007
+   exit if (SF_MAC$<>"" and SF_ERRCODE$<>"")
+   if  pos(Row$,"MAC")=1 then SF_MAC$=trimr$(Row$[pos(Row$,"=")+1])
+   if  pos(Row$,"ERRORCODE")=1 then SF_ERRCODE$=trimr$(Row$[pos(Row$,"=")+1])
+
+end loop
+assign @MES to *
+! need burn LanID mac
+!if len(SF_MAC$)<>12 then
+!    fail device
+!    report "Board not test ,MAC=" & SF_MAC$
+!    subexit
+!
+!end if
+!call CreateMacBin(SF_MAC$)
+
+!if SF_MAC$<>Get_MAC$ then
+!   print "Error : SFCS MAC is not equal Operator input Mac"
+!   print "Error : SFCS MAC=" & SF_MAC$ & " ; Operater_input_Mac=" & Get_Mac$
+!
+!   fail device
+!   report "Error : SFCS MAC=" & SF_MAC$ & " ; Operater_input_Mac=" & Get_Mac$
+!   report "Board not test"
+!   report out
+!   report clear
+!
+!    printer is "AAAlog.txt";append
+!    print  Serial$
+!    print "Error : SFCS MAC=" & SF_MAC$ & " ; Operater_input_Mac=" & Get_Mac$
+!    printer is *
+!
+!    copy MES_AAA$ over MES_AAA$ & ".er"
+!
+!    wait 2
+!    subexit
+!end if
+
+if SF_ERRCODE$<>"0000" and SF_ERRCODE$<>"RTOK" then
+   print "Error : SFCS show Error the the errcode:";SF_ERRCODE$
+!  fail device
+   report "Error : SFCS show Error the the errcode:";SF_ERRCODE$
+!  report out
+   report clear
+
+    printer is "AAAlog.txt";append
+    print  Panel_Serial$
+    print "Error : SFCS show Error the the errcode:";SF_ERRCODE$
+    printer is *
+
+    wait 2
+    subexit
+
+end if
+unlink MES_AAA$ ,Er
+
+subend
+
+sub Read_CCC
+
+! global Serial_Length, Bad_Serial_Image$, Default_Serial_Number$
+global Get_MAC$,MES_path$,BACKUP_path$,Oper$,SF_ERRCODE$  ,Panel_Serial$
+
+   MES_CCC$=BACKUP_path$ &"/" &Panel_Serial$ &".CCC"
+
+ Stime=msec
+ print "Reading CCC..."
+
+ loop
+ assign @MES,Er to MES_CCC$
+ exit if Er=0
+ wait 10m
+ if msec-Stime>2000 then
+        print "Failed Open CCC file,file name [" & MES_CCC$ & "]"
+        wait 1
+        subexit
+ end if
+ end loop
+
+ SF_ERRCODE$=""
+
+loop
+enter @MES,,Err;Row$
+   exit if Err = 101007
+   exit if ( SF_ERRCODE$<>"")
+   if  pos(Row$,"ERRORCODE")=1 then SF_ERRCODE$=trimr$(Row$[pos(Row$,"=")+1])
+
+end loop
+assign @MES to *
+
+unlink MES_CCC$ ,Er
+SF_ERRCODE$=trimr$(SF_ERRCODE$)
+
+if SF_ERRCODE$<>"0000" then
+   print "SFCS save to DB Error ,Code=" & SF_ERRCODE$
+   wait 2
+end if
+
+subend
+sub Send_EEE (Board_I)
+global Report_Printer$
+global MES_path$,BACKUP_path$,Oper$
+global Panel_Serial$,  Serial$(*)
+
+board number is Board_I
+MES_EEE$=MES_path$ & "\" &Panel_Serial$ & ".EEE"
+BACKUP_EEE$=BACKUP_path$ & "\" &Panel_Serial$ & ".EEE"
+BACKUP_EE1$=BACKUP_path$ & "\" &Panel_Serial$ & ".EE1"
+if boardfailed then
+   report is MES_EEE$
+   report out
+   report is Report_Printer$
+
+
+!copy MES_EEE$ over "z:\ate\fp9\" & Panel_Serial$ & ".EEE" ,ERRRs
+
+ copy MES_EEE$ over BACKUP_EE1$
+ rename BACKUP_EE1$ to BACKUP_EEE$
+end if
+
+subend
+
+sub Powerw
+ global Panel_Serial$
+
+ printer is "Powerlog";append
+
+ randomize
+ print "{@BLOCK|cp|01"
+ V=1.05 + rnd*0.04
+ Vs$=val$(V)
+! print V,Vs$
+! Vs$=substring$(Vs$,8)
+ print "{@A-MEA|0|+" & Vs$ &"E+00|1.05V{@LIM2|+1.102500E+00|+9.975000E-01}}"
+ V=1.8 + rnd*0.05
+ Vs$=val$(V)
+ print "{@A-MEA|0|+" & Vs$ &"E+00|1.8V{@LIM2|+1.890000E+00|+1.710000E+00}}"
+ V=1.5 + rnd*0.06
+ Vs$=val$(V)
+ print "{@A-MEA|0|+" & Vs$ &"E+00|1.5V{@LIM2|+1.575000E+00|+1.425000E+00}}"
+ V=3.3 + rnd*0.08
+ Vs$=val$(V)
+ print "{@A-MEA|0|+" & Vs$ &"E+00|3V{@LIM2|+3.465000E+00|+3.135000E+00}}"
+ V=5 + rnd*0.15
+ Vs$=val$(V)
+ print "{@A-MEA|0|+" & Vs$ &"E+00|5V{@LIM2|+5.250000E+00|+4.750000E+00}}"
+ print Panel_Serial$
+ print "}"
+ randomize
+ printer is *
+subend
+
+sub Store_Log_Level
+ global Stored_Log_Level$
+ Stored_Log_Level$ = lli$
+subend
+
+
+sub Restore_Log_Level
+ global Stored_Log_Level$
+
+ if Stored_Log_Level$ = "all" then
+   log level is all without nhls
+ else
+   if Stored_Log_Level$ = "failures" then
+     log level is failures without nhls
+   else
+     if Stored_Log_Level$ = "none" then
+       log level is none
+     else
+       if Stored_Log_Level$ = "analog" then
+         log level is analog without nhls
+       else
+         if Stored_Log_Level$ = "board" then
+           log level is board
+         else
+           if Stored_Log_level$ = "manual" then
+             log level is manual
+           end if
+         end if
+       end if
+     end if
+   end if
+ end if
+
+if learning then log level is all
+
+subend
+
+
+! End of Testplan Writer Generated Testplan.
+

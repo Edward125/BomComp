@@ -1,5 +1,5 @@
 VERSION 5.00
-Object = "{F9043C88-F6F2-101A-A3C9-08002B2F49FB}#1.2#0"; "COMDLG32.OCX"
+Object = "{F9043C88-F6F2-101A-A3C9-08002B2F49FB}#1.2#0"; "comdlg32.ocx"
 Begin VB.Form frmCreateTestplan 
    BorderStyle     =   4  'Fixed ToolWindow
    Caption         =   "Put forward boards..."
@@ -140,7 +140,7 @@ t = 0
 'Open PrmPath & "BomCompare\EspeciallyDevice.txt" For Output As #2
 'Close #2
 'open testplan file
-msg1(0).Caption = "Reading testplan file..."
+Msg1(0).Caption = "Reading testplan file..."
 
   Open PrmPath & "BomCompare\UnsettledDevice.txt" For Output As #23
   Close #23
@@ -164,7 +164,7 @@ msg1(0).Caption = "Reading testplan file..."
                       Exit Do
                   End If
                     tmptext = Replace(LCase(Mystr), " ", "")
-                        If InStr(tmptext, "onboardsboardset_boards_") <> 0 And InStr(Mystr, "test ") <> 0 And bSubAnalog = True And InStr(Mystr, "analog/") <> 0 Then
+                        If InStr(tmptext, "onboardsboardset_boards_") <> 0 And InStr(Mystr, "test ") <> 0 And bSubAnalog = True And InStr(Mystr, strAnalog_) <> 0 Then
                            'BoardsNumber = Right(Trim(Replace(tmptext, "(*)", "")), 1)
                            tmptext = Right(tmptext, (Len(tmptext) - InStr(tmptext, "onboardsboardset_boards_")) + 1)
                            tmptext = Replace(LCase(tmptext), "onboardsboardset_boards_", "")
@@ -219,7 +219,7 @@ msg1(0).Caption = "Reading testplan file..."
           tmptext = ""
           BoardsNumber = ""
           Mystr = ""
-          msg1(0).Caption = "Reading testplan file... Read file line:" & i
+          Msg1(0).Caption = "Reading testplan file... Read file line:" & i
         DoEvents
       Loop
   Close #1
@@ -227,11 +227,11 @@ msg1(0).Caption = "Reading testplan file..."
 
   
      If bSubAnalog = False Then
-        msg1(0).Caption = "The testplan is bad file!"
+        Msg1(0).Caption = "The testplan is bad file!"
         bRunTestplan = False
         
      End If
-    msg1(0).Caption = "Testplan closed! & boards testplan create ok!"
+    Msg1(0).Caption = "Testplan closed! & boards testplan create ok!"
     
    bSubAnalog = False
    MsgBox "Boards testplan create ok! In " & PrmPath & "BomCompare\Panel_boards_testplan\", vbInformation
