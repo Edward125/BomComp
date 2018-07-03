@@ -1,0 +1,1 @@
+74.05461.D71         IC PWR SW G546A1P1UF SOP 8P                               1    U6301

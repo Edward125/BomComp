@@ -7,13 +7,19 @@ Begin VB.Form frmLibEdit
    ClientLeft      =   45
    ClientTop       =   390
    ClientWidth     =   10965
-   Icon            =   "frmLibEdit.frx":0000
    LinkTopic       =   "Form1"
    MaxButton       =   0   'False
    MinButton       =   0   'False
    ScaleHeight     =   4230
    ScaleWidth      =   10965
    StartUpPosition =   2  'CenterScreen
+   Begin MSComDlg.CommonDialog CommonDialog1 
+      Left            =   1080
+      Top             =   1560
+      _ExtentX        =   847
+      _ExtentY        =   847
+      _Version        =   393216
+   End
    Begin VB.CommandButton cmdExit 
       Caption         =   "&Exit"
       BeginProperty Font 
@@ -137,13 +143,6 @@ Begin VB.Form frmLibEdit
       TabIndex        =   1
       Top             =   120
       Width           =   1695
-   End
-   Begin MSComDlg.CommonDialog CommonDialog1 
-      Left            =   4080
-      Top             =   120
-      _ExtentX        =   847
-      _ExtentY        =   847
-      _Version        =   393216
    End
    Begin VB.TextBox txtTestplan 
       BackColor       =   &H00FFFFC0&
@@ -437,12 +436,29 @@ cmdBom.Enabled = True
 End Sub
 
 Private Sub cmdExit_Click()
-frmMain.Show
-Unload Me
+End
+End Sub
+
+Private Sub Form_Load()
+On Error Resume Next
+ 
+  
+   If App.PrevInstance Then
+     MsgBox "The application is already open", vbInformation, "Error"
+
+   End
+   Exit Sub
+   
+  End If
+
+PrmPath = App.Path
+If Right(PrmPath, 1) <> "\" Then PrmPath = PrmPath & "\"
+MkDir PrmPath & "BomCompare"
+
 End Sub
 
 Private Sub Form_Unload(Cancel As Integer)
-frmMain.Show
+End
 
 End Sub
 
